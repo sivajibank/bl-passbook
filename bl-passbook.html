@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -69,6 +70,7 @@ body{min-height:100vh;overflow-x:hidden;padding-bottom:env(safe-area-inset-botto
 .hero::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,transparent,var(--cyan),var(--lime),var(--violet),transparent);background-size:200% 100%;animation:slide 4.5s linear infinite}
 @keyframes slide{to{background-position:200% 0}}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.78)}}
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:900;letter-spacing:2px;text-transform:uppercase;
   padding:4px 10px;border-radius:20px;background:rgba(0,240,255,.12);color:var(--cyan);border:1px solid rgba(0,240,255,.28)}
 .cname{font-size:23px;font-weight:900;letter-spacing:-.6px;margin-top:11px;line-height:1.15}
@@ -160,6 +162,29 @@ var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZa
    no database, no network calls. Everything lives in the link.
    ══════════════════════════════════════════════════════════════ */
 var P = null, SECLEN = 4, buf = '', tries = 0, lockUntil = 0;
+var LIVE = null;      /* {url,id,key} when this card carries a live pointer */
+var LIVEST = 'none';  /* none | pending | live | offline                    */
+
+/* The key travels in the URL fragment, which browsers never transmit, so the
+   server holding the blob cannot read it \u2014 and neither can anyone who copies
+   it out of storage. */
+function b64uBytes(str){
+  str = String(str).replace(/-/g,'+').replace(/_/g,'/');
+  while(str.length%4) str += '=';
+  var bin = atob(str), out = new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+function b64uText(str){ return new TextDecoder().decode(b64uBytes(str)); }
+function canCrypto(){ return !!(window.crypto && window.crypto.subtle && window.TextDecoder && window.fetch); }
+
+function pbDecrypt(blob, keyB64u){
+  var raw = b64uBytes(blob);
+  var iv  = raw.slice(0,12), ct = raw.slice(12);
+  return window.crypto.subtle.importKey('raw', b64uBytes(keyB64u), {name:'AES-GCM'}, false, ['decrypt'])
+    .then(function(key){ return window.crypto.subtle.decrypt({name:'AES-GCM', iv:iv}, key, ct); })
+    .then(function(pt){ return new TextDecoder().decode(pt); });
+}
 
 /* ── helpers ─────────────────────────────────────────────── */
 function $(id){ return document.getElementById(id); }
@@ -193,6 +218,18 @@ function parseD(s){
 function boot(){
   var frag = '';
   try { frag = (location.hash||'').replace(/^#/,''); } catch(e){}
+  /* A live card looks like  L.<b64u worker url>.<record id>.<key>.<snapshot>
+     The snapshot still rides on the end, so the passbook opens instantly and
+     still works with no signal. The fetch happens after the PIN, never before. */
+  if(frag.charAt(0)==='L' && frag.charAt(1)==='.'){
+    var parts = frag.split('.');
+    if(parts.length>=5){
+      try { LIVE = { url:b64uText(parts[1]).replace(/\/+$/,''), id:parts[2], key:parts[3] }; }
+      catch(e){ LIVE = null; }
+      frag = parts.slice(4).join('.');
+      if(LIVE) LIVEST = 'pending';
+    }
+  }
   if(!frag){ fail('No passbook data found in this link.','Ask your contractor to send the passbook link again \u2014 the part after the # sign is missing.'); return; }
   try {
     var json = LZString.decompressFromEncodedURIComponent(frag);
@@ -280,6 +317,55 @@ function unlock(skip){
   setTimeout(function(){ g.style.display='none'; }, skip?0:520);
   $('app').style.display='block';
   render();
+  if(LIVE) pullLive();
+}
+
+/* ── live refresh ────────────────────────────────────────────────────────
+   Runs only after the PIN is accepted. If anything at all goes wrong \u2014 no
+   signal, Worker down, record deleted, key tampered with \u2014 we keep the
+   snapshot that came inside the link and say so honestly. */
+function pullLive(){
+  if(!LIVE || !canCrypto()){ LIVEST = LIVE ? 'offline' : 'none'; paintLive(); return; }
+  var to = setTimeout(function(){ LIVEST='offline'; paintLive(); }, 9000);
+  fetch(LIVE.url+'/p/'+LIVE.id, {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.text(); })
+    .then(function(blob){ return pbDecrypt(blob, LIVE.key); })
+    .then(function(packed){
+      var fresh = JSON.parse(LZString.decompressFromEncodedURIComponent(packed));
+      if(!fresh || !fresh.c) throw new Error('bad payload');
+      clearTimeout(to);
+      var keepSec = P.sec;          /* the gate already passed \u2014 don't re-lock */
+      P = fresh; P.sec = keepSec;
+      LIVEST = 'live';
+      render();
+    })
+    .catch(function(){ clearTimeout(to); LIVEST='offline'; paintLive(); });
+}
+
+function paintLive(){
+  var el = $('livebar');
+  if(!el) return;
+  if(LIVEST==='live'){
+    el.style.display='flex';
+    el.style.color='var(--mint)';
+    el.style.borderColor='rgba(43,217,166,.30)';
+    el.style.background='rgba(43,217,166,.07)';
+    el.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint);animation:pulseDot 1.8s ease-in-out infinite"></span>'
+      + '<span>Live \u00B7 updated '+fmtD(P.d)+'</span>';
+  } else if(LIVEST==='pending'){
+    el.style.display='flex';
+    el.style.color='var(--text4)';
+    el.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:var(--text4)"></span><span>Checking for updates\u2026</span>';
+  } else if(LIVEST==='offline'){
+    el.style.display='flex';
+    el.style.color='var(--amber)';
+    el.style.borderColor='rgba(255,176,32,.28)';
+    el.style.background='rgba(255,176,32,.06)';
+    el.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:var(--amber)"></span>'
+      + '<span>Offline \u2014 showing the details saved on this card ('+fmtD(P.d)+')</span>';
+  } else {
+    el.style.display='none';
+  }
 }
 
 /* ══ CALCULATIONS ═════════════════════════════════════════ */
@@ -320,6 +406,9 @@ function render(){
 
   /* ── hero ── */
   var stCol = {Active:'var(--lime)','On Hold':'var(--amber)',Completed:'var(--cyan)',Cancelled:'var(--coral)'}[c.st]||'var(--text3)';
+  H += '<div id="livebar" style="display:none;align-items:center;gap:8px;font-size:11px;font-weight:800;'
+     + 'padding:8px 13px;border-radius:20px;border:1px solid var(--b1);background:var(--bg3);margin-bottom:11px;width:fit-content"></div>';
+
   H += '<div class="hero">'
      + '<span class="badge">\uD83D\uDCD8 Project Passbook</span>'
      + '<div class="cname">'+esc(c.n||'Customer')+'</div>'
@@ -524,6 +613,7 @@ function render(){
     + '</div>';
 
   $('app').innerHTML = H;
+  paintLive();
   animate();
 }
 
