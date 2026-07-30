@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -201,18 +200,26 @@ function fmtS(v){
 var MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fmtD(d){
   if(!d) return '\u2014';
-  var p = String(d).split('-');
-  if(p.length!==3) return String(d);
-  return p[2]+' '+(MO[Number(p[1])-1]||'')+' '+p[0];
+  var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(d).trim());
+  if(!m) return '\u2014';
+  var mo = Number(m[2]), dy = Number(m[3]);
+  if(mo<1 || mo>12 || dy<1 || dy>31) return '\u2014';
+  return String(dy).padStart(2,'0')+' '+MO[mo-1]+' '+m[1];
 }
 function daysBetween(a,b){ return Math.round((a-b)/86400000); }
 function todayD(){ var t=new Date(); t.setHours(0,0,0,0); return t; }
 function parseD(s){
   if(!s) return null;
-  var p=String(s).split('-'); if(p.length!==3) return null;
-  var d=new Date(Number(p[0]),Number(p[1])-1,Number(p[2])); d.setHours(0,0,0,0);
+  var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(s).trim());
+  if(!m) return null;
+  var mo=Number(m[2]), dy=Number(m[3]);
+  if(mo<1 || mo>12 || dy<1 || dy>31) return null;
+  var d=new Date(Number(m[1]), mo-1, dy); d.setHours(0,0,0,0);
+  /* reject roll-overs like 2026-02-31 */
+  if(d.getMonth()!==mo-1 || d.getDate()!==dy) return null;
   return isNaN(d.getTime())?null:d;
 }
+function hasD(s){ return parseD(s)!==null; }
 
 /* ── boot: decode the fragment ───────────────────────────── */
 function boot(){
@@ -299,18 +306,27 @@ function paint(){
   if(buf.length===SECLEN) setTimeout(check, 130);
 }
 function check(){
-  if(Date.now() < lockUntil){
-    $('gmsg').textContent = 'Too many attempts \u2014 wait '+Math.ceil((lockUntil-Date.now())/1000)+'s';
-    return;
-  }
+  if(Date.now() < lockUntil){ startLockTick(); return; }
   if(buf === String(P.sec)){ unlock(); return; }
   tries++;
   $('cells').classList.add('bad');
   try{ if(navigator.vibrate) navigator.vibrate(70); }catch(e){}
-  if(tries>=5){ lockUntil = Date.now()+30000; tries=0; $('gmsg').textContent='Too many attempts \u2014 locked for 30 seconds'; }
+  if(tries>=5){ lockUntil = Date.now()+30000; tries=0; startLockTick(); }
   else $('gmsg').textContent = 'Wrong PIN \u2014 '+(5-tries)+' attempt'+(5-tries===1?'':'s')+' left';
   setTimeout(function(){ buf=''; paint(); $('cells').classList.remove('bad'); }, 460);
 }
+var _lockTick = null;
+function startLockTick(){
+  clearInterval(_lockTick);
+  var tick = function(){
+    var left = Math.ceil((lockUntil - Date.now())/1000);
+    if(left<=0){ clearInterval(_lockTick); _lockTick=null; $('gmsg').textContent=''; return; }
+    $('gmsg').textContent = 'Too many attempts \u2014 try again in '+left+'s';
+  };
+  tick();
+  _lockTick = setInterval(tick, 1000);
+}
+
 function unlock(skip){
   var g=$('gate');
   g.classList.add('out');
@@ -393,7 +409,7 @@ function calc(){
     py:py, plan:plan, spays:spays, ph:ph,
     received:grossRec, refunded:refunded, net:net,
     budget:budget, agreed:agreed, contract:contract,
-    balance:balance, over:over, prog:prog,
+    balance:balance, over:over, prog:prog, noContract: !(contract>0),
     spent:num(f.sp), matVal:num(f.mv), ncTotal:num(f.nc),
     payPct: contract>0 ? Math.min(Math.round(net/contract*100),100) : 0
   };
@@ -406,7 +422,7 @@ function render(){
 
   /* ── hero ── */
   var stCol = {Active:'var(--lime)','On Hold':'var(--amber)',Completed:'var(--cyan)',Cancelled:'var(--coral)'}[c.st]||'var(--text3)';
-  H += '<div id="livebar" style="display:none;align-items:center;gap:8px;font-size:11px;font-weight:800;'
+  H += '<div id="livebar" class="noprint" style="display:none;align-items:center;gap:8px;font-size:11px;font-weight:800;'
      + 'padding:8px 13px;border-radius:20px;border:1px solid var(--b1);background:var(--bg3);margin-bottom:11px;width:fit-content"></div>';
 
   H += '<div class="hero">'
@@ -419,14 +435,19 @@ function render(){
      + (c.sq?'<span class="chip">\uD83D\uDCD0 '+num(c.sq).toLocaleString('en-IN')+' sq ft</span>':'')
      + (c.sd?'<span class="chip">\uD83D\uDE80 Started '+fmtD(c.sd)+'</span>':'')
      + (c.ed?'<span class="chip">\uD83C\uDFC1 Target '+fmtD(c.ed)+'</span>':'')
-     + '<span class="chip">\uD83D\uDD52 As of '+fmtD(P.d)+'</span>'
+     + (hasD(P.d) ? '<span class="chip">\uD83D\uDD52 As of '+fmtD(P.d)+'</span>' : '')
      + '</div></div>';
 
   /* ── KPIs ── */
   var kpis = [
-    {i:'\uD83D\uDCB0', l:'Contract Value', v:fmtS(K.contract), c:'var(--amber)', s:K.agreed>0?'agreed stage total':'project budget'},
-    {i:'\uD83D\uDCB5', l:'Total Received', v:fmtS(K.net),      c:'var(--lime)',  s:K.refunded>0?('after '+fmtS(K.refunded)+' refund'):(K.payPct+'% collected')},
-    {i:K.over>0?'\u2705':'\u23F3', l:K.over>0?'Advance Paid':'Balance to Pay', v:fmtS(K.over>0?K.over:K.balance), c:K.balance>0?'var(--coral)':'var(--mint)', s:K.balance>0?'still outstanding':'fully settled'},
+    K.noContract
+      ? {i:'\uD83D\uDCB0', l:'Contract Value', v:'\u2014', c:'var(--text3)', s:'not set yet'}
+      : {i:'\uD83D\uDCB0', l:'Contract Value', v:fmtS(K.contract), c:'var(--amber)', s:K.agreed>0?'agreed stage total':'project budget'},
+    {i:'\uD83D\uDCB5', l:'Total Received', v:fmtS(K.net), c:'var(--lime)',
+      s:K.refunded>0?('after '+fmtS(K.refunded)+' refund'):(K.noContract?'received to date':(K.payPct+'% collected'))},
+    K.noContract
+      ? {i:'\u2139\uFE0F', l:'Balance to Pay', v:'\u2014', c:'var(--text3)', s:'ask your contractor'}
+      : {i:K.over>0?'\u2705':'\u23F3', l:K.over>0?'Advance Paid':'Balance to Pay', v:fmtS(K.over>0?K.over:K.balance), c:K.balance>0?'var(--coral)':'var(--mint)', s:K.balance>0?'still outstanding':'fully settled'},
     {i:'\uD83C\uDFD7\uFE0F', l:'Work Progress', v:K.prog+'%', c:'var(--cyan)', s:K.ph.length?(K.ph.filter(function(r){return r[2]==='Completed';}).length+' of '+K.ph.length+' phases done'):'no phases yet'}
   ];
   H += '<div class="kpis">'+kpis.map(function(k,i){
@@ -449,11 +470,14 @@ function render(){
   }
 
   /* ── UPI pay now ── */
-  if(P.o && P.o.u && co.u && K.balance>0){
+  if(P.o && P.o.u && co.u && K.balance>0 && /^[A-Za-z0-9._\-]+@[A-Za-z0-9.\-]+$/.test(String(co.u).trim())){
+    /* A VPA can only ever contain these characters. Anything else is either a
+       typo or an injection attempt, and both must not reach the payment app. */
+    var vpa = String(co.u).trim().replace(/[^A-Za-z0-9._\-@]/g,'');
     var amt = K.balance.toFixed(2);
     var pn  = encodeURIComponent(co.n||'Contractor');
     var note= encodeURIComponent('Project payment \u2014 '+(c.pr||c.n||''));
-    var q   = 'pa='+co.u+'&pn='+pn+'&am='+amt+'&cu=INR&tn='+note;
+    var q   = 'pa='+encodeURIComponent(vpa)+'&pn='+pn+'&am='+encodeURIComponent(amt)+'&cu=INR&tn='+note;
     var waN = String(co.p||'').replace(/[^\d]/g,'');
     if(waN.length===10) waN='91'+waN;
     var waMsg = encodeURIComponent('Hello '+(co.n||'')+',\n\nI have made a payment for my project *'+(c.pr||c.n||'')+'*.\n\nAmount: '+fmt(K.balance)+'\nUTR / Reference: \n\nPlease confirm receipt. Thank you.');
@@ -465,7 +489,7 @@ function render(){
       + '<a class="ub" style="border-color:rgba(0,186,245,.35)" href="paytmmp://pay?'+q+'"><em>\uD83D\uDD37</em>Paytm</a>'
       + '<a class="ub" style="border-color:rgba(37,211,102,.35)" href="upi://pay?'+q+'"><em>\uD83D\uDCB8</em>Any UPI</a>'
       + '</div>'
-      + '<div style="font-size:10.5px;color:var(--text4);text-align:center;margin-top:9px;font-weight:600">Paying to <b class="mono" style="color:var(--text3)">'+esc(co.u)+'</b></div>'
+      + '<div style="font-size:10.5px;color:var(--text4);text-align:center;margin-top:9px;font-weight:600">Paying to <b class="mono" style="color:var(--text3)">'+esc(vpa)+'</b></div>'
       + (waN?'<a class="ub noprint" style="flex-direction:row;justify-content:center;margin-top:9px;background:rgba(37,211,102,.10);border-color:rgba(37,211,102,.35);color:#25D366" href="https://wa.me/'+waN+'?text='+waMsg+'"><em>\uD83D\uDCF2</em> Send payment confirmation on WhatsApp</a>':'')
       + '</div>';
   }
@@ -607,9 +631,10 @@ function render(){
     + (co.e?'<div>\u2709\uFE0F '+esc(co.e)+'</div>':'')
     + (co.a?'<div>\uD83D\uDCCD '+esc(co.a)+'</div>':'')
     + (co.g?'<div class="mono" style="font-size:10px">GSTIN '+esc(co.g)+'</div>':'')
-    + '<div style="margin-top:12px;font-size:10px;color:var(--text4);line-height:1.7">This passbook is a snapshot taken on '+fmtD(P.d)+'.<br>'
+    + '<div style="margin-top:12px;font-size:10px;color:var(--text4);line-height:1.7">'
+    + (hasD(P.d) ? 'This passbook is a snapshot taken on '+fmtD(P.d)+'.<br>' : 'This passbook is a snapshot of your project account.<br>')
     + 'For the latest position please contact your contractor.<br>'
-    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v1.0</span></div>'
+    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v1.1</span></div>'
     + '</div>';
 
   $('app').innerHTML = H;
