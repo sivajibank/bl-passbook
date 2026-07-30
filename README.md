@@ -140,10 +140,104 @@ body{min-height:100vh;overflow-x:hidden;padding-bottom:env(safe-area-inset-botto
   font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
 .tog button:active{transform:scale(.95)}
 @media print{
-  #aurora,#gate,.tog,.upi,.noprint{display:none!important}
-  html,body{background:#fff;color:#000}
-  .card,.kpi,.hero{background:#fff;border:1px solid #ccc;opacity:1!important;transform:none!important;animation:none!important}
-  .kpi .vl,.cname{color:#000}
+  /* ══ A4 PAGE SETUP ═══════════════════════════════════════════════════ */
+  @page{ size:A4 portrait; margin:14mm 13mm 15mm 13mm; }
+
+  html,body{
+    background:#fff !important; color:#14202c !important;
+    font-size:10.2pt; line-height:1.45;
+    -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;
+  }
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+
+  /* Ink-friendly palette. Re-pointing the variables recolours everything
+     at once instead of chasing every rule individually. */
+  :root{
+    --bg1:#fff; --bg2:#fff; --bg3:#f6f8fa; --bg4:#f0f3f7;
+    --b1:#d8dee6; --b2:#c3ccd6;
+    --text:#14202c; --text2:#28394a; --text3:#42546a; --text4:#586a7d;
+    --cyan:#0a6b78; --lime:#3f6b12; --amber:#9a6100; --coral:#b3243f;
+    --violet:#5b3a9e; --mint:#0e7a5a; --pink:#a3196b;
+  }
+
+  /* ── hide anything interactive or decorative ─────────────────────── */
+  #aurora,#gate,.tog,.upi,.noprint,#livebar,.galspin,
+  .tbl button,.card button,.sec button,a.ub{ display:none !important; }
+
+  /* ── use the full width of the sheet ─────────────────────────────── */
+  .wrap{ max-width:none !important; width:100% !important; margin:0 !important; padding:0 !important; }
+  #app{ display:block !important; }
+
+  /* ── never split a card, a table row or a section heading ────────── */
+  .card,.kpi,.hero,tr,.galcell{ break-inside:avoid; page-break-inside:avoid; }
+  .sec{ break-inside:auto; margin-top:9mm; }
+  .stitle{ break-after:avoid; page-break-after:avoid; }
+  thead{ display:table-header-group; }   /* repeat headers across pages */
+
+  /* ── masthead ────────────────────────────────────────────────────── */
+  #printhead{ display:block !important; border-bottom:2.5pt solid #14202c; padding-bottom:3mm; margin-bottom:5mm; }
+  #printhead .ph-co{ font-size:16pt; font-weight:900; letter-spacing:-.3pt; }
+  #printhead .ph-sub{ font-size:8.6pt; color:#42546a; margin-top:1mm; font-weight:600; }
+  #printhead .ph-tag{ float:right; text-align:right; font-size:8.4pt; color:#42546a; font-weight:700; }
+  #printhead .ph-tag b{ display:block; font-size:11pt; color:#14202c; letter-spacing:2pt; text-transform:uppercase; }
+
+  /* ── hero ────────────────────────────────────────────────────────── */
+  .hero{ background:#f6f8fa !important; border:1pt solid #c3ccd6 !important; border-radius:3mm;
+         padding:4mm 5mm !important; margin-bottom:4mm; }
+  .hero::before{ display:none !important; }
+  .badge{ display:none !important; }
+  .cname{ font-size:17pt !important; color:#14202c !important; margin-top:0 !important; }
+  .cproj{ font-size:10.5pt !important; color:#3f6b12 !important; font-weight:800; }
+  .chip{ background:#fff !important; border:.7pt solid #c3ccd6 !important; color:#28394a !important;
+         font-size:8.2pt !important; padding:1mm 2.4mm !important; }
+
+  /* ── KPI cards: four across ──────────────────────────────────────── */
+  .kpis{ grid-template-columns:repeat(4,1fr) !important; gap:3mm !important; margin-top:0 !important; }
+  .kpi{ background:#fff !important; border:1pt solid #c3ccd6 !important; border-radius:2.5mm;
+        padding:3mm !important; opacity:1 !important; transform:none !important; animation:none !important; }
+  .kpi::after{ display:none !important; }
+  .kpi .ic{ font-size:9pt !important; }
+  .kpi .vl{ font-size:13.5pt !important; margin-top:1mm !important; }
+  .kpi .lb{ font-size:7.2pt !important; color:#4a5b6d !important; letter-spacing:.7pt; }
+  .kpi .sb{ font-size:7.8pt !important; color:#42546a !important; }
+
+  /* ── cards and section headings ──────────────────────────────────── */
+  .card{ background:#fff !important; border:.8pt solid #d8dee6 !important; border-radius:2.5mm;
+         padding:3mm 3.5mm !important; margin-bottom:2.2mm !important;
+         opacity:1 !important; transform:none !important; transition:none !important; }
+  .card.in{ opacity:1 !important; }
+  .stitle b{ font-size:9.6pt !important; letter-spacing:1.4pt; }
+  .stitle span.n{ background:#f0f3f7 !important; border:.7pt solid #d8dee6 !important;
+                  color:#42546a !important; font-size:8pt !important; }
+  p,div,td,span{ orphans:3; widows:3; }
+
+  /* ── progress bars must actually show ink ────────────────────────── */
+  .bar{ background:#e4e9ef !important; height:2.2mm !important; border:.4pt solid #d8dee6; }
+  .bar i{ opacity:1 !important; transition:none !important; }
+
+  /* ── tables ──────────────────────────────────────────────────────── */
+  .tbl{ font-size:9pt !important; }
+  .tbl th{ color:#14202c !important; font-size:7.9pt !important; border-bottom:1pt solid #9aa7b4 !important;
+           background:#f0f3f7 !important; padding:1.8mm 2mm !important; }
+  .tbl td{ color:#2b3a4a !important; border-bottom:.5pt solid #e4e9ef !important; padding:1.8mm 2mm !important; }
+  .tbl tbody tr:nth-child(even) td{ background:#fafbfc !important; }
+  .tot{ border-top:1pt solid #9aa7b4 !important; font-size:10pt !important; padding:2mm !important; }
+
+  .pill{ border:.7pt solid currentColor !important; background:#fff !important; font-size:7.9pt !important; }
+
+  /* ── photo gallery ───────────────────────────────────────────────── */
+  .gal{ grid-template-columns:repeat(4,1fr) !important; gap:2.5mm !important; }
+  .galcell{ border:.7pt solid #c3ccd6 !important; border-radius:2mm; }
+  .galtag{ background:rgba(0,0,0,.72) !important; color:#fff !important; font-size:7.2pt !important; }
+
+  /* ── footer ──────────────────────────────────────────────────────── */
+  .foot{ border-top:1.2pt solid #c3ccd6 !important; color:#42546a !important;
+         font-size:8.6pt !important; margin-top:7mm !important; padding-top:3mm !important;
+         break-inside:avoid; }
+  .foot div{ color:#42546a !important; }
+
+  #printnote{ display:block !important; margin-top:4mm; padding:2.5mm 3mm; border:.7pt dashed #9aa7b4;
+              border-radius:2mm; font-size:8.4pt; color:#42546a; font-weight:600; text-align:center; }
 }
 </style>
 </head>
@@ -268,6 +362,8 @@ var STR = {
     view:'\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95', download:'\u0BAA\u0BA4\u0BBF\u0BB5\u0BBF\u0BB1\u0B95\u0BCD\u0B95', close:'\u0BAE\u0BC2\u0B9F\u0BC1',
     loading:'\u0B8F\u0BB1\u0BCD\u0BB1\u0BC1\u0B95\u0BBF\u0BB1\u0BA4\u0BC1\u2026',
     receipt:'\u0BB0\u0B9A\u0BC0\u0BA4\u0BC1',
+    preparing:'\u0BA4\u0BAF\u0BBE\u0BB0\u0BBE\u0B95\u0BBF\u0BB1\u0BA4\u0BC1\u2026',
+    printNote:'\u0B87\u0BA4\u0BC1 \u0B85\u0B9A\u0BCD\u0B9A\u0BBF\u0B9F\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F \u0BAA\u0BA4\u0BBF\u0BB5\u0BC1. \u0B86\u0BB5\u0BA3\u0B99\u0BCD\u0B95\u0BB3\u0BC8\u0BAF\u0BC1\u0BAE\u0BCD \u0BAA\u0BC1\u0BB0\u0BC8\u0BAA\u0BCD\u0BAA\u0B9F\u0B99\u0BCD\u0B95\u0BB3\u0BC8\u0BAF\u0BC1\u0BAE\u0BCD \u0B87\u0BA3\u0BC8\u0BAF \u0BAA\u0BBE\u0BB8\u0BCD\u0BAA\u0BC1\u0BAF\u0BCD \u0B87\u0BA3\u0BCD\u0B95\u0BBF\u0BB2\u0BCD \u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BB2\u0BBE\u0BAE\u0BCD.',
     popupBlocked:'\u0BB0\u0B9A\u0BC0\u0BA4\u0BC1 \u0B85\u0B9A\u0BCD\u0B9A\u0BBF\u0B9F \u0BAA\u0BBE\u0BAA\u0BCD-\u0B85\u0BAA\u0BCD \u0B85\u0BA9\u0BC1\u0BAE\u0BA4\u0BBF\u0B95\u0BCD\u0B95\u0BB5\u0BC1\u0BAE\u0BCD.',
     needNet:'\u0B87\u0BA3\u0BC8\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BC7\u0BB5\u0BC8'
   }
@@ -758,6 +854,20 @@ function render(){
 
   /* ── hero ── */
   var stCol = {Active:'var(--lime)','On Hold':'var(--amber)',Completed:'var(--cyan)',Cancelled:'var(--coral)'}[c.st]||'var(--text3)';
+  /* Printed sheets travel without the screen around them, so the paper needs
+     its own masthead: who issued it, for whom, and as of when. */
+  H += '<div id="printhead" style="display:none">'
+     +   '<div class="ph-tag"><b>Project Passbook</b>'
+     +     (hasD(P.d) ? T('asOf','As of')+' '+fmtD(P.d) : '')
+     +   '</div>'
+     +   '<div class="ph-co">'+esc(co.n||'Project Passbook')+'</div>'
+     +   '<div class="ph-sub">'
+     +     [co.a, co.p, co.e].filter(Boolean).map(esc).join('  \u00B7  ')
+     +     (co.g? '  \u00B7  GSTIN '+esc(co.g) : '')
+     +   '</div>'
+     +   '<div style="clear:both"></div>'
+     + '</div>';
+
   H += '<div id="livebar" class="noprint" style="display:none;align-items:center;gap:8px;font-size:11px;font-weight:800;'
      + 'padding:8px 13px;border-radius:20px;border:1px solid var(--b1);background:var(--bg3);margin-bottom:11px;width:fit-content"></div>';
 
@@ -817,7 +927,7 @@ function render(){
     var waN = String(co.p||'').replace(/[^\d]/g,'');
     if(waN.length===10) waN='91'+waN;
     var waMsg = encodeURIComponent('Hello '+(co.n||'')+',\n\nI have made a payment for my project *'+(c.pr||c.n||'')+'*.\n\nAmount: '+fmt(K.balance)+'\nUTR / Reference: \n\nPlease confirm receipt. Thank you.');
-    H += '<div class="sec"><div class="stitle"><b style="color:var(--mint)">\uD83D\uDCB3 '+T('payNow','Pay Now')+'</b>'
+    H += '<div class="sec noprint"><div class="stitle"><b style="color:var(--mint)">\uD83D\uDCB3 '+T('payNow','Pay Now')+'</b>'
       + '<span class="n">'+fmt(K.balance)+' '+T('due','due')+'</span></div>'
       + '<div class="upi">'
       + '<a class="ub" style="border-color:rgba(66,133,244,.35)" href="tez://upi/pay?'+q+'"><em>\uD83D\uDD35</em>GPay</a>'
@@ -1098,10 +1208,14 @@ function render(){
   H += '<div class="tog noprint">'
     + '<button onclick="setLang(\''+(LANG==='ta'?'en':'ta')+'\')" style="border-color:rgba(0,240,255,.35);color:var(--cyan)">'
     +   (LANG==='ta'?'\uD83C\uDDEC\uD83C\uDDE7 English':'\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD')+'</button>'
-    + '<button onclick="window.print()">\uD83D\uDDA8 '+T('printSave','Print / Save PDF')+'</button>'
+    + '<button id="printbtn" onclick="doPrint()">\uD83D\uDDA8 '+T('printSave','Print / Save PDF')+'</button>'
     + '<button onclick="location.reload()">\uD83D\uDD04 '+T('reload','Reload')+'</button>'
     + '<button id="a2hs" onclick="doInstall()" style="display:none;border-color:rgba(155,93,229,.35);color:#B68AFF">\u2B07 '+T('addHome','Add to Home Screen')+'</button>'
     + '</div>';
+
+  H += '<div id="printnote" style="display:none">'
+     + T('printNote','This is a printed snapshot. Documents and site photos can be opened from the online passbook link.')
+     + '</div>';
 
   H += '<div class="foot">'
     + (co.n?'<div style="font-size:14px;font-weight:900;color:var(--text2)">\uD83C\uDFE2 '+esc(co.n)+'</div>':'')
@@ -1112,7 +1226,7 @@ function render(){
     + '<div style="margin-top:12px;font-size:10px;color:var(--text4);line-height:1.7">'
     + (hasD(P.d) ? 'This passbook is a snapshot taken on '+fmtD(P.d)+'.<br>' : 'This passbook is a snapshot of your project account.<br>')
     + 'For the latest position please contact your contractor.<br>'
-    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v2.2</span></div>'
+    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v2.3</span></div>'
     + '</div>';
 
   $('app').innerHTML = H;
@@ -1154,6 +1268,36 @@ window.addEventListener('beforeinstallprompt', function(e){
   e.preventDefault(); _installEvt = e;
   var b = $('a2hs'); if(b) b.style.display='inline-block';
 });
+/* A lazily-loaded thumbnail is an empty box on paper, so pull the whole
+   gallery in and let it decode before handing over to the print dialog. */
+window.doPrint = function(){
+  var cells = document.querySelectorAll('[data-gal]');
+  var pending = [];
+  cells.forEach(function(el){
+    if(el.classList.contains('loaded')) return;
+    var i = Number(el.getAttribute('data-gal'));
+    pending.push(galFetch(i).then(function(url){
+      return new Promise(function(res){
+        var im = new Image();
+        im.onload = im.onerror = function(){
+          el.style.backgroundImage = 'url('+url+')';
+          el.classList.add('loaded');
+          var sp = el.querySelector('.galspin'); if(sp) sp.remove();
+          res();
+        };
+        im.src = url;
+      });
+    }, function(){}));
+  });
+  var go = function(){ setTimeout(function(){ window.print(); }, 250); };
+  if(!pending.length){ go(); return; }
+  var btn = document.getElementById('printbtn');
+  if(btn) btn.textContent = '\u23F3 ' + T('preparing','Preparing\u2026');
+  Promise.all(pending).then(go, go).then(function(){
+    if(btn) btn.innerHTML = '\uD83D\uDDA8 ' + T('printSave','Print / Save PDF');
+  });
+};
+
 window.doInstall = function(){
   if(!_installEvt){
     alert(LANG==='ta'
