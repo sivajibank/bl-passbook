@@ -117,6 +117,20 @@ body{min-height:100vh;overflow-x:hidden;padding-bottom:env(safe-area-inset-botto
 .ub:active{transform:scale(.95)}
 .ub em{font-size:21px;font-style:normal}
 
+.gal{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+@media(min-width:520px){.gal{grid-template-columns:repeat(4,1fr)}}
+.galcell{position:relative;aspect-ratio:1;border-radius:11px;overflow:hidden;cursor:pointer;
+  background:var(--bg3) center/cover no-repeat;border:1px solid var(--b1);
+  display:flex;align-items:center;justify-content:center;transition:transform .2s,border-color .2s}
+.galcell:active{transform:scale(.96)}
+.galcell.loaded{border-color:rgba(255,0,153,.28)}
+.galspin{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.14);
+  border-top-color:var(--pink);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.galtag{position:absolute;left:5px;bottom:5px;font-size:8.5px;font-weight:800;padding:2px 6px;
+  border-radius:10px;background:rgba(4,7,12,.66);color:#fff;backdrop-filter:blur(4px);
+  max-width:88%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media print{.gal{grid-template-columns:repeat(4,1fr)}.galspin{display:none}}
 .foot{margin-top:30px;text-align:center;font-size:11px;color:var(--text4);line-height:1.8;font-weight:600;
   border-top:1px solid var(--b1);padding-top:18px}
 .empty{text-align:center;padding:26px 14px;color:var(--text4);font-size:12px;font-weight:600}
@@ -253,6 +267,8 @@ var STR = {
     sqft:'\u0B9A\u0BA4\u0BC1\u0BB0 \u0B85\u0B9F\u0BBF', addHome:'\u0BAE\u0BC1\u0B95\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BBF\u0BB0\u0BC8\u0BAF\u0BBF\u0BB2\u0BCD \u0B9A\u0BC7\u0BB0\u0BCD',
     view:'\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95', download:'\u0BAA\u0BA4\u0BBF\u0BB5\u0BBF\u0BB1\u0B95\u0BCD\u0B95', close:'\u0BAE\u0BC2\u0B9F\u0BC1',
     loading:'\u0B8F\u0BB1\u0BCD\u0BB1\u0BC1\u0B95\u0BBF\u0BB1\u0BA4\u0BC1\u2026',
+    receipt:'\u0BB0\u0B9A\u0BC0\u0BA4\u0BC1',
+    popupBlocked:'\u0BB0\u0B9A\u0BC0\u0BA4\u0BC1 \u0B85\u0B9A\u0BCD\u0B9A\u0BBF\u0B9F \u0BAA\u0BBE\u0BAA\u0BCD-\u0B85\u0BAA\u0BCD \u0B85\u0BA9\u0BC1\u0BAE\u0BA4\u0BBF\u0B95\u0BCD\u0B95\u0BB5\u0BC1\u0BAE\u0BCD.',
     needNet:'\u0B87\u0BA3\u0BC8\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BC7\u0BB5\u0BC8'
   }
 };
@@ -359,6 +375,142 @@ function fmtBytes(n){
   if(n >= 1024)    return Math.round(n/1024)+' KB';
   return n+' B';
 }
+
+
+/* ══ photo gallery ═══════════════════════════════════════════════════════
+   Thumbnails load only as they scroll into view, so opening the passbook on
+   a phone connection does not pull the whole album at once. */
+var _galCache = {};
+
+function galFetch(i){
+  var g = (P.pg||[])[i];
+  if(!g) return Promise.reject(new Error('missing'));
+  if(_galCache[i]) return Promise.resolve(_galCache[i]);
+  if(!LIVE || !canCrypto()) return Promise.reject(new Error('offline'));
+  return fetch(LIVE.url+'/d/'+g[0], {cache:'force-cache'})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+    .then(function(blob){ return pbDecryptBytes(blob, LIVE.key); })
+    .then(function(bytes){
+      var url = URL.createObjectURL(new Blob([bytes], {type:'image/jpeg'}));
+      _galCache[i] = url;
+      return url;
+    });
+}
+
+function galMount(){
+  var cells = document.querySelectorAll('[data-gal]');
+  if(!cells.length) return;
+  var load = function(el){
+    var i = Number(el.getAttribute('data-gal'));
+    galFetch(i).then(function(url){
+      el.style.backgroundImage = 'url('+url+')';
+      el.classList.add('loaded');
+      var sp = el.querySelector('.galspin'); if(sp) sp.remove();
+    }, function(){
+      el.innerHTML = '<span style="font-size:18px;opacity:.35">\u26A0</span>';
+    });
+  };
+  if(!('IntersectionObserver' in window)){ cells.forEach(load); return; }
+  var io = new IntersectionObserver(function(en){
+    en.forEach(function(e){
+      if(e.isIntersecting){ load(e.target); io.unobserve(e.target); }
+    });
+  }, {rootMargin:'200px'});
+  cells.forEach(function(c){ io.observe(c); });
+}
+
+window.openGal = function(i){
+  var g = (P.pg||[])[i];
+  galFetch(i).then(function(url){
+    showGalBox(i, url, g);
+  }, function(){});
+};
+
+function showGalBox(i, url, g){
+  var total = (P.pg||[]).length;
+  var lb = document.createElement('div');
+  lb.id = 'galbox';
+  lb.style.cssText = 'position:fixed;inset:0;z-index:95;background:rgba(4,7,12,.95);display:flex;'
+    + 'flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;'
+    + 'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)';
+  var cap = [g[2], g[1], hasD(g[3])?fmtD(g[3]):''].filter(Boolean).join(' \u00B7 ');
+  lb.innerHTML =
+      '<img src="'+url+'" style="max-width:100%;max-height:74vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6)">'
+    + '<div style="font-size:12px;font-weight:800;color:var(--text2);text-align:center;max-width:92%">'+esc(cap)+'</div>'
+    + '<div style="font-size:10.5px;color:var(--text4);font-weight:700">'+(i+1)+' / '+total+'</div>'
+    + '<div style="display:flex;gap:9px;align-items:center">'
+    +   '<button data-nav="-1" style="padding:9px 15px;border-radius:20px;background:var(--bg3);border:1px solid var(--b2);color:var(--text2);font-size:13px;font-weight:800;font-family:inherit;cursor:pointer">\u2039</button>'
+    +   '<a href="'+url+'" download="'+esc((g[2]||'site-photo')+'.jpg')+'" style="padding:9px 16px;border-radius:20px;background:var(--bg3);border:1px solid var(--b2);color:var(--text2);font-size:12px;font-weight:800;text-decoration:none">\u2B07 '+T('download','Download')+'</a>'
+    +   '<button data-nav="0" style="padding:9px 16px;border-radius:20px;background:var(--bg3);border:1px solid var(--b2);color:var(--text2);font-size:12px;font-weight:800;font-family:inherit;cursor:pointer">\u2715</button>'
+    +   '<button data-nav="1" style="padding:9px 15px;border-radius:20px;background:var(--bg3);border:1px solid var(--b2);color:var(--text2);font-size:13px;font-weight:800;font-family:inherit;cursor:pointer">\u203A</button>'
+    + '</div>';
+  var shut = function(){ try{ document.body.removeChild(lb); }catch(e){} document.removeEventListener('keydown', keys); };
+  var go = function(d){
+    var n = (i + d + total) % total;
+    shut(); openGal(n);
+  };
+  var keys = function(e){
+    if(e.key==='Escape') shut();
+    else if(e.key==='ArrowLeft') go(-1);
+    else if(e.key==='ArrowRight') go(1);
+  };
+  lb.addEventListener('click', function(e){ if(e.target===lb) shut(); });
+  lb.querySelectorAll('button').forEach(function(b){
+    b.addEventListener('click', function(){
+      var d = Number(b.getAttribute('data-nav'));
+      if(d===0) shut(); else go(d);
+    });
+  });
+  document.addEventListener('keydown', keys);
+  document.body.appendChild(lb);
+}
+
+/* ══ per-payment receipt ═════════════════════════════════════════════════ */
+window.printReceipt = function(idx){
+  var p = (window._ledger||[])[idx];
+  if(!p) return;
+  var co = P.co||{}, c = P.c||{};
+  var w = window.open('', '_blank', 'width=760,height=900');
+  if(!w){ alert(T('popupBlocked','Please allow pop-ups to print the receipt.')); return; }
+  var row = function(k,v){ return '<tr><td class="k">'+esc(k)+'</td><td class="v">'+esc(v)+'</td></tr>'; };
+  w.document.write(
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt \u2014 '+esc(c.n||'')+'</title><style>'
+    + '@page{size:A5 landscape;margin:10mm}'
+    + 'body{font-family:Georgia,"Times New Roman",serif;margin:0;padding:12mm;color:#14202c}'
+    + '.wrap{border:2px solid #14202c;border-radius:8px;padding:10mm}'
+    + '.co{font-size:19px;font-weight:bold;text-align:center}'
+    + '.sub{font-size:10.5px;color:#566;text-align:center;margin-top:2px}'
+    + '.ttl{text-align:center;font-size:11px;letter-spacing:5px;text-transform:uppercase;color:#667;margin:11px 0 3px}'
+    + 'table{width:100%;border-collapse:collapse;margin-top:10px}'
+    + 'td{padding:5px 3px;font-size:12.5px;border-bottom:1px solid #e3e7ec}'
+    + 'td.k{color:#667;width:38%}td.v{font-weight:bold;text-align:right}'
+    + '.amt{margin-top:12px;text-align:center;font-size:26px;font-weight:bold;letter-spacing:.5px}'
+    + '.amtl{text-align:center;font-size:9.5px;letter-spacing:3px;text-transform:uppercase;color:#778}'
+    + '.sig{margin-top:20px;display:flex;justify-content:space-between;font-size:10px;color:#667}'
+    + '.sig div{border-top:1px solid #99a;padding-top:4px;width:38%;text-align:center}'
+    + '.note{margin-top:10px;font-size:9.5px;color:#889;text-align:center}'
+    + '</style></head><body><div class="wrap">'
+    + '<div class="co">'+esc(co.n||'')+'</div>'
+    + (co.a?'<div class="sub">'+esc(co.a)+'</div>':'')
+    + (co.p?'<div class="sub">'+esc(co.p)+(co.e?' \u00B7 '+esc(co.e):'')+'</div>':'')
+    + '<div class="ttl">Payment Receipt</div>'
+    + '<table>'
+    +   row('Received from', c.n||'')
+    +   (c.pr?row('Project', c.pr):'')
+    +   row('Date', fmtD(p.d))
+    +   row('Towards', p.src||p.t||'Payment')
+    +   (p.m?row('Mode', p.m):'')
+    +   (p.ref?row('Reference', p.ref):'')
+    + '</table>'
+    + '<div class="amtl" style="margin-top:12px">Amount Received</div>'
+    + '<div class="amt">'+fmt(p.a)+'</div>'
+    + '<div class="sig"><div>Customer</div><div>For '+esc(co.n||'')+'</div></div>'
+    + '<div class="note">Computer-generated receipt issued from the project passbook on '
+    +   fmtD(P.d)+'. Running balance after this payment: '+fmt(p._run)+'.</div>'
+    + '</div></body></html>');
+  w.document.close();
+  w.onload = function(){ w.focus(); w.print(); };
+};
 
 /* ── helpers ─────────────────────────────────────────────── */
 function $(id){ return document.getElementById(id); }
@@ -714,18 +866,21 @@ function render(){
     allPays.push({d:r[1], a:num(r[2]), m:r[3]||'', t:'Stage', ref:r[4]||'', src:st?st[1]:''});
   });
   allPays.sort(function(a,b){ return String(b.d||'').localeCompare(String(a.d||'')); });
+  window._ledger = allPays;
   if(allPays.length){
     H += '<div class="sec"><div class="stitle"><b style="color:var(--lime)">\uD83E\uDD1D '+T('paymentLedger','Payment Ledger')+'</b><span class="n">'+allPays.length+' '+T('entries','entries')+'</span></div>'
       + '<div class="card in" style="padding:4px 4px 8px"><table class="tbl"><thead><tr>'
       + '<th>'+T('date','Date')+'</th><th>'+T('details','Details')+'</th><th class="r">'+T('amount','Amount')+'</th></tr></thead><tbody>';
     var run = 0;
     allPays.slice().reverse().forEach(function(p){ p._run = (run += (String(p.t).toLowerCase()==='refund'? -p.a : p.a)); });
-    allPays.forEach(function(p){
+    allPays.forEach(function(p, pi){
       var isRef = String(p.t).toLowerCase()==='refund';
       var pcol  = isRef ? 'var(--coral)' : 'var(--lime)';
       H += '<tr><td class="mono" style="white-space:nowrap;font-size:11px">'+fmtD(p.d)+'</td>'
         + '<td><div style="font-weight:800;color:var(--text)">'+esc(p.src||p.t)+'</div>'
-        + '<div style="font-size:10px;color:var(--text4);margin-top:2px">'+esc(p.m)+(p.ref?' \u00B7 '+esc(p.ref):'')+'</div></td>'
+        + '<div style="font-size:10px;color:var(--text4);margin-top:2px">'+esc(p.m)+(p.ref?' \u00B7 '+esc(p.ref):'')
+        + (isRef?'':' <button class="noprint" onclick="printReceipt('+pi+')" style="margin-left:4px;padding:1px 7px;border-radius:12px;border:1px solid var(--b2);background:var(--bg3);color:var(--text3);font-size:9px;font-weight:800;font-family:inherit;cursor:pointer">\uD83E\uDDFE '+T('receipt','Receipt')+'</button>')
+        + '</div></td>'
         + '<td class="r mono" style="font-weight:900;color:'+pcol+';white-space:nowrap">'+(isRef?'\u2212':'')+fmt(p.a)
         + '<div style="font-size:9.5px;color:var(--text4);font-weight:700;margin-top:2px">bal '+fmtS(p._run)+'</div></td></tr>';
     });
@@ -774,8 +929,22 @@ function render(){
     H += '</div>';
   }
 
+  /* ── photo gallery ── */
+  if((P.pg||[]).length){
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--pink)">\uD83D\uDDBC\uFE0F '+T('sitePhotos','Site Photos')+'</b>'
+      + '<span class="n">'+P.pg.length+'</span></div>'
+      + '<div class="gal">';
+    P.pg.forEach(function(g,i){
+      H += '<div class="galcell" data-gal="'+i+'" onclick="openGal('+i+')" title="'+esc(g[2]||'')+'">'
+        + '<span class="galspin"></span>'
+        + (g[1]?'<span class="galtag">'+esc(g[1])+'</span>':'')
+        + '</div>';
+    });
+    H += '</div></div>';
+  }
+
   /* ── photos summary ── */
-  if((P.pt||[]).length){
+  if((P.pt||[]).length && !(P.pg||[]).length){
     var tot = P.pt.reduce(function(s,r){ return s+num(r[1]); },0);
     H += '<div class="sec"><div class="stitle"><b style="color:var(--pink)">\uD83D\uDCF8 '+T('sitePhotos','Site Photos')+'</b><span class="n">'+tot+' '+T('photos','photos')+'</span></div>'
       + '<div class="card in"><div style="display:flex;flex-wrap:wrap;gap:7px">'
@@ -943,12 +1112,13 @@ function render(){
     + '<div style="margin-top:12px;font-size:10px;color:var(--text4);line-height:1.7">'
     + (hasD(P.d) ? 'This passbook is a snapshot taken on '+fmtD(P.d)+'.<br>' : 'This passbook is a snapshot of your project account.<br>')
     + 'For the latest position please contact your contractor.<br>'
-    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v2.1</span></div>'
+    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v2.2</span></div>'
     + '</div>';
 
   $('app').innerHTML = H;
   paintLive();
   animate();
+  galMount();
 }
 
 /* ── entrance animations ─────────────────────────────────── */
@@ -1001,3 +1171,4 @@ boot();
 </script>
 </body>
 </html>
+
