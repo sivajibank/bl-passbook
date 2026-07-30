@@ -605,14 +605,20 @@ function render(){
   }
 
   /* ── cost summary ── */
-  if(K.spent>0 || K.matVal>0 || K.ncTotal>0){
-    H += '<div class="sec"><div class="stitle"><b style="color:var(--text3)">\uD83D\uDCCA Cost Summary</b></div>'
-      + '<div class="card in">'
-      + (K.spent>0  ? '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">Work Executed</span><span class="mono">'+fmt(K.spent)+'</span></div>':'')
-      + (K.matVal>0 ? '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">Materials</span><span class="mono">'+fmt(K.matVal)+'</span></div>':'')
-      + (K.ncTotal>0? '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">Additional Works</span><span class="mono">'+fmt(K.ncTotal)+'</span></div>':'')
-      + '<div class="tot"><span>Total Cost to Date</span><span class="mono" style="color:var(--amber)">'+fmt(K.spent+K.matVal+K.ncTotal)+'</span></div>'
-      + '</div></div>';
+  if(K.spent!==0 || K.matVal!==0 || K.ncTotal!==0){
+    var _internal = !!(P.f && P.f.i);          /* were internal figures opted in? */
+    var _rows = 0;
+    var _body = '';
+    if(K.spent!==0){ _rows++;
+      _body += '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">Work Executed</span><span class="mono">'+fmt(K.spent)+'</span></div>'; }
+    if(_internal && K.matVal!==0){ _rows++;
+      _body += '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">Materials</span><span class="mono">'+fmt(K.matVal)+'</span></div>'; }
+    if(_internal && K.ncTotal!==0){ _rows++;
+      _body += '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">Site Expenses</span><span class="mono">'+fmt(K.ncTotal)+'</span></div>'; }
+    /* a one-line "total" that just repeats the line above it is noise */
+    if(_rows>1) _body += '<div class="tot"><span>Total Cost to Date</span><span class="mono" style="color:var(--amber)">'+fmt(K.spent+(_internal?K.matVal+K.ncTotal:0))+'</span></div>';
+    if(_rows) H += '<div class="sec"><div class="stitle"><b style="color:var(--text3)">\uD83D\uDCCA Cost Summary</b></div>'
+      + '<div class="card in">'+_body+'</div></div>';
   }
 
   /* ── note ── */
@@ -637,7 +643,7 @@ function render(){
     + '<div style="margin-top:12px;font-size:10px;color:var(--text4);line-height:1.7">'
     + (hasD(P.d) ? 'This passbook is a snapshot taken on '+fmtD(P.d)+'.<br>' : 'This passbook is a snapshot of your project account.<br>')
     + 'For the latest position please contact your contractor.<br>'
-    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v1.2</span></div>'
+    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v1.3</span></div>'
     + '</div>';
 
   $('app').innerHTML = H;
