@@ -7,7 +7,8 @@
 <title>Project Passbook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+Tamil:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Project%20Passbook%22%2C%22short_name%22%3A%22Passbook%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2307090F%22%2C%22theme_color%22%3A%22%2307090F%22%7D">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -18,7 +19,7 @@
   --violet:#9B5DE5; --mint:#2BD9A6; --pink:#FF0099;
   --r:16px;
 }
-html,body{background:var(--bg1);color:var(--text);font-family:'Outfit',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+html,body{background:var(--bg1);color:var(--text);font-family:'Outfit','Noto Sans Tamil',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
 body{min-height:100vh;overflow-x:hidden;padding-bottom:env(safe-area-inset-bottom)}
 .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
 
@@ -139,7 +140,7 @@ body{min-height:100vh;overflow-x:hidden;padding-bottom:env(safe-area-inset-botto
 <div id="gate">
   <div class="gcard">
     <div class="glogo">🏗️</div>
-    <div class="gtitle">Project Passbook</div>
+    <div class="gtitle" id="gtitle">Project Passbook</div>
     <div class="gsub" id="gsub">Enter the PIN shared by your contractor</div>
     <input id="pin" type="tel" inputmode="numeric" autocomplete="off" maxlength="6">
     <div class="cells" id="cells"></div>
@@ -183,6 +184,83 @@ function pbDecrypt(blob, keyB64u){
   return window.crypto.subtle.importKey('raw', b64uBytes(keyB64u), {name:'AES-GCM'}, false, ['decrypt'])
     .then(function(key){ return window.crypto.subtle.decrypt({name:'AES-GCM', iv:iv}, key, ct); })
     .then(function(pt){ return new TextDecoder().decode(pt); });
+}
+
+
+/* ══ bilingual strings ═══════════════════════════════════════════════════
+   The passbook remembers the choice, so a Tamil-reading customer only picks
+   it once. Falls back to English for anything missing. */
+var LANG = 'en';
+try { LANG = localStorage.getItem('blpb_lang') || 'en'; } catch(e){}
+var STR = {
+  ta: {
+    projectPassbook:'\u0BAA\u0BCA\u0BB0\u0BC1\u0BB3\u0BCD \u0BAA\u0BBE\u0BB8\u0BCD\u0BAA\u0BC1\u0BAF\u0BCD',
+    enterPin:'\u0B95\u0BC1\u0BB1\u0BBF\u0BAF\u0BC0\u0B9F\u0BCD\u0B9F\u0BC1 \u0B8E\u0BA3\u0BCD\u0BA3\u0BC8 \u0B89\u0BB3\u0BCD\u0BB3\u0BBF\u0B9F\u0BC1\u0B95',
+    clear:'\u0B85\u0BB4\u0BBF',
+    wrongPin:'\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B95\u0BC1\u0BB1\u0BBF\u0BAF\u0BC0\u0B9F\u0BCD\u0B9F\u0BC1',
+    attemptsLeft:'\u0BAE\u0BC1\u0BAF\u0BB1\u0BCD\u0B9A\u0BBF\u0B95\u0BB3\u0BCD \u0BAE\u0BBF\u0B9F\u0BCD\u0B9F\u0BAE\u0BC1\u0BB3\u0BCD\u0BB3\u0BA4\u0BC1',
+    lockedFor:'\u0B85\u0BA4\u0BBF\u0B95 \u0BAE\u0BC1\u0BAF\u0BB1\u0BCD\u0B9A\u0BBF\u0B95\u0BB3\u0BCD \u2014 \u0BAE\u0BB1\u0BC1\u0BAA\u0B9F\u0BBF \u0BAE\u0BC1\u0BAF\u0BB1\u0BCD\u0B9A\u0BBF\u0B95\u0BCD\u0B95',
+    contractValue:'\u0B92\u0BAA\u0BCD\u0BAA\u0BA8\u0BCD\u0BA4 \u0BAE\u0BA4\u0BBF\u0BAA\u0BCD\u0BAA\u0BC1',
+    totalReceived:'\u0BAE\u0BC1\u0BA4\u0BCD\u0BA4 \u0BB5\u0BB0\u0BB5\u0BC1',
+    balanceToPay:'\u0B9A\u0BC6\u0BB2\u0BC1\u0BA4\u0BCD\u0BA4 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BBF\u0BAF \u0BA4\u0BCA\u0B95\u0BC8',
+    advancePaid:'\u0BAE\u0BC1\u0BA9\u0BCD\u0BAA\u0BAA\u0BCD \u0BAA\u0BA3\u0BAE\u0BCD',
+    workProgress:'\u0BB5\u0BC7\u0BB2\u0BC8 \u0BAE\u0BC1\u0BA9\u0BCD\u0BA9\u0BC7\u0BB1\u0BCD\u0BB1\u0BAE\u0BCD',
+    notSet:'\u0BA8\u0BBF\u0BB0\u0BCD\u0BA3\u0BAF\u0BBF\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BB5\u0BBF\u0BB2\u0BCD\u0BB2\u0BC8',
+    askContractor:'\u0B95\u0BA3\u0BCD\u0B9F\u0BCD\u0BB0\u0BBE\u0B95\u0BCD\u0B9F\u0BB0\u0BBF\u0B9F\u0BAE\u0BCD \u0B95\u0BC7\u0B9F\u0BCD\u0B95\u0BB5\u0BC1\u0BAE\u0BCD',
+    paymentCollected:'\u0BB5\u0B9A\u0BC2\u0BB2\u0BBF\u0BA4\u0BCD\u0BA4 \u0BA4\u0BCA\u0B95\u0BC8',
+    payNow:'\u0B87\u0BAA\u0BCD\u0BAA\u0BC7\u0BBE\u0BA4\u0BC1 \u0B9A\u0BC6\u0BB2\u0BC1\u0BA4\u0BCD\u0BA4\u0BC1\u0B95',
+    due:'\u0BA8\u0BBF\u0BB2\u0BC1\u0BB5\u0BC8',
+    stagePaymentPlan:'\u0B95\u0B9F\u0BCD\u0B9F \u0B95\u0B9F\u0BCD\u0B9F\u0BA3 \u0B85\u0B9F\u0BCD\u0B9F\u0BB5\u0BA3\u0BC8',
+    stages:'\u0B95\u0B9F\u0BCD\u0B9F\u0B99\u0BCD\u0B95\u0BB3\u0BCD',
+    totalAgreed:'\u0BAE\u0BCA\u0BA4\u0BCD\u0BA4 \u0B92\u0BAA\u0BCD\u0BAA\u0BA8\u0BCD\u0BA4\u0BAE\u0BCD',
+    collected:'\u0BB5\u0B9A\u0BC2\u0BB2\u0BBF\u0BA4\u0BCD\u0BA4\u0BA4\u0BC1',
+    balance:'\u0BAE\u0BBF\u0B9F\u0BCD\u0B9F\u0BAE\u0BCD',
+    paymentLedger:'\u0B95\u0B9F\u0BCD\u0B9F\u0BA3 \u0B95\u0BA3\u0B95\u0BCD\u0B95\u0BC1',
+    entries:'\u0BAA\u0BC1\u0BB3\u0BCD\u0BB3\u0BBF\u0B95\u0BB3\u0BCD',
+    date:'\u0BA4\u0BC7\u0BA4\u0BBF', details:'\u0BB5\u0BBF\u0BB5\u0BB0\u0BAE\u0BCD', amount:'\u0BA4\u0BCA\u0B95\u0BC8',
+    workProgressSec:'\u0BB5\u0BC7\u0BB2\u0BC8 \u0BA8\u0BBF\u0BB2\u0BC8',
+    overall:'\u0BAE\u0BCA\u0BA4\u0BCD\u0BA4\u0BAE\u0BCD',
+    siteLog:'\u0BA4\u0BB3 \u0BAA\u0BA4\u0BBF\u0BB5\u0BC7\u0B9F\u0BC1',
+    updates:'\u0BAA\u0BC1\u0BA4\u0BC1\u0BAA\u0BCD\u0BAA\u0BBF\u0BAA\u0BCD\u0BAA\u0BC1\u0B95\u0BB3\u0BCD',
+    workers:'\u0BAA\u0BA3\u0BBF\u0BAF\u0BBE\u0BB3\u0BB0\u0BCD\u0B95\u0BB3\u0BCD',
+    sitePhotos:'\u0BA4\u0BB3 \u0BAA\u0BC1\u0BB1\u0BC8\u0BAA\u0BCD\u0BAA\u0B9F\u0B99\u0BCD\u0B95\u0BB3\u0BCD',
+    photos:'\u0BAA\u0BC1\u0BB1\u0BC8\u0BAA\u0BCD\u0BAA\u0B9F\u0B99\u0BCD\u0B95\u0BB3\u0BCD',
+    photosNote:'\u0BAA\u0BC1\u0BB1\u0BC8\u0BAA\u0BCD\u0BAA\u0B9F\u0B99\u0BCD\u0B95\u0BB3\u0BCD \u0BAA\u0BA4\u0BBF\u0BB5\u0BBF\u0BB2\u0BCD \u0B89\u0BB3\u0BCD\u0BB3\u0BA9 \u2014 \u0BB5\u0BBE\u0B9F\u0BCD\u0BB8\u0BBE\u0BAA\u0BCD\u0BAA\u0BBF\u0BB2\u0BCD \u0B95\u0BC7\u0B9F\u0BCD\u0B9F\u0BC1\u0BAA\u0BCD \u0BAA\u0BC6\u0BB1\u0BB2\u0BBE\u0BAE\u0BCD.',
+    costSummary:'\u0B9A\u0BC6\u0BB2\u0BB5\u0BC1 \u0B9A\u0BC1\u0B95\u0BCD\u0B95\u0BAE\u0BCD',
+    workExecuted:'\u0B9A\u0BC6\u0BAF\u0BCD\u0BAF\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F \u0BB5\u0BC7\u0BB2\u0BC8',
+    materials:'\u0BAA\u0BCA\u0BB0\u0BC1\u0B9F\u0BCD\u0B95\u0BB3\u0BCD',
+    siteExpenses:'\u0BA4\u0BB3 \u0B9A\u0BC6\u0BB2\u0BB5\u0BC1\u0B95\u0BB3\u0BCD',
+    totalCost:'\u0B87\u0BA4\u0BC1\u0BB5\u0BB0\u0BC8 \u0BAE\u0BCA\u0BA4\u0BCD\u0BA4 \u0B9A\u0BC6\u0BB2\u0BB5\u0BC1',
+    note:'\u0B95\u0BC1\u0BB1\u0BBF\u0BAA\u0BCD\u0BAA\u0BC1',
+    printSave:'\u0B85\u0B9A\u0BCD\u0B9A\u0BBF\u0B9F\u0BC1 / PDF',
+    reload:'\u0BAE\u0BB1\u0BC1\u0BAA\u0BCD\u0BAA\u0BC7\u0BB1\u0BCD\u0BB1\u0BC1',
+    measurements:'\u0B85\u0BB3\u0BB5\u0BC1\u0BAA\u0BCD \u0BAA\u0BA4\u0BBF\u0BB5\u0BC7\u0B9F\u0BC1',
+    item:'\u0BB5\u0BC7\u0BB2\u0BC8', qty:'\u0B85\u0BB3\u0BB5\u0BC1', rate:'\u0BB5\u0BBF\u0B95\u0BBF\u0BA4\u0BAE\u0BCD',
+    documents:'\u0B86\u0BB5\u0BA3\u0B99\u0BCD\u0B95\u0BB3\u0BCD',
+    docsNote:'\u0B87\u0BB5\u0BC8 \u0B95\u0BA3\u0BCD\u0B9F\u0BCD\u0BB0\u0BBE\u0B95\u0BCD\u0B9F\u0BB0\u0BBF\u0B9F\u0BAE\u0BCD \u0BAA\u0BA4\u0BBF\u0BB5\u0BBF\u0BB2\u0BCD \u0B89\u0BB3\u0BCD\u0BB3\u0BA9.',
+    estimate:'\u0BAE\u0BA4\u0BBF\u0BAA\u0BCD\u0BAA\u0BC1',
+    items:'\u0BAA\u0BC0\u0B9F\u0BCD\u0B9F\u0B95\u0BB3\u0BCD',
+    comingUp:'\u0B85\u0B9F\u0BC1\u0BA4\u0BCD\u0BA4 \u0BB5\u0BC7\u0BB2\u0BC8\u0B95\u0BB3\u0BCD',
+    next3Weeks:'\u0B85\u0B9F\u0BC1\u0BA4\u0BCD\u0BA4 3 \u0BB5\u0BBE\u0BB0\u0B99\u0BCD\u0B95\u0BB3\u0BCD',
+    activity:'\u0B9A\u0BAE\u0BC0\u0BAA\u0B95\u0BBE\u0BB2 \u0BA8\u0B9F\u0BB5\u0B9F\u0BBF\u0B95\u0BCD\u0B95\u0BC8',
+    needHelp:'\u0B89\u0BA4\u0BB5\u0BBF \u0BB5\u0BC7\u0BA3\u0BC1\u0BAE\u0BBE?',
+    requestCall:'\u0BA4\u0BCA\u0BB2\u0BC8\u0BAA\u0BC7\u0B9A \u0B95\u0BC7\u0B9F\u0BCD\u0B95',
+    raiseQuery:'\u0B95\u0BC7\u0BB3\u0BCD\u0BB5\u0BBF \u0B95\u0BC7\u0B9F\u0BCD\u0B95',
+    live:'\u0BA8\u0BC7\u0BB0\u0BB2\u0BC8', updated:'\u0BAA\u0BC1\u0BA4\u0BC1\u0BAA\u0BCD\u0BAA\u0BBF\u0BA4\u0BCD\u0BA4\u0BA4\u0BC1',
+    offline:'\u0B87\u0BA3\u0BC8\u0BAA\u0BCD\u0BAA\u0BBF\u0BB2\u0BCD\u0BB2\u0BC8',
+    checking:'\u0B9A\u0BB0\u0BBF\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BBF\u0BB1\u0BA4\u0BC1\u2026',
+    asOf:'\u0BA4\u0BC7\u0BA4\u0BBF \u0BB5\u0BB0\u0BC8', started:'\u0BA4\u0BCA\u0B9F\u0B95\u0BCD\u0B95\u0BAE\u0BCD', target:'\u0B87\u0BB2\u0B95\u0BCD\u0B95\u0BC1',
+    sqft:'\u0B9A\u0BA4\u0BC1\u0BB0 \u0B85\u0B9F\u0BBF', addHome:'\u0BAE\u0BC1\u0B95\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BBF\u0BB0\u0BC8\u0BAF\u0BBF\u0BB2\u0BCD \u0B9A\u0BC7\u0BB0\u0BCD'
+  }
+};
+function T(k, en){
+  if(LANG==='ta' && STR.ta && STR.ta[k]) return STR.ta[k];
+  return en;
+}
+function setLang(l){
+  LANG = l;
+  try { localStorage.setItem('blpb_lang', l); } catch(e){}
+  render();
 }
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -251,7 +329,10 @@ function boot(){
   if(!P.sec){ unlock(true); return; }          /* no PIN set \u2192 open directly */
   buildPad();
   buildCells();
-  $('gsub').textContent = 'Enter the '+SECLEN+'-digit PIN shared by '+(P.co&&P.co.n ? P.co.n : 'your contractor');
+  $('gsub').textContent = LANG==='ta'
+    ? (SECLEN+' \u0B87\u0BB2\u0B95\u0BCD\u0B95 '+T('enterPin','')) 
+    : ('Enter the '+SECLEN+'-digit PIN shared by '+(P.co&&P.co.n ? P.co.n : 'your contractor'));
+  $('gtitle').textContent = T('projectPassbook','Project Passbook');
   try{ document.title = (P.c.pr||P.c.n||'Project')+' \u2014 Passbook'; }catch(e){}
   setTimeout(function(){ try{ $('pin').focus({preventScroll:true}); }catch(e){} }, 400);
 }
@@ -272,7 +353,7 @@ function buildCells(){
 function buildPad(){
   var keys = ['1','2','3','4','5','6','7','8','9','clr','0','del'];
   $('pad').innerHTML = keys.map(function(k){
-    if(k==='clr') return '<button class="key fn" data-k="clr">Clear</button>';
+    if(k==='clr') return '<button class="key fn" data-k="clr">'+T('clear','Clear')+'</button>';
     if(k==='del') return '<button class="key fn" data-k="del">\u232B</button>';
     return '<button class="key" data-k="'+k+'">'+k+'</button>';
   }).join('');
@@ -312,7 +393,9 @@ function check(){
   $('cells').classList.add('bad');
   try{ if(navigator.vibrate) navigator.vibrate(70); }catch(e){}
   if(tries>=5){ lockUntil = Date.now()+30000; tries=0; startLockTick(); }
-  else $('gmsg').textContent = 'Wrong PIN \u2014 '+(5-tries)+' attempt'+(5-tries===1?'':'s')+' left';
+  else $('gmsg').textContent = LANG==='ta'
+    ? (T('wrongPin','')+' \u2014 '+(5-tries)+' '+T('attemptsLeft',''))
+    : ('Wrong PIN \u2014 '+(5-tries)+' attempt'+(5-tries===1?'':'s')+' left');
   setTimeout(function(){ buf=''; paint(); $('cells').classList.remove('bad'); }, 460);
 }
 var _lockTick = null;
@@ -321,7 +404,8 @@ function startLockTick(){
   var tick = function(){
     var left = Math.ceil((lockUntil - Date.now())/1000);
     if(left<=0){ clearInterval(_lockTick); _lockTick=null; $('gmsg').textContent=''; return; }
-    $('gmsg').textContent = 'Too many attempts \u2014 try again in '+left+'s';
+    $('gmsg').textContent = LANG==='ta' ? (T('lockedFor','')+' '+left+'s')
+      : ('Too many attempts \u2014 try again in '+left+'s');
   };
   tick();
   _lockTick = setInterval(tick, 1000);
@@ -367,11 +451,11 @@ function paintLive(){
     el.style.borderColor='rgba(43,217,166,.30)';
     el.style.background='rgba(43,217,166,.07)';
     el.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint);animation:pulseDot 1.8s ease-in-out infinite"></span>'
-      + '<span>Live \u00B7 updated '+fmtD(P.d)+'</span>';
+      + '<span>'+T('live','Live')+' \u00B7 '+T('updated','updated')+' '+fmtD(P.d)+'</span>';
   } else if(LIVEST==='pending'){
     el.style.display='flex';
     el.style.color='var(--text4)';
-    el.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:var(--text4)"></span><span>Checking for updates\u2026</span>';
+    el.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:var(--text4)"></span><span>'+T('checking','Checking for updates\u2026')+'</span>';
   } else if(LIVEST==='offline'){
     el.style.display='flex';
     el.style.color='var(--amber)';
@@ -429,29 +513,29 @@ function render(){
      + 'padding:8px 13px;border-radius:20px;border:1px solid var(--b1);background:var(--bg3);margin-bottom:11px;width:fit-content"></div>';
 
   H += '<div class="hero">'
-     + '<span class="badge">\uD83D\uDCD8 Project Passbook</span>'
+     + '<span class="badge">\uD83D\uDCD8 '+T('projectPassbook','Project Passbook')+'</span>'
      + '<div class="cname">'+esc(c.n||'Customer')+'</div>'
      + (c.pr?'<div class="cproj">\uD83C\uDFE0 '+esc(c.pr)+'</div>':'')
      + '<div class="cmeta">'
      + (c.st?'<span class="chip" style="color:'+stCol+';border-color:'+stCol+'40">\u25CF '+esc(c.st)+'</span>':'')
      + (c.ad?'<span class="chip">\uD83D\uDCCD '+esc(c.ad)+'</span>':'')
-     + (c.sq?'<span class="chip">\uD83D\uDCD0 '+num(c.sq).toLocaleString('en-IN')+' sq ft</span>':'')
-     + (c.sd?'<span class="chip">\uD83D\uDE80 Started '+fmtD(c.sd)+'</span>':'')
-     + (c.ed?'<span class="chip">\uD83C\uDFC1 Target '+fmtD(c.ed)+'</span>':'')
-     + (hasD(P.d) ? '<span class="chip">\uD83D\uDD52 As of '+fmtD(P.d)+'</span>' : '')
+     + (c.sq?'<span class="chip">\uD83D\uDCD0 '+num(c.sq).toLocaleString('en-IN')+' '+T('sqft','sq ft')+'</span>':'')
+     + (c.sd?'<span class="chip">\uD83D\uDE80 '+T('started','Started')+' '+fmtD(c.sd)+'</span>':'')
+     + (c.ed?'<span class="chip">\uD83C\uDFC1 '+T('target','Target')+' '+fmtD(c.ed)+'</span>':'')
+     + (hasD(P.d) ? '<span class="chip">\uD83D\uDD52 '+T('asOf','As of')+' '+fmtD(P.d)+'</span>' : '')
      + '</div></div>';
 
   /* ── KPIs ── */
   var kpis = [
     K.noContract
-      ? {i:'\uD83D\uDCB0', l:'Contract Value', v:'\u2014', c:'var(--text3)', s:'not set yet'}
-      : {i:'\uD83D\uDCB0', l:'Contract Value', v:fmtS(K.contract), c:'var(--amber)', s:K.agreed>0?'agreed stage total':'project budget'},
-    {i:'\uD83D\uDCB5', l:'Total Received', v:fmtS(K.net), c:'var(--lime)',
+      ? {i:'\uD83D\uDCB0', l:T('contractValue','Contract Value'), v:'\u2014', c:'var(--text3)', s:T('notSet','not set yet')}
+      : {i:'\uD83D\uDCB0', l:T('contractValue','Contract Value'), v:fmtS(K.contract), c:'var(--amber)', s:K.agreed>0?'agreed stage total':'project budget'},
+    {i:'\uD83D\uDCB5', l:T('totalReceived','Total Received'), v:fmtS(K.net), c:'var(--lime)',
       s:K.refunded>0?('after '+fmtS(K.refunded)+' refund'):(K.noContract?'received to date':(K.payPct+'% collected'))},
     K.noContract
-      ? {i:'\u2139\uFE0F', l:'Balance to Pay', v:'\u2014', c:'var(--text3)', s:'ask your contractor'}
-      : {i:K.over>0?'\u2705':'\u23F3', l:K.over>0?'Advance Paid':'Balance to Pay', v:fmtS(K.over>0?K.over:K.balance), c:K.balance>0?'var(--coral)':'var(--mint)', s:K.balance>0?'still outstanding':'fully settled'},
-    {i:'\uD83C\uDFD7\uFE0F', l:'Work Progress', v:K.prog+'%', c:'var(--cyan)', s:K.ph.length?(K.ph.filter(function(r){return r[2]==='Completed';}).length+' of '+K.ph.length+' phases done'):'no phases yet'}
+      ? {i:'\u2139\uFE0F', l:T('balanceToPay','Balance to Pay'), v:'\u2014', c:'var(--text3)', s:T('askContractor','ask your contractor')}
+      : {i:K.over>0?'\u2705':'\u23F3', l:K.over>0?T('advancePaid','Advance Paid'):T('balanceToPay','Balance to Pay'), v:fmtS(K.over>0?K.over:K.balance), c:K.balance>0?'var(--coral)':'var(--mint)', s:K.balance>0?'still outstanding':'fully settled'},
+    {i:'\uD83C\uDFD7\uFE0F', l:T('workProgress','Work Progress'), v:K.prog+'%', c:'var(--cyan)', s:K.ph.length?(K.ph.filter(function(r){return r[2]==='Completed';}).length+' of '+K.ph.length+' phases done'):'no phases yet'}
   ];
   H += '<div class="kpis">'+kpis.map(function(k,i){
     return '<div class="kpi" style="color:'+k.c+';animation-delay:'+(i*0.08)+'s">'
@@ -464,7 +548,7 @@ function render(){
   /* ── payment progress bar ── */
   if(K.contract>0){
     H += '<div class="card in" style="margin-top:12px">'
-      + '<div class="row"><b style="font-size:11.5px;letter-spacing:1.4px;color:var(--text3);text-transform:uppercase">Payment Collected</b>'
+      + '<div class="row"><b style="font-size:11.5px;letter-spacing:1.4px;color:var(--text3);text-transform:uppercase">'+T('paymentCollected','Payment Collected')+'</b>'
       + '<b class="mono" style="font-size:13px;color:var(--lime)">'+K.payPct+'%</b></div>'
       + '<div class="bar"><i data-w="'+K.payPct+'" style="background:linear-gradient(90deg,var(--lime),var(--cyan))"></i></div>'
       + '<div class="row" style="margin-top:8px;font-size:11px;color:var(--text4);font-weight:700">'
@@ -484,8 +568,8 @@ function render(){
     var waN = String(co.p||'').replace(/[^\d]/g,'');
     if(waN.length===10) waN='91'+waN;
     var waMsg = encodeURIComponent('Hello '+(co.n||'')+',\n\nI have made a payment for my project *'+(c.pr||c.n||'')+'*.\n\nAmount: '+fmt(K.balance)+'\nUTR / Reference: \n\nPlease confirm receipt. Thank you.');
-    H += '<div class="sec"><div class="stitle"><b style="color:var(--mint)">\uD83D\uDCB3 Pay Now</b>'
-      + '<span class="n">'+fmt(K.balance)+' due</span></div>'
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--mint)">\uD83D\uDCB3 '+T('payNow','Pay Now')+'</b>'
+      + '<span class="n">'+fmt(K.balance)+' '+T('due','due')+'</span></div>'
       + '<div class="upi">'
       + '<a class="ub" style="border-color:rgba(66,133,244,.35)" href="tez://upi/pay?'+q+'"><em>\uD83D\uDD35</em>GPay</a>'
       + '<a class="ub" style="border-color:rgba(93,58,155,.45)" href="phonepe://pay?'+q+'"><em>\uD83D\uDFE3</em>PhonePe</a>'
@@ -500,7 +584,7 @@ function render(){
   /* ── stage payment plan ── */
   if(K.plan.length){
     var coll = K.spays.reduce(function(s,r){ return s+num(r[2]); },0);
-    H += '<div class="sec"><div class="stitle"><b style="color:var(--violet)">\uD83D\uDCB3 Stage Payment Plan</b><span class="n">'+K.plan.length+' stages</span></div>';
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--violet)">\uD83D\uDCB3 '+T('stagePaymentPlan','Stage Payment Plan')+'</b><span class="n">'+K.plan.length+' '+T('stages','stages')+'</span></div>';
     K.plan.forEach(function(st){
       var sid = st[0], nm = st[1], amt = num(st[2]), due = st[3];
       var paid = K.spays.filter(function(p){ return p[0]===sid; }).reduce(function(s,p){ return s+num(p[2]); },0);
@@ -519,9 +603,9 @@ function render(){
         + '</div><div class="bar"><i data-w="'+pct+'" style="background:'+col+'"></i></div></div>';
     });
     H += '<div class="card in" style="background:var(--bg3)">'
-      + '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">Total Agreed</span><span class="mono">'+fmt(K.agreed)+'</span></div>'
-      + '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">Collected</span><span class="mono" style="color:var(--lime)">'+fmt(coll)+'</span></div>'
-      + '<div class="tot"><span>Balance</span><span class="mono" style="color:'+(K.agreed-coll>0?'var(--coral)':'var(--mint)')+'">'+fmt(Math.max(K.agreed-coll,0))+(K.agreed-coll<=0?' \u2705':'')+'</span></div>'
+      + '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">'+T('totalAgreed','Total Agreed')+'</span><span class="mono">'+fmt(K.agreed)+'</span></div>'
+      + '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">'+T('collected','Collected')+'</span><span class="mono" style="color:var(--lime)">'+fmt(coll)+'</span></div>'
+      + '<div class="tot"><span>'+T('balance','Balance')+'</span><span class="mono" style="color:'+(K.agreed-coll>0?'var(--coral)':'var(--mint)')+'">'+fmt(Math.max(K.agreed-coll,0))+(K.agreed-coll<=0?' \u2705':'')+'</span></div>'
       + '</div></div>';
   }
 
@@ -534,9 +618,9 @@ function render(){
   });
   allPays.sort(function(a,b){ return String(b.d||'').localeCompare(String(a.d||'')); });
   if(allPays.length){
-    H += '<div class="sec"><div class="stitle"><b style="color:var(--lime)">\uD83E\uDD1D Payment Ledger</b><span class="n">'+allPays.length+' entries</span></div>'
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--lime)">\uD83E\uDD1D '+T('paymentLedger','Payment Ledger')+'</b><span class="n">'+allPays.length+' '+T('entries','entries')+'</span></div>'
       + '<div class="card in" style="padding:4px 4px 8px"><table class="tbl"><thead><tr>'
-      + '<th>Date</th><th>Details</th><th class="r">Amount</th></tr></thead><tbody>';
+      + '<th>'+T('date','Date')+'</th><th>'+T('details','Details')+'</th><th class="r">'+T('amount','Amount')+'</th></tr></thead><tbody>';
     var run = 0;
     allPays.slice().reverse().forEach(function(p){ p._run = (run += (String(p.t).toLowerCase()==='refund'? -p.a : p.a)); });
     allPays.forEach(function(p){
@@ -549,7 +633,7 @@ function render(){
         + '<div style="font-size:9.5px;color:var(--text4);font-weight:700;margin-top:2px">bal '+fmtS(p._run)+'</div></td></tr>';
     });
     H += '</tbody></table>'
-      + '<div class="tot"><span>Total Received</span><span class="mono" style="color:var(--lime)">'+fmt(K.net)+'</span></div>'
+      + '<div class="tot"><span>'+T('totalReceived','Total Received')+'</span><span class="mono" style="color:var(--lime)">'+fmt(K.net)+'</span></div>'
       + '</div></div>';
   }
 
@@ -557,7 +641,7 @@ function render(){
   if(K.ph.length){
     var order = {'In Progress':0,'On Hold':1,'Not Started':2,'Completed':3,'Cancelled':4};
     var phs = K.ph.slice().sort(function(a,b){ return (order[a[2]]==null?9:order[a[2]]) - (order[b[2]]==null?9:order[b[2]]); });
-    H += '<div class="sec"><div class="stitle"><b style="color:var(--cyan)">\uD83D\uDD28 Work Progress</b><span class="n">'+K.prog+'% overall</span></div>';
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--cyan)">\uD83D\uDD28 '+T('workProgressSec','Work Progress')+'</b><span class="n">'+K.prog+'% '+T('overall','overall')+'</span></div>';
     phs.forEach(function(r){
       var nm=r[0], cat=r[1], st=r[2], comp=num(r[3]), sd=r[4], ed=r[5], con=r[6], nt=r[7];
       var col = st==='Completed'?'var(--mint)':st==='In Progress'?'var(--cyan)':st==='On Hold'?'var(--amber)':st==='Cancelled'?'var(--coral)':'var(--text4)';
@@ -580,12 +664,12 @@ function render(){
 
   /* ── site log ── */
   if((P.sl||[]).length){
-    H += '<div class="sec"><div class="stitle"><b style="color:var(--amber)">\uD83D\uDCD3 Site Log</b><span class="n">'+P.sl.length+' updates</span></div>';
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--amber)">\uD83D\uDCD3 '+T('siteLog','Site Log')+'</b><span class="n">'+P.sl.length+' '+T('updates','updates')+'</span></div>';
     P.sl.forEach(function(r){
       var d=r[0], w=r[1], wx=r[2], wd=r[3], iss=r[4];
       H += '<div class="card"><div class="row">'
         + '<b style="font-size:12.5px;color:var(--amber)">'+fmtD(d)+'</b>'
-        + '<span style="font-size:10.5px;color:var(--text4);font-weight:700">'+(w?'\uD83D\uDC77 '+esc(w)+' workers':'')+(w&&wx?' \u00B7 ':'')+(wx?esc(wx):'')+'</span></div>'
+        + '<span style="font-size:10.5px;color:var(--text4);font-weight:700">'+(w?'\uD83D\uDC77 '+esc(w)+' '+T('workers','workers'):'')+(w&&wx?' \u00B7 ':'')+(wx?esc(wx):'')+'</span></div>'
         + (wd?'<div style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.6;font-weight:600">'+esc(wd)+'</div>':'')
         + (iss?'<div style="font-size:11.5px;color:var(--coral);margin-top:7px;font-weight:700">\u26A0 '+esc(iss)+'</div>':'')
         + '</div>';
@@ -596,12 +680,112 @@ function render(){
   /* ── photos summary ── */
   if((P.pt||[]).length){
     var tot = P.pt.reduce(function(s,r){ return s+num(r[1]); },0);
-    H += '<div class="sec"><div class="stitle"><b style="color:var(--pink)">\uD83D\uDCF8 Site Photos</b><span class="n">'+tot+' photos</span></div>'
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--pink)">\uD83D\uDCF8 '+T('sitePhotos','Site Photos')+'</b><span class="n">'+tot+' '+T('photos','photos')+'</span></div>'
       + '<div class="card in"><div style="display:flex;flex-wrap:wrap;gap:7px">'
       + P.pt.map(function(r){
           return '<span class="chip" style="color:var(--text2)">'+esc(r[0])+' \u00B7 <b style="color:var(--pink)">'+num(r[1])+'</b></span>';
         }).join('')
-      + '</div><div style="font-size:10.5px;color:var(--text4);margin-top:10px;font-weight:600">Photos are kept on file \u2014 ask your contractor to share them on WhatsApp.</div></div></div>';
+      + '</div><div style="font-size:10.5px;color:var(--text4);margin-top:10px;font-weight:600">'+T('photosNote','Photos are kept on file \u2014 ask your contractor to share them on WhatsApp.')+'</div></div></div>';
+  }
+
+
+  /* ── coming up: derived from the phase dates, costs nothing in the link ── */
+  if(P.o && P.o.n && K.ph.length){
+    var t0 = todayD(), t1 = new Date(t0.getTime()+21*86400000);
+    var soon = K.ph.filter(function(r){
+      if(r[2]==='Completed' || r[2]==='Cancelled') return false;
+      var sd = parseD(r[4]), ed = parseD(r[5]);
+      if(r[2]==='In Progress') return true;
+      return sd && sd>=t0 && sd<=t1;
+    }).sort(function(a,b){ return String(a[4]||'').localeCompare(String(b[4]||'')); }).slice(0,6);
+    if(soon.length){
+      H += '<div class="sec"><div class="stitle"><b style="color:var(--mint)">\u23ED\uFE0F '+T('comingUp','Coming Up')+'</b>'
+        + '<span class="n">'+T('next3Weeks','next 3 weeks')+'</span></div>';
+      soon.forEach(function(r){
+        var live = r[2]==='In Progress';
+        H += '<div class="card"><div class="row">'
+          + '<div style="min-width:0"><div style="font-size:12.5px;font-weight:800">'+(live?'\u25B6 ':'\u25CB ')+esc(r[0])+'</div>'
+          + '<div style="font-size:10.5px;color:var(--text4);margin-top:3px;font-weight:700">'
+          + (r[4]?fmtD(r[4]):'')+(r[4]&&r[5]?' \u2192 ':'')+(r[5]?fmtD(r[5]):'')+'</div></div>'
+          + '<span class="pill" style="background:'+(live?'rgba(43,217,166,.15)':'rgba(255,255,255,.05)')+';color:'+(live?'var(--mint)':'var(--text3)')+'">'
+          + esc(r[2])+'</span></div></div>';
+      });
+      H += '</div>';
+    }
+  }
+
+  /* ── measurement register ────────────────────────────────────────────── */
+  if((P.ms||[]).length){
+    var msTot = P.ms.reduce(function(t,r){ return t+num(r[2])*num(r[4]); },0);
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--cyan)">\uD83D\uDCD0 '+T('measurements','Measurements')+'</b>'
+      + '<span class="n">'+P.ms.length+' '+T('entries','entries')+'</span></div>'
+      + '<div class="card in" style="padding:4px 4px 8px"><table class="tbl"><thead><tr>'
+      + '<th>'+T('date','Date')+'</th><th>'+T('item','Item')+'</th>'
+      + '<th class="r">'+T('qty','Qty')+'</th><th class="r">'+T('amount','Amount')+'</th></tr></thead><tbody>';
+    P.ms.forEach(function(r){
+      H += '<tr><td class="mono" style="white-space:nowrap;font-size:10.5px">'+fmtD(r[0])+'</td>'
+        + '<td style="font-weight:700;color:var(--text)">'+esc(r[1])+'</td>'
+        + '<td class="r mono" style="white-space:nowrap">'+num(r[2]).toLocaleString('en-IN')+' <span style="color:var(--text4)">'+esc(r[3])+'</span></td>'
+        + '<td class="r mono" style="font-weight:800;white-space:nowrap">'+(num(r[4])?fmt(num(r[2])*num(r[4])):'\u2014')+'</td></tr>';
+    });
+    H += '</tbody></table>'
+      + (msTot>0?'<div class="tot"><span>'+T('amount','Amount')+'</span><span class="mono" style="color:var(--cyan)">'+fmt(msTot)+'</span></div>':'')
+      + '</div></div>';
+  }
+
+  /* ── documents on file (names only, never the files) ─────────────────── */
+  if((P.dc||[]).length){
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--violet)">\uD83D\uDCC4 '+T('documents','Documents')+'</b>'
+      + '<span class="n">'+P.dc.length+'</span></div><div class="card in">';
+    P.dc.forEach(function(d){
+      H += '<div class="row" style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.045)">'
+        + '<div style="min-width:0"><div style="font-size:12px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\uD83D\uDCC4 '+esc(d[0])+'</div>'
+        + (d[1]?'<div style="font-size:10px;color:var(--text4);font-weight:700;margin-top:2px">'+esc(d[1])+'</div>':'')+'</div>'
+        + '<span class="mono" style="font-size:10px;color:var(--text4);flex-shrink:0">'+fmtD(d[2])+'</span></div>';
+    });
+    H += '<div style="font-size:10.5px;color:var(--text4);margin-top:10px;font-weight:600">'
+      + T('docsNote','These are held on file by your contractor.')+'</div></div></div>';
+  }
+
+  /* ── approved estimate ───────────────────────────────────────────────── */
+  if(P.es){
+    var e = P.es;
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--amber)">\uD83D\uDCCB '+T('estimate','Estimate')+'</b>'
+      + (e.st?'<span class="n">'+esc(e.st)+'</span>':'')+'</div>'
+      + '<div class="card in">'
+      + '<div style="font-size:13px;font-weight:900">'+esc(e.t)+'</div>'
+      + '<div style="font-size:10.5px;color:var(--text4);font-weight:700;margin-top:3px">'
+      + (hasD(e.d)?fmtD(e.d)+' \u00B7 ':'')+e.n+' '+T('items','items')+'</div>'
+      + '<div class="tot" style="margin-top:9px"><span>'+T('amount','Amount')+'</span>'
+      + '<span class="mono" style="color:var(--amber)">'+fmt(num(e.tot)+num(e.gst))+'</span></div>'
+      + '</div></div>';
+  }
+
+  /* ── activity timeline ───────────────────────────────────────────────── */
+  if((P.ac||[]).length){
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--text3)">\uD83D\uDD53 '+T('activity','Activity')+'</b>'
+      + '<span class="n">'+P.ac.length+'</span></div><div class="card in">';
+    P.ac.forEach(function(a,i){
+      H += '<div style="display:flex;gap:10px;padding:6px 0">'
+        + '<div style="flex-shrink:0;width:7px;height:7px;border-radius:50%;background:var(--cyan);margin-top:6px;opacity:'+(1-i*0.04)+'"></div>'
+        + '<div style="min-width:0"><div style="font-size:11.5px;font-weight:700;color:var(--text2);line-height:1.5">'+esc(a[2])+'</div>'
+        + '<div class="mono" style="font-size:9.5px;color:var(--text4);margin-top:2px">'+fmtD(a[0])+'</div></div></div>';
+    });
+    H += '</div></div>';
+  }
+
+  /* ── contact the contractor ──────────────────────────────────────────── */
+  if(P.o && P.o.q && co.p){
+    var cw = String(co.p).replace(/[^\d]/g,'');
+    if(cw.length===10) cw = '91'+cw;
+    var proj = (c.pr||c.n||'');
+    var mCall = encodeURIComponent('Hello '+(co.n||'')+',\n\nCould you please call me regarding my project *'+proj+'*?\n\nThank you.');
+    var mQ    = encodeURIComponent('Hello '+(co.n||'')+',\n\nI have a question about my project *'+proj+'*:\n\n');
+    H += '<div class="sec noprint"><div class="stitle"><b style="color:var(--lime)">\uD83D\uDCAC '+T('needHelp','Need help?')+'</b></div>'
+      + '<div class="upi">'
+      + '<a class="ub" style="border-color:rgba(200,255,0,.3)" href="tel:'+esc(String(co.p).replace(/[^\d+]/g,''))+'"><em>\uD83D\uDCDE</em>'+T('requestCall','Request a call')+'</a>'
+      + '<a class="ub" style="border-color:rgba(37,211,102,.3);color:#25D366" href="https://wa.me/'+cw+'?text='+mQ+'"><em>\uD83D\uDCAC</em>'+T('raiseQuery','Raise a query')+'</a>'
+      + '</div></div>';
   }
 
   /* ── cost summary ── */
@@ -610,28 +794,31 @@ function render(){
     var _rows = 0;
     var _body = '';
     if(K.spent!==0){ _rows++;
-      _body += '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">Work Executed</span><span class="mono">'+fmt(K.spent)+'</span></div>'; }
+      _body += '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">'+T('workExecuted','Work Executed')+'</span><span class="mono">'+fmt(K.spent)+'</span></div>'; }
     if(_internal && K.matVal!==0){ _rows++;
-      _body += '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">Materials</span><span class="mono">'+fmt(K.matVal)+'</span></div>'; }
+      _body += '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">'+T('materials','Materials')+'</span><span class="mono">'+fmt(K.matVal)+'</span></div>'; }
     if(_internal && K.ncTotal!==0){ _rows++;
-      _body += '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">Site Expenses</span><span class="mono">'+fmt(K.ncTotal)+'</span></div>'; }
+      _body += '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">'+T('siteExpenses','Site Expenses')+'</span><span class="mono">'+fmt(K.ncTotal)+'</span></div>'; }
     /* a one-line "total" that just repeats the line above it is noise */
-    if(_rows>1) _body += '<div class="tot"><span>Total Cost to Date</span><span class="mono" style="color:var(--amber)">'+fmt(K.spent+(_internal?K.matVal+K.ncTotal:0))+'</span></div>';
-    if(_rows) H += '<div class="sec"><div class="stitle"><b style="color:var(--text3)">\uD83D\uDCCA Cost Summary</b></div>'
+    if(_rows>1) _body += '<div class="tot"><span>'+T('totalCost','Total Cost to Date')+'</span><span class="mono" style="color:var(--amber)">'+fmt(K.spent+(_internal?K.matVal+K.ncTotal:0))+'</span></div>';
+    if(_rows) H += '<div class="sec"><div class="stitle"><b style="color:var(--text3)">\uD83D\uDCCA '+T('costSummary','Cost Summary')+'</b></div>'
       + '<div class="card in">'+_body+'</div></div>';
   }
 
   /* ── note ── */
   if(P.c && P.c.nt){
     H += '<div class="sec"><div class="card in" style="border-color:rgba(255,176,32,.28);background:rgba(255,176,32,.06)">'
-      + '<div style="font-size:10px;font-weight:900;letter-spacing:1.6px;color:var(--amber);text-transform:uppercase;margin-bottom:7px">\uD83D\uDCCC Note</div>'
+      + '<div style="font-size:10px;font-weight:900;letter-spacing:1.6px;color:var(--amber);text-transform:uppercase;margin-bottom:7px">\uD83D\uDCCC '+T('note','Note')+'</div>'
       + '<div style="font-size:12.5px;line-height:1.65;color:var(--text2);font-weight:600">'+esc(P.c.nt)+'</div></div></div>';
   }
 
   /* ── actions + footer ── */
   H += '<div class="tog noprint">'
-    + '<button onclick="window.print()">\uD83D\uDDA8 Print / Save PDF</button>'
-    + '<button onclick="location.reload()">\uD83D\uDD04 Reload</button>'
+    + '<button onclick="setLang(\''+(LANG==='ta'?'en':'ta')+'\')" style="border-color:rgba(0,240,255,.35);color:var(--cyan)">'
+    +   (LANG==='ta'?'\uD83C\uDDEC\uD83C\uDDE7 English':'\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD')+'</button>'
+    + '<button onclick="window.print()">\uD83D\uDDA8 '+T('printSave','Print / Save PDF')+'</button>'
+    + '<button onclick="location.reload()">\uD83D\uDD04 '+T('reload','Reload')+'</button>'
+    + '<button id="a2hs" onclick="doInstall()" style="display:none;border-color:rgba(155,93,229,.35);color:#B68AFF">\u2B07 '+T('addHome','Add to Home Screen')+'</button>'
     + '</div>';
 
   H += '<div class="foot">'
@@ -643,7 +830,7 @@ function render(){
     + '<div style="margin-top:12px;font-size:10px;color:var(--text4);line-height:1.7">'
     + (hasD(P.d) ? 'This passbook is a snapshot taken on '+fmtD(P.d)+'.<br>' : 'This passbook is a snapshot of your project account.<br>')
     + 'For the latest position please contact your contractor.<br>'
-    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v1.3</span></div>'
+    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v2.0</span></div>'
     + '</div>';
 
   $('app').innerHTML = H;
@@ -675,6 +862,25 @@ function animate(){
   }, {rootMargin:'0px 0px -40px 0px', threshold:0.04});
   cards.forEach(function(c){ io.observe(c); });
 }
+
+/* ── add to home screen ─────────────────────────────────────
+   Turns the passbook into an icon on the customer's phone so they never have
+   to dig the WhatsApp message out again. */
+var _installEvt = null;
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault(); _installEvt = e;
+  var b = $('a2hs'); if(b) b.style.display='inline-block';
+});
+window.doInstall = function(){
+  if(!_installEvt){
+    alert(LANG==='ta'
+      ? '\u0BAA\u0BCD\u0BB0\u0BC7\u0BBE\u0BB8\u0BB0\u0BCD \u0BAE\u0BC6\u0BA9\u0BC1\u0BB5\u0BBF\u0BB2\u0BCD \u201C\u0BAE\u0BC1\u0B95\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BBF\u0BB0\u0BC8\u0BAF\u0BBF\u0BB2\u0BCD \u0B9A\u0BC7\u0BB0\u0BCD\u201D \u0B85\u0BB4\u0BC1\u0BA4\u0BCD\u0BA4\u0BB5\u0BC1\u0BAE\u0BCD.'
+      : 'Use your browser menu and choose \u201CAdd to Home screen\u201D.');
+    return;
+  }
+  _installEvt.prompt();
+  _installEvt = null;
+};
 
 /* ── go ──────────────────────────────────────────────────── */
 boot();
