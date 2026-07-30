@@ -378,7 +378,10 @@ function paintLive(){
     el.style.borderColor='rgba(255,176,32,.28)';
     el.style.background='rgba(255,176,32,.06)';
     el.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:var(--amber)"></span>'
-      + '<span>Offline \u2014 showing the details saved on this card ('+fmtD(P.d)+')</span>';
+      + '<span>' + (P.min
+          ? 'No internet \u2014 this card stores no details of its own. Please reconnect and reopen.'
+          : 'Offline \u2014 showing the details saved on this card ('+fmtD(P.d)+')')
+      + '</span>';
   } else {
     el.style.display='none';
   }
@@ -634,7 +637,7 @@ function render(){
     + '<div style="margin-top:12px;font-size:10px;color:var(--text4);line-height:1.7">'
     + (hasD(P.d) ? 'This passbook is a snapshot taken on '+fmtD(P.d)+'.<br>' : 'This passbook is a snapshot of your project account.<br>')
     + 'For the latest position please contact your contractor.<br>'
-    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v1.1</span></div>'
+    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v1.2</span></div>'
     + '</div>';
 
   $('app').innerHTML = H;
