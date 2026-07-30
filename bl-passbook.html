@@ -12,44 +12,77 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg1:#07090F; --bg2:#0C1119; --bg3:#121A26; --bg4:#18222F;
-  --b1:rgba(255,255,255,.07); --b2:rgba(255,255,255,.13);
-  --text:#EAF2FF; --text2:#B9C8DC; --text3:#8296AF; --text4:#5D6E85;
-  --cyan:#00F0FF; --lime:#C8FF00; --amber:#FFB020; --coral:#FF4D6D;
-  --violet:#9B5DE5; --mint:#2BD9A6; --pink:#FF0099;
-  --r:16px;
+  /* Cyanotype: the ground is blueprint ink, the marks are chalk and
+     surveyor's spray. Nothing here is a stock dashboard colour. */
+  --bg1:#0A1622; --bg2:#0E1E2C; --bg3:#132738; --bg4:#193146;
+  --b1:rgba(140,200,225,.11); --b2:rgba(140,200,225,.20);
+  --text:#EBF2F7; --text2:#B4C8D6; --text3:#8399AA; --text4:#63798A;
+  --datum:#4DD8E8;      /* blueprint line          */
+  --marking:#FF7A2F;    /* surveyor's spray paint  */
+  --rebar:#D9A441;      /* oxidised steel          */
+  --verdigris:#3FBFA0;  /* weathered copper        */
+  --alarm:#F0544F;      /* hazard tape             */
+  --chalk:#C9D6E0;
+  /* legacy aliases so existing sections keep their meaning */
+  --cyan:var(--datum); --lime:var(--verdigris); --amber:var(--rebar);
+  --coral:var(--alarm); --violet:#8E9BE8; --mint:var(--verdigris); --pink:#E87BA8;
+  --r:14px;
 }
 html,body{background:var(--bg1);color:var(--text);font-family:'Outfit','Noto Sans Tamil',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
 body{min-height:100vh;overflow-x:hidden;padding-bottom:env(safe-area-inset-bottom)}
 .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
 
 /* ── aurora backdrop ───────────────────────────────── */
-#aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-#aurora i{position:absolute;display:block;border-radius:50%;filter:blur(70px);opacity:.30;animation:drift 22s ease-in-out infinite}
-#aurora i:nth-child(1){width:52vw;height:52vw;background:radial-gradient(circle,#00F0FF,transparent 68%);top:-14vw;left:-14vw}
-#aurora i:nth-child(2){width:46vw;height:46vw;background:radial-gradient(circle,#9B5DE5,transparent 68%);bottom:-12vw;right:-12vw;animation-delay:-7s}
-#aurora i:nth-child(3){width:38vw;height:38vw;background:radial-gradient(circle,#C8FF00,transparent 70%);top:42%;right:-16vw;animation-delay:-13s;opacity:.16}
-@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(5vw,7vh) scale(1.12)}66%{transform:translate(-6vw,-4vh) scale(.92)}}
-@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* Drafting sheet: a 24px minor grid with a 120px major, plus a soft
+   vignette so the centre of the sheet reads brightest. */
+#aurora{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(77,216,232,.10), transparent 62%),
+    radial-gradient(90% 60% at 50% 108%, rgba(255,122,47,.07), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(140,200,225,.055) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(140,200,225,.055) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(0deg, rgba(140,200,225,.075) 0 1px, transparent 1px 120px),
+    repeating-linear-gradient(90deg, rgba(140,200,225,.075) 0 1px, transparent 1px 120px);
+  mask-image:radial-gradient(120% 100% at 50% 35%, #000 55%, transparent 100%);
+  -webkit-mask-image:radial-gradient(120% 100% at 50% 35%, #000 55%, transparent 100%)}
+#aurora i{display:none}
+
+/* ── the datum line: signature element ────────────────────────────────
+   A plumb line down the sheet. Its bob tracks the read position, and
+   every section heading hangs a survey tick off it. */
+#datum{position:fixed;left:max(9px, calc(50vw - 380px + 3px));top:0;bottom:0;width:1px;z-index:1;
+  background:linear-gradient(180deg,transparent,rgba(77,216,232,.30) 8%,rgba(77,216,232,.30) 92%,transparent);
+  pointer-events:none}
+#bob{position:absolute;left:50%;top:0;width:9px;height:9px;margin-left:-4.5px;margin-top:-4.5px;
+  border-radius:50%;background:var(--marking);box-shadow:0 0 0 3px rgba(255,122,47,.16),0 0 14px rgba(255,122,47,.55);
+  transition:transform .12s linear}
+@media(max-width:520px){#datum{left:7px}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  #bob{display:none}}
 
 .wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:18px 14px 60px}
 
 /* ── PIN gate ──────────────────────────────────────── */
 #gate{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;
-  background:radial-gradient(120% 90% at 50% 0%,#111A28 0%,#07090F 70%);transition:opacity .5s ease,transform .5s cubic-bezier(.22,1,.36,1)}
+  background:
+    repeating-linear-gradient(0deg, rgba(140,200,225,.05) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(140,200,225,.05) 0 1px, transparent 1px 24px),
+    radial-gradient(120% 90% at 50% 0%,#12293C 0%,#0A1622 68%);
+  transition:opacity .5s ease,transform .5s cubic-bezier(.22,1,.36,1)}
 #gate.out{opacity:0;transform:scale(1.06);pointer-events:none}
 .gcard{width:100%;max-width:330px;text-align:center}
-.glogo{width:70px;height:70px;margin:0 auto 16px;border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:32px;
-  background:linear-gradient(135deg,rgba(0,240,255,.18),rgba(155,93,229,.18));border:1px solid var(--b2);
-  box-shadow:0 12px 40px rgba(0,240,255,.16);animation:bob 3.6s ease-in-out infinite}
+.glogo{width:70px;height:70px;margin:0 auto 16px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:32px;
+  background:linear-gradient(150deg,rgba(77,216,232,.16),rgba(255,122,47,.12));border:1px solid var(--b2);
+  box-shadow:0 12px 40px rgba(77,216,232,.14);animation:bob 3.6s ease-in-out infinite;position:relative}
+.glogo::after{content:'';position:absolute;inset:6px;border:1px solid rgba(140,200,225,.16);border-radius:9px}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .gtitle{font-size:20px;font-weight:900;letter-spacing:-.4px}
 .gsub{font-size:12px;color:var(--text3);margin-top:5px;font-weight:600;line-height:1.5}
 .cells{display:flex;gap:10px;justify-content:center;margin:24px 0 6px}
-.cell{width:48px;height:60px;border-radius:14px;background:rgba(255,255,255,.045);border:1.5px solid var(--b2);
+.cell{width:48px;height:60px;border-radius:8px;background:rgba(140,200,225,.05);border:1.5px solid var(--b2);
   display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:var(--cyan);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:all .22s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden}
-.cell.on{border-color:rgba(0,240,255,.65);background:rgba(0,240,255,.10);transform:translateY(-3px);box-shadow:0 8px 22px rgba(0,240,255,.20)}
+.cell.on{border-color:rgba(77,216,232,.70);background:rgba(77,216,232,.11);transform:translateY(-3px);box-shadow:0 8px 22px rgba(77,216,232,.20)}
 .cell.on::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);animation:sweep .55s ease}
 @keyframes sweep{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
 .cells.bad{animation:shake .42s}
@@ -57,50 +90,97 @@ body{min-height:100vh;overflow-x:hidden;padding-bottom:env(safe-area-inset-botto
 .cells.bad .cell{border-color:rgba(255,77,109,.75);color:var(--coral);background:rgba(255,77,109,.10)}
 #gmsg{font-size:12px;font-weight:700;color:var(--coral);min-height:18px;margin-top:8px}
 .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:20px}
-.key{height:52px;border-radius:14px;border:1px solid var(--b1);background:rgba(255,255,255,.04);color:var(--text);
+.key{height:52px;border-radius:9px;border:1px solid var(--b1);background:rgba(140,200,225,.045);color:var(--text);
   font-size:20px;font-weight:800;font-family:inherit;cursor:pointer;backdrop-filter:blur(10px);transition:transform .1s,background .18s}
-.key:active{transform:scale(.93);background:rgba(0,240,255,.16)}
+.key:active{transform:scale(.93);background:rgba(77,216,232,.17);border-color:rgba(77,216,232,.4)}
 .key.fn{font-size:15px;color:var(--text3)}
 #pin{position:absolute;opacity:0;pointer-events:none;height:0;width:0}
 
 /* ── header ────────────────────────────────────────── */
-.hero{background:linear-gradient(150deg,rgba(0,240,255,.10),rgba(155,93,229,.07) 55%,transparent);
-  border:1px solid var(--b1);border-radius:22px;padding:20px 18px;position:relative;overflow:hidden;
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-.hero::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--cyan),var(--lime),var(--violet),transparent);background-size:200% 100%;animation:slide 4.5s linear infinite}
+.hero{background:linear-gradient(158deg,rgba(77,216,232,.09),rgba(255,122,47,.05) 60%,transparent);
+  border:1px solid var(--b1);border-radius:16px;padding:19px 18px 17px;position:relative;overflow:hidden;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+/* a survey tape along the top edge — measured, not decorative */
+.hero::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;
+  background:repeating-linear-gradient(90deg,rgba(77,216,232,.55) 0 1px,transparent 1px 9px);
+  mask-image:linear-gradient(90deg,#000,#000 62%,transparent);
+  -webkit-mask-image:linear-gradient(90deg,#000,#000 62%,transparent)}
 @keyframes slide{to{background-position:200% 0}}
 @keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.78)}}
-.badge{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:900;letter-spacing:2px;text-transform:uppercase;
-  padding:4px 10px;border-radius:20px;background:rgba(0,240,255,.12);color:var(--cyan);border:1px solid rgba(0,240,255,.28)}
-.cname{font-size:23px;font-weight:900;letter-spacing:-.6px;margin-top:11px;line-height:1.15}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:800;letter-spacing:2.6px;text-transform:uppercase;
+  padding:4px 10px;border-radius:4px;background:rgba(77,216,232,.10);color:var(--datum);
+  border:1px solid rgba(77,216,232,.30);font-family:'JetBrains Mono',monospace}
+.cname{font-size:25px;font-weight:800;letter-spacing:-.9px;margin-top:12px;line-height:1.1;text-wrap:balance}
 .cproj{font-size:13px;color:var(--lime);font-weight:800;margin-top:3px}
 .cmeta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
 .chip{font-size:10.5px;font-weight:700;color:var(--text3);background:rgba(255,255,255,.05);border:1px solid var(--b1);padding:4px 10px;border-radius:20px}
 
 /* ── KPI ───────────────────────────────────────────── */
-.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+/* ── KPI title blocks ─────────────────────────────────────────────────
+   Modelled on the stamped title block in the corner of a drawing sheet:
+   a reference number, a ruled field, and registration ticks at the
+   corners. Numerals are monospaced so columns of figures line up. */
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:13px;perspective:900px}
 @media(min-width:560px){.kpis{grid-template-columns:repeat(4,1fr)}}
-.kpi{background:var(--bg3);border:1px solid var(--b1);border-radius:var(--r);padding:14px 12px;position:relative;overflow:hidden;
-  opacity:0;transform:translateY(16px);animation:rise .6s cubic-bezier(.22,1,.36,1) forwards}
-@keyframes rise{to{opacity:1;transform:none}}
-.kpi::after{content:'';position:absolute;width:74px;height:74px;border-radius:50%;top:-32px;right:-26px;opacity:.16;background:currentColor;filter:blur(6px)}
-.kpi .ic{font-size:15px}
-.kpi .vl{font-size:18px;font-weight:900;margin-top:6px;letter-spacing:-.6px}
-.kpi .lb{font-size:8.5px;font-weight:900;letter-spacing:1.6px;color:var(--text4);text-transform:uppercase;margin-top:3px}
-.kpi .sb{font-size:10px;font-weight:700;color:var(--text3);margin-top:4px}
+.kpi{position:relative;padding:13px 12px 12px;border-radius:10px;
+  background:linear-gradient(168deg, color-mix(in srgb, var(--acc) 8%, var(--bg2)) 0%, var(--bg2) 62%);
+  border:1px solid var(--b1);
+  transform-style:preserve-3d;
+  transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transition:transform .35s cubic-bezier(.22,1,.36,1), border-color .3s, box-shadow .35s;
+  opacity:0;animation:blockIn .72s cubic-bezier(.16,1,.3,1) var(--d,0ms) forwards;
+  outline:none}
+@supports not (background: color-mix(in srgb, red 8%, blue)){ .kpi{background:var(--bg2)} }
+@keyframes blockIn{
+  0%  {opacity:0;transform:translateY(18px) scale(.965)}
+  60% {opacity:1}
+  100%{opacity:1;transform:translateY(0) scale(1)}}
+.kpi:hover,.kpi:focus-visible{border-color:color-mix(in srgb, var(--acc) 45%, transparent);
+  box-shadow:0 10px 28px -14px color-mix(in srgb, var(--acc) 60%, transparent)}
+.kpi:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+/* a raking highlight that follows the pointer, like light across a sheet */
+.kpi::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(130px 90px at var(--gx,50%) var(--gy,0%), color-mix(in srgb, var(--acc) 16%, transparent), transparent 70%);
+  opacity:0;transition:opacity .35s}
+.kpi:hover::before{opacity:1}
+/* registration ticks */
+.kpi .tick{position:absolute;width:6px;height:6px;border:1px solid color-mix(in srgb, var(--acc) 55%, transparent);opacity:.7}
+.kpi .tick.tl{top:5px;left:5px;border-right:0;border-bottom:0}
+.kpi .tick.tr{top:5px;right:5px;border-left:0;border-bottom:0}
+.kpi .tick.bl{bottom:5px;left:5px;border-right:0;border-top:0}
+.kpi .tick.br{bottom:5px;right:5px;border-left:0;border-top:0}
+.kpi .kref{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:1px;
+  color:color-mix(in srgb, var(--acc) 70%, transparent);opacity:.85}
+.kpi .vl{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;margin-top:5px;
+  letter-spacing:-.8px;color:var(--acc);font-variant-numeric:tabular-nums;line-height:1.1}
+@media(min-width:560px){.kpi .vl{font-size:21px}}
+.kpi .krule{height:1px;margin:8px 0 7px;
+  background:linear-gradient(90deg, color-mix(in srgb, var(--acc) 55%, transparent), transparent)}
+.kpi .lb{font-size:8.5px;font-weight:800;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase}
+.kpi .sb{font-size:10px;font-weight:600;color:var(--text4);margin-top:3px;line-height:1.35}
 
 /* ── sections ──────────────────────────────────────── */
 .sec{margin-top:22px}
-.stitle{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.stitle{display:flex;align-items:center;gap:9px;margin-bottom:11px;position:relative}
+.stitle::before{content:'';position:absolute;left:-16px;top:50%;width:11px;height:1px;
+  background:linear-gradient(90deg,var(--datum),transparent);opacity:.75}
+@media(max-width:520px){.stitle::before{left:-13px;width:9px}}
 .stitle b{font-size:12px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
 .stitle span.n{margin-left:auto;font-size:10px;font-weight:800;color:var(--text4);background:var(--bg3);border:1px solid var(--b1);padding:3px 9px;border-radius:20px}
-.card{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:14px;margin-bottom:9px;
-  opacity:0;transform:translateY(14px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1)}
+.card{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);padding:14px;margin-bottom:8px;
+  opacity:0;transform:translateY(14px);
+  transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1),border-color .3s}
+.card:hover{border-color:var(--b2)}
 .card.in{opacity:1;transform:none}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .bar{height:7px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:9px}
-.bar i{display:block;height:100%;border-radius:6px;width:0;transition:width 1.1s cubic-bezier(.22,1,.36,1)}
+.bar i{display:block;height:100%;border-radius:6px;width:0;
+  transition:width 1.25s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden}
+/* a pour: the fill carries a faint travelling sheen while it settles */
+.bar i::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);
+  transform:translateX(-100%);animation:pour 1.6s cubic-bezier(.3,0,.2,1) .25s 1 forwards}
+@keyframes pour{to{transform:translateX(220%)}}
 .tbl{width:100%;border-collapse:collapse;font-size:12px}
 .tbl th{font-size:9px;letter-spacing:1.3px;text-transform:uppercase;color:var(--text4);text-align:left;padding:7px 8px;border-bottom:1px solid var(--b1);font-weight:900}
 .tbl td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.045);color:var(--text2);font-weight:600}
@@ -156,13 +236,23 @@ body{min-height:100vh;overflow-x:hidden;padding-bottom:env(safe-area-inset-botto
     --bg1:#fff; --bg2:#fff; --bg3:#f6f8fa; --bg4:#f0f3f7;
     --b1:#d8dee6; --b2:#c3ccd6;
     --text:#14202c; --text2:#28394a; --text3:#42546a; --text4:#586a7d;
-    --cyan:#0a6b78; --lime:#3f6b12; --amber:#9a6100; --coral:#b3243f;
-    --violet:#5b3a9e; --mint:#0e7a5a; --pink:#a3196b;
+    --datum:#0a5f6b; --marking:#9c4408; --rebar:#7d5410;
+    --verdigris:#0d6b52; --alarm:#a81e34; --chalk:#28394a;
+    --cyan:#0a5f6b; --lime:#0d6b52; --amber:#7d5410; --coral:#a81e34;
+    --violet:#4a3382; --mint:#0d6b52; --pink:#8d1558;
   }
 
   /* ── hide anything interactive or decorative ─────────────────────── */
-  #aurora,#gate,.tog,.upi,.noprint,#livebar,.galspin,
+  #aurora,#gate,#datum,#bob,.tog,.upi,.noprint,#livebar,.galspin,
+  .kpi .tick,.kpi::before,.hero::before,
   .tbl button,.card button,.sec button,a.ub{ display:none !important; }
+  .stitle::before{ display:none !important; }
+  .kpi{ animation:none !important; opacity:1 !important; transform:none !important;
+        background:#fff !important; }
+  .kpi .kref{ color:#42546a !important; font-size:7.4pt !important; letter-spacing:1.2pt; }
+  .kpi .krule{ background:#c3ccd6 !important; margin:2mm 0 1.6mm !important; }
+  .kpi .vl{ font-size:14pt !important; letter-spacing:-.4pt; }
+  .bar i::after{ display:none !important; }
 
   /* ── use the full width of the sheet ─────────────────────────────── */
   .wrap{ max-width:none !important; width:100% !important; margin:0 !important; padding:0 !important; }
@@ -243,6 +333,7 @@ body{min-height:100vh;overflow-x:hidden;padding-bottom:env(safe-area-inset-botto
 </head>
 <body>
 <div id="aurora"><i></i><i></i><i></i></div>
+<div id="datum" aria-hidden="true"><span id="bob"></span></div>
 
 <!-- ══ PIN GATE ══ -->
 <div id="gate">
@@ -885,21 +976,32 @@ function render(){
      + '</div></div>';
 
   /* ── KPIs ── */
+  /* Each card is a drawing title block: a stamped field with its own
+     reference number, hairline rules and corner registration ticks. The
+     numerals settle into place like a levelling instrument finding zero. */
   var kpis = [
     K.noContract
-      ? {i:'\uD83D\uDCB0', l:T('contractValue','Contract Value'), v:'\u2014', c:'var(--text3)', s:T('notSet','not set yet')}
-      : {i:'\uD83D\uDCB0', l:T('contractValue','Contract Value'), v:fmtS(K.contract), c:'var(--amber)', s:K.agreed>0?'agreed stage total':'project budget'},
-    {i:'\uD83D\uDCB5', l:T('totalReceived','Total Received'), v:fmtS(K.net), c:'var(--lime)',
+      ? {ref:'01', l:T('contractValue','Contract Value'), raw:null, c:'var(--text3)', s:T('notSet','not set yet')}
+      : {ref:'01', l:T('contractValue','Contract Value'), raw:K.contract, c:'var(--marking)', s:K.agreed>0?'agreed stage total':'project budget'},
+    {ref:'02', l:T('totalReceived','Total Received'), raw:K.net, c:'var(--datum)',
       s:K.refunded>0?('after '+fmtS(K.refunded)+' refund'):(K.noContract?'received to date':(K.payPct+'% collected'))},
     K.noContract
-      ? {i:'\u2139\uFE0F', l:T('balanceToPay','Balance to Pay'), v:'\u2014', c:'var(--text3)', s:T('askContractor','ask your contractor')}
-      : {i:K.over>0?'\u2705':'\u23F3', l:K.over>0?T('advancePaid','Advance Paid'):T('balanceToPay','Balance to Pay'), v:fmtS(K.over>0?K.over:K.balance), c:K.balance>0?'var(--coral)':'var(--mint)', s:K.balance>0?'still outstanding':'fully settled'},
-    {i:'\uD83C\uDFD7\uFE0F', l:T('workProgress','Work Progress'), v:K.prog+'%', c:'var(--cyan)', s:K.ph.length?(K.ph.filter(function(r){return r[2]==='Completed';}).length+' of '+K.ph.length+' phases done'):'no phases yet'}
+      ? {ref:'03', l:T('balanceToPay','Balance to Pay'), raw:null, c:'var(--text3)', s:T('askContractor','ask your contractor')}
+      : {ref:'03', l:K.over>0?T('advancePaid','Advance Paid'):T('balanceToPay','Balance to Pay'),
+         raw:(K.over>0?K.over:K.balance), c:K.balance>0?'var(--alarm)':'var(--verdigris)',
+         s:K.balance>0?'still outstanding':'fully settled'},
+    {ref:'04', l:T('workProgress','Work Progress'), raw:K.prog, pct:1, c:'var(--rebar)',
+      s:K.ph.length?(K.ph.filter(function(r){return r[2]==='Completed';}).length+' of '+K.ph.length+' phases done'):'no phases yet'}
   ];
   H += '<div class="kpis">'+kpis.map(function(k,i){
-    return '<div class="kpi" style="color:'+k.c+';animation-delay:'+(i*0.08)+'s">'
-      + '<div class="ic">'+k.i+'</div>'
-      + '<div class="vl" style="color:'+k.c+'">'+k.v+'</div>'
+    var shown = (k.raw===null) ? '\u2014' : (k.pct ? k.raw+'%' : fmtS(k.raw));
+    return '<div class="kpi" style="--acc:'+k.c+';--d:'+(i*90)+'ms" tabindex="0">'
+      + '<span class="tick tl"></span><span class="tick tr"></span>'
+      + '<span class="tick bl"></span><span class="tick br"></span>'
+      + '<div class="kref">'+k.ref+'</div>'
+      + '<div class="vl'+(k.raw===null?'':' num')+'"'
+      +   (k.raw===null?'':' data-to="'+k.raw+'"'+(k.pct?' data-pct="1"':''))+'>'+shown+'</div>'
+      + '<div class="krule"></div>'
       + '<div class="lb">'+k.l+'</div>'
       + '<div class="sb">'+k.s+'</div></div>';
   }).join('')+'</div>';
@@ -1226,13 +1328,77 @@ function render(){
     + '<div style="margin-top:12px;font-size:10px;color:var(--text4);line-height:1.7">'
     + (hasD(P.d) ? 'This passbook is a snapshot taken on '+fmtD(P.d)+'.<br>' : 'This passbook is a snapshot of your project account.<br>')
     + 'For the latest position please contact your contractor.<br>'
-    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v2.3</span></div>'
+    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v3.0</span></div>'
     + '</div>';
 
   $('app').innerHTML = H;
   paintLive();
   animate();
   galMount();
+  settleNumerals();
+  kpiParallax();
+  datumLine();
+}
+
+/* Numerals rise to their value on an ease-out curve, so the eye lands on
+   the figure rather than being handed it. Skipped entirely under
+   prefers-reduced-motion, where the final value is simply written. */
+var REDUCED = false;
+try { REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){}
+
+function settleNumerals(){
+  document.querySelectorAll('.vl.num').forEach(function(el, i){
+    var to = Number(el.getAttribute('data-to'))||0;
+    var pct = el.hasAttribute('data-pct');
+    var write = function(v){ el.textContent = pct ? Math.round(v)+'%' : fmtS(v); };
+    if(REDUCED){ write(to); return; }
+    var dur = 1050, start = null, delay = i*90;
+    write(0);
+    setTimeout(function(){
+      var step = function(ts){
+        if(start===null) start = ts;
+        var p = Math.min((ts-start)/dur, 1);
+        var e = 1 - Math.pow(1-p, 4);          /* easeOutQuart */
+        write(to*e);
+        if(p<1) requestAnimationFrame(step); else write(to);
+      };
+      requestAnimationFrame(step);
+    }, delay+140);
+  });
+}
+
+/* Title blocks lift slightly toward the pointer — a drawing sheet catching
+   the light. Pointer-fine only, so it never interferes with touch. */
+function kpiParallax(){
+  if(REDUCED) return;
+  try{ if(!window.matchMedia('(pointer:fine)').matches) return; }catch(e){ return; }
+  document.querySelectorAll('.kpi').forEach(function(el){
+    el.addEventListener('pointermove', function(e){
+      var r = el.getBoundingClientRect();
+      var x = (e.clientX-r.left)/r.width - .5, y = (e.clientY-r.top)/r.height - .5;
+      el.style.setProperty('--rx', (-y*5).toFixed(2)+'deg');
+      el.style.setProperty('--ry', ( x*5).toFixed(2)+'deg');
+      el.style.setProperty('--gx', ((x+.5)*100).toFixed(1)+'%');
+      el.style.setProperty('--gy', ((y+.5)*100).toFixed(1)+'%');
+    });
+    el.addEventListener('pointerleave', function(){
+      el.style.setProperty('--rx','0deg'); el.style.setProperty('--ry','0deg');
+    });
+  });
+}
+
+/* The datum line: a plumb line down the page whose bob tracks the read
+   position, with a survey tick at every section heading. */
+function datumLine(){
+  var bob = $('bob'); if(!bob) return;
+  var tick = function(){
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    var p = h>0 ? Math.min(Math.max(window.scrollY/h, 0), 1) : 0;
+    bob.style.transform = 'translateY('+(p*100)+'vh)';
+  };
+  window.addEventListener('scroll', tick, {passive:true});
+  window.addEventListener('resize', tick);
+  tick();
 }
 
 /* ── entrance animations ─────────────────────────────────── */
