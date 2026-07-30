@@ -250,7 +250,10 @@ var STR = {
     offline:'\u0B87\u0BA3\u0BC8\u0BAA\u0BCD\u0BAA\u0BBF\u0BB2\u0BCD\u0BB2\u0BC8',
     checking:'\u0B9A\u0BB0\u0BBF\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BBF\u0BB1\u0BA4\u0BC1\u2026',
     asOf:'\u0BA4\u0BC7\u0BA4\u0BBF \u0BB5\u0BB0\u0BC8', started:'\u0BA4\u0BCA\u0B9F\u0B95\u0BCD\u0B95\u0BAE\u0BCD', target:'\u0B87\u0BB2\u0B95\u0BCD\u0B95\u0BC1',
-    sqft:'\u0B9A\u0BA4\u0BC1\u0BB0 \u0B85\u0B9F\u0BBF', addHome:'\u0BAE\u0BC1\u0B95\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BBF\u0BB0\u0BC8\u0BAF\u0BBF\u0BB2\u0BCD \u0B9A\u0BC7\u0BB0\u0BCD'
+    sqft:'\u0B9A\u0BA4\u0BC1\u0BB0 \u0B85\u0B9F\u0BBF', addHome:'\u0BAE\u0BC1\u0B95\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BBF\u0BB0\u0BC8\u0BAF\u0BBF\u0BB2\u0BCD \u0B9A\u0BC7\u0BB0\u0BCD',
+    view:'\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95', download:'\u0BAA\u0BA4\u0BBF\u0BB5\u0BBF\u0BB1\u0B95\u0BCD\u0B95', close:'\u0BAE\u0BC2\u0B9F\u0BC1',
+    loading:'\u0B8F\u0BB1\u0BCD\u0BB1\u0BC1\u0B95\u0BBF\u0BB1\u0BA4\u0BC1\u2026',
+    needNet:'\u0B87\u0BA3\u0BC8\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BC7\u0BB5\u0BC8'
   }
 };
 function T(k, en){
@@ -261,6 +264,100 @@ function setLang(l){
   LANG = l;
   try { localStorage.setItem('blpb_lang', l); } catch(e){}
   render();
+}
+
+
+/* ══ documents ═══════════════════════════════════════════════════════════
+   Each file is fetched as ciphertext and decrypted here with the key from
+   this link's fragment, so the server never sees a readable document. */
+var _docCache = {};
+
+function pbDecryptBytes(blob, keyB64u){
+  var raw = b64uBytes(blob);
+  var iv  = raw.slice(0,12), ct = raw.slice(12);
+  return window.crypto.subtle.importKey('raw', b64uBytes(keyB64u), {name:'AES-GCM'}, false, ['decrypt'])
+    .then(function(key){ return window.crypto.subtle.decrypt({name:'AES-GCM', iv:iv}, key, ct); })
+    .then(function(pt){ return new Uint8Array(pt); });
+}
+
+function docBusy(i, txt, col){
+  var el = $('dst'+i);
+  if(el){ el.innerHTML = txt; el.style.color = col || 'var(--text4)'; }
+}
+
+function fetchDoc(i){
+  var d = (P.dc||[])[i];
+  if(!d) return Promise.reject(new Error('missing'));
+  if(_docCache[i]) return Promise.resolve(_docCache[i]);
+  if(!LIVE || !canCrypto()) return Promise.reject(new Error(T('needNet','needs an internet connection')));
+  docBusy(i, T('loading','Loading\u2026'), 'var(--cyan)');
+  return fetch(LIVE.url+'/d/'+d[5], {cache:'force-cache'})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+    .then(function(blob){ return pbDecryptBytes(blob, LIVE.key); })
+    .then(function(bytes){
+      var url = URL.createObjectURL(new Blob([bytes], {type: d[4] || 'application/octet-stream'}));
+      _docCache[i] = url;
+      docBusy(i, '');
+      return url;
+    });
+}
+
+window.viewDoc = function(i){
+  var d = (P.dc||[])[i];
+  fetchDoc(i).then(function(url){
+    var mime = String(d[4]||'');
+    if(mime.indexOf('image/')===0){ showLightbox(url, d[0]); return; }
+    var w = window.open(url, '_blank');
+    if(!w) downloadDoc(i);           /* pop-up blocked \u2014 fall back to saving */
+  }, function(e){
+    docBusy(i, '\u26A0 '+esc(String(e && e.message || e).slice(0,40)), 'var(--coral)');
+  });
+};
+
+window.downloadDoc = function(i){
+  var d = (P.dc||[])[i];
+  fetchDoc(i).then(function(url){
+    var a = document.createElement('a');
+    a.href = url; a.download = d[0] || 'document';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }, function(e){
+    docBusy(i, '\u26A0 '+esc(String(e && e.message || e).slice(0,40)), 'var(--coral)');
+  });
+};
+
+function showLightbox(url, name){
+  var lb = document.createElement('div');
+  lb.style.cssText = 'position:fixed;inset:0;z-index:90;background:rgba(4,7,12,.94);display:flex;'
+    + 'flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px;'
+    + 'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)';
+  lb.innerHTML = '<img src="'+url+'" style="max-width:100%;max-height:78vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6)">'
+    + '<div style="font-size:12px;font-weight:800;color:var(--text2);text-align:center;max-width:90%">'+esc(name||'')+'</div>'
+    + '<div style="display:flex;gap:9px">'
+    +   '<a href="'+url+'" download="'+esc(name||'image')+'" style="padding:9px 16px;border-radius:20px;background:var(--bg3);'
+    +     'border:1px solid var(--b2);color:var(--text2);font-size:12px;font-weight:800;text-decoration:none">\u2B07 '+T('download','Download')+'</a>'
+    +   '<button style="padding:9px 16px;border-radius:20px;background:var(--bg3);border:1px solid var(--b2);'
+    +     'color:var(--text2);font-size:12px;font-weight:800;font-family:inherit;cursor:pointer">\u2715 '+T('close','Close')+'</button>'
+    + '</div>';
+  var shut = function(){ try{ document.body.removeChild(lb); }catch(e){} };
+  lb.addEventListener('click', function(e){ if(e.target===lb) shut(); });
+  lb.querySelector('button').addEventListener('click', shut);
+  document.body.appendChild(lb);
+}
+
+function docIcon(mime, name){
+  var m = String(mime||'').toLowerCase(), n = String(name||'').toLowerCase();
+  if(m.indexOf('pdf')>=0 || /\.pdf$/.test(n))   return '\uD83D\uDCD5';
+  if(m.indexOf('image/')===0 || /\.(jpe?g|png|gif|webp|heic)$/.test(n)) return '\uD83D\uDDBC\uFE0F';
+  if(/\.(docx?|odt)$/.test(n))  return '\uD83D\uDCDD';
+  if(/\.(xlsx?|csv)$/.test(n))  return '\uD83D\uDCCA';
+  return '\uD83D\uDCC4';
+}
+function fmtBytes(n){
+  n = num(n);
+  if(!n) return '';
+  if(n >= 1048576) return (n/1048576).toFixed(1)+' MB';
+  if(n >= 1024)    return Math.round(n/1024)+' KB';
+  return n+' B';
 }
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -737,11 +834,27 @@ function render(){
   if((P.dc||[]).length){
     H += '<div class="sec"><div class="stitle"><b style="color:var(--violet)">\uD83D\uDCC4 '+T('documents','Documents')+'</b>'
       + '<span class="n">'+P.dc.length+'</span></div><div class="card in">';
-    P.dc.forEach(function(d){
-      H += '<div class="row" style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.045)">'
-        + '<div style="min-width:0"><div style="font-size:12px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\uD83D\uDCC4 '+esc(d[0])+'</div>'
-        + (d[1]?'<div style="font-size:10px;color:var(--text4);font-weight:700;margin-top:2px">'+esc(d[1])+'</div>':'')+'</div>'
-        + '<span class="mono" style="font-size:10px;color:var(--text4);flex-shrink:0">'+fmtD(d[2])+'</span></div>';
+    P.dc.forEach(function(d,i){
+      var openable = !!(d[5] && LIVE);
+      var meta = [];
+      if(d[1]) meta.push(esc(d[1]));
+      if(hasD(d[2])) meta.push(fmtD(d[2]));
+      if(num(d[3])) meta.push(fmtBytes(d[3]));
+      H += '<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.045)">'
+        + '<div class="row">'
+        +   '<div style="min-width:0"><div style="font-size:12px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'
+        +     docIcon(d[4], d[0])+' '+esc(d[0])+'</div>'
+        +     (meta.length?'<div style="font-size:10px;color:var(--text4);font-weight:700;margin-top:2px">'+meta.join(' \u00B7 ')+'</div>':'')
+        +   '</div>'
+        +   (openable
+              ? '<div style="display:flex;gap:6px;flex-shrink:0">'
+                + '<button onclick="viewDoc('+i+')" style="padding:5px 11px;border-radius:16px;border:1px solid rgba(0,240,255,.35);background:rgba(0,240,255,.08);color:var(--cyan);font-size:10.5px;font-weight:800;font-family:inherit;cursor:pointer">\uD83D\uDC41 '+T('view','View')+'</button>'
+                + '<button onclick="downloadDoc('+i+')" style="padding:5px 11px;border-radius:16px;border:1px solid var(--b2);background:var(--bg3);color:var(--text2);font-size:10.5px;font-weight:800;font-family:inherit;cursor:pointer">\u2B07</button>'
+                + '</div>'
+              : '')
+        + '</div>'
+        + '<div id="dst'+i+'" style="font-size:10px;font-weight:700;margin-top:4px;min-height:12px;color:var(--text4)"></div>'
+        + '</div>';
     });
     H += '<div style="font-size:10.5px;color:var(--text4);margin-top:10px;font-weight:600">'
       + T('docsNote','These are held on file by your contractor.')+'</div></div></div>';
@@ -830,7 +943,7 @@ function render(){
     + '<div style="margin-top:12px;font-size:10px;color:var(--text4);line-height:1.7">'
     + (hasD(P.d) ? 'This passbook is a snapshot taken on '+fmtD(P.d)+'.<br>' : 'This passbook is a snapshot of your project account.<br>')
     + 'For the latest position please contact your contractor.<br>'
-    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v2.0</span></div>'
+    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v2.1</span></div>'
     + '</div>';
 
   $('app').innerHTML = H;
@@ -888,4 +1001,3 @@ boot();
 </script>
 </body>
 </html>
-
