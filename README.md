@@ -453,6 +453,10 @@ var STR = {
     view:'\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95', download:'\u0BAA\u0BA4\u0BBF\u0BB5\u0BBF\u0BB1\u0B95\u0BCD\u0B95', close:'\u0BAE\u0BC2\u0B9F\u0BC1',
     loading:'\u0B8F\u0BB1\u0BCD\u0BB1\u0BC1\u0B95\u0BBF\u0BB1\u0BA4\u0BC1\u2026',
     receipt:'\u0BB0\u0B9A\u0BC0\u0BA4\u0BC1',
+    variations:'\u0B85\u0BA9\u0BC1\u0BAE\u0BA4\u0BBF\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F \u0BAE\u0BBE\u0BB1\u0BCD\u0BB1\u0B99\u0BCD\u0B95\u0BB3\u0BCD',
+    addedToContract:'\u0B92\u0BAA\u0BCD\u0BAA\u0BA8\u0BCD\u0BA4\u0BA4\u0BCD\u0BA4\u0BBF\u0BB2\u0BCD \u0B9A\u0BC7\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1',
+    retention:'\u0BA4\u0BC7\u0B95\u0BCD\u0B95\u0BBF \u0BA4\u0BCA\u0B95\u0BC8',
+    retentionNote:'\u0B95\u0BC1\u0BB1\u0BC8 \u0B95\u0BBE\u0BB2 \u0BAE\u0BC1\u0B9F\u0BBF\u0BAF\u0BC1\u0BAE\u0BCD \u0BB5\u0BB0\u0BC8 \u0BB5\u0BC8\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1',
     preparing:'\u0BA4\u0BAF\u0BBE\u0BB0\u0BBE\u0B95\u0BBF\u0BB1\u0BA4\u0BC1\u2026',
     printNote:'\u0B87\u0BA4\u0BC1 \u0B85\u0B9A\u0BCD\u0B9A\u0BBF\u0B9F\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F \u0BAA\u0BA4\u0BBF\u0BB5\u0BC1. \u0B86\u0BB5\u0BA3\u0B99\u0BCD\u0B95\u0BB3\u0BC8\u0BAF\u0BC1\u0BAE\u0BCD \u0BAA\u0BC1\u0BB0\u0BC8\u0BAA\u0BCD\u0BAA\u0B9F\u0B99\u0BCD\u0B95\u0BB3\u0BC8\u0BAF\u0BC1\u0BAE\u0BCD \u0B87\u0BA3\u0BC8\u0BAF \u0BAA\u0BBE\u0BB8\u0BCD\u0BAA\u0BC1\u0BAF\u0BCD \u0B87\u0BA3\u0BCD\u0B95\u0BBF\u0BB2\u0BCD \u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BB2\u0BBE\u0BAE\u0BCD.',
     popupBlocked:'\u0BB0\u0B9A\u0BC0\u0BA4\u0BC1 \u0B85\u0B9A\u0BCD\u0B9A\u0BBF\u0B9F \u0BAA\u0BBE\u0BAA\u0BCD-\u0B85\u0BAA\u0BCD \u0B85\u0BA9\u0BC1\u0BAE\u0BA4\u0BBF\u0B95\u0BCD\u0B95\u0BB5\u0BC1\u0BAE\u0BCD.',
@@ -923,7 +927,9 @@ function calc(){
   var net      = grossRec - refunded;
   var budget   = num(c.bg);
   var agreed   = plan.reduce(function(s,r){ return s+num(r[2]); },0);
-  var contract = agreed>0 ? agreed : budget;
+  var voTotal  = (P.vo||[]).reduce(function(s,r){ return s+num(r[3]); },0);
+  var contract = (agreed>0 ? agreed : budget) + voTotal;
+  var retHeld  = P.rt ? num(P.rt[0]) : 0;
   var balance  = Math.max(contract - net, 0);
   var over     = net - contract;
   var ph = P.ph||[];
@@ -931,7 +937,7 @@ function calc(){
   return {
     py:py, plan:plan, spays:spays, ph:ph,
     received:grossRec, refunded:refunded, net:net,
-    budget:budget, agreed:agreed, contract:contract,
+    budget:budget, agreed:agreed, contract:contract, voTotal:voTotal, retHeld:retHeld,
     balance:balance, over:over, prog:prog, noContract: !(contract>0),
     spent:num(f.sp), matVal:num(f.mv), ncTotal:num(f.nc),
     payPct: contract>0 ? Math.min(Math.round(net/contract*100),100) : 0
@@ -1067,6 +1073,35 @@ function render(){
       + '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">'+T('totalAgreed','Total Agreed')+'</span><span class="mono">'+fmt(K.agreed)+'</span></div>'
       + '<div class="tot" style="border:none;padding-top:0"><span style="color:var(--text3)">'+T('collected','Collected')+'</span><span class="mono" style="color:var(--lime)">'+fmt(coll)+'</span></div>'
       + '<div class="tot"><span>'+T('balance','Balance')+'</span><span class="mono" style="color:'+(K.agreed-coll>0?'var(--coral)':'var(--mint)')+'">'+fmt(Math.max(K.agreed-coll,0))+(K.agreed-coll<=0?' \u2705':'')+'</span></div>'
+      + '</div></div>';
+  }
+
+  /* ── approved variations ── */
+  if((P.vo||[]).length){
+    H += '<div class="sec"><div class="stitle"><b style="color:var(--violet)">\uD83D\uDCDD '+T('variations','Approved Changes')+'</b>'
+      + '<span class="n">'+P.vo.length+'</span></div><div class="card in">';
+    P.vo.forEach(function(v){
+      var neg = num(v[3])<0;
+      H += '<div class="row" style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.045)">'
+        + '<div style="min-width:0"><div style="font-size:12px;font-weight:800">'+esc(v[2])+'</div>'
+        + '<div style="font-size:10px;color:var(--text4);font-weight:700;margin-top:2px">'
+        +   esc(v[0])+(hasD(v[1])?' \u00B7 '+fmtD(v[1]):'')+'</div></div>'
+        + '<span class="mono" style="font-weight:900;flex-shrink:0;color:'+(neg?'var(--coral)':'var(--violet)')+'">'
+        +   (neg?'\u2212':'+')+fmt(Math.abs(num(v[3])))+'</span></div>';
+    });
+    H += '<div class="tot"><span>'+T('addedToContract','Added to contract')+'</span>'
+      + '<span class="mono" style="color:var(--violet)">'+(K.voTotal<0?'\u2212':'+')+fmt(Math.abs(K.voTotal))+'</span></div>'
+      + '</div></div>';
+  }
+
+  /* ── retention ── */
+  if(K.retHeld>0){
+    H += '<div class="sec"><div class="card in" style="border-color:rgba(0,240,255,.25);background:rgba(0,240,255,.05)">'
+      + '<div style="font-size:10px;font-weight:900;letter-spacing:1.6px;color:var(--cyan);text-transform:uppercase;margin-bottom:6px">\uD83D\uDD12 '+T('retention','Retention Held')+'</div>'
+      + '<div class="row"><span style="font-size:12px;color:var(--text3);font-weight:600">'
+      +   T('retentionNote','Held back until the defect liability period ends')
+      +   (P.rt[1]? ' ('+P.rt[1]+'%)' : '')+'</span>'
+      + '<span class="mono" style="font-size:15px;font-weight:900;color:var(--cyan)">'+fmt(K.retHeld)+'</span></div>'
       + '</div></div>';
   }
 
@@ -1328,7 +1363,7 @@ function render(){
     + '<div style="margin-top:12px;font-size:10px;color:var(--text4);line-height:1.7">'
     + (hasD(P.d) ? 'This passbook is a snapshot taken on '+fmtD(P.d)+'.<br>' : 'This passbook is a snapshot of your project account.<br>')
     + 'For the latest position please contact your contractor.<br>'
-    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v3.0</span></div>'
+    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v3.1</span></div>'
     + '</div>';
 
   $('app').innerHTML = H;
