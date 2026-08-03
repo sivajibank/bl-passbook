@@ -462,7 +462,15 @@ var STR = {
     popupBlocked:'\u0BB0\u0B9A\u0BC0\u0BA4\u0BC1 \u0B85\u0B9A\u0BCD\u0B9A\u0BBF\u0B9F \u0BAA\u0BBE\u0BAA\u0BCD-\u0B85\u0BAA\u0BCD \u0B85\u0BA9\u0BC1\u0BAE\u0BA4\u0BBF\u0B95\u0BCD\u0B95\u0BB5\u0BC1\u0BAE\u0BCD.',
     needNet:'\u0B87\u0BA3\u0BC8\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BC7\u0BB5\u0BC8',
     minCardOffline:'இணையம் இல்லை — இந்த கார்டில் விவரங்கள் சேமிக்கப்படவில்லை. மீண்டும் இணைந்து திறக்கவும்.',
-    snapshotOffline:'இணையம் இல்லை — கார்டில் சேமிக்கப்பட்ட விவரங்கள் காட்டப்படுகின்றன'
+    snapshotOffline:'இணையம் இல்லை — கார்டில் சேமிக்கப்பட்ட விவரங்கள் காட்டப்படுகின்றன',
+    nextPaymentDue:'அடுத்த செலுத்த வேண்டிய தொகை',
+    overdueBy:'தாமதமானது',
+    dueToday:'இன்று செலுத்த வேண்டும்',
+    dueInDays:'செலுத்த வேண்டிய நாள்',
+    daysWord:'நாட்கள்',
+    searchLedger:'பணம் தேடுக\u2026',
+    noMatches:'பொருந்தும் பணம் இல்லை',
+    exportLedger:'ஏற்றுமதி'
   }
 };
 function T(k, en){
@@ -701,6 +709,66 @@ window.printReceipt = function(idx){
     + '<div class="note">Computer-generated receipt issued from the project passbook on '
     +   fmtD(P.d)+'. Running balance after this payment: '+fmt(p._run)+'.</div>'
     + '</div></body></html>');
+  w.document.close();
+  w.onload = function(){ w.focus(); w.print(); };
+};
+
+/* ══ ledger search & export ══════════════════════════════════════════════ */
+window.filterLedger = function(q){
+  q = String(q||'').toLowerCase().trim();
+  var rows = document.querySelectorAll('#ledgerBody tr[data-q]');
+  var shown = 0;
+  rows.forEach(function(tr){
+    var match = !q || tr.getAttribute('data-q').indexOf(q) !== -1;
+    tr.style.display = match ? '' : 'none';
+    if(match) shown++;
+  });
+  var empty = $('ledgerEmptyRow');
+  if(empty) empty.style.display = shown ? 'none' : '';
+};
+
+window.exportLedger = function(){
+  var co = P.co||{}, c = P.c||{};
+  var qEl = $('ledgerSearch');
+  var q = qEl ? String(qEl.value||'').toLowerCase().trim() : '';
+  var rows = (window._ledger||[]).filter(function(p){
+    if(!q) return true;
+    var s = (fmtD(p.d)+' '+(p.src||p.t)+' '+p.m+' '+p.ref).toLowerCase();
+    return s.indexOf(q)!==-1;
+  });
+  if(!rows.length){ alert(T('noMatches','No matching payments')); return; }
+  var w = window.open('', '_blank', 'width=820,height=920');
+  if(!w){ alert(T('popupBlocked','Please allow pop-ups to print the receipt.')); return; }
+  var total = rows.reduce(function(s,p){ return s + (String(p.t).toLowerCase()==='refund'? -p.a : p.a); },0);
+  var trs = rows.map(function(p){
+    var isRef = String(p.t).toLowerCase()==='refund';
+    return '<tr><td>'+esc(fmtD(p.d))+'</td><td>'+esc(p.src||p.t)+'</td><td>'+esc(p.m)+'</td><td>'+esc(p.ref||'\u2014')+'</td>'
+      + '<td style="text-align:right;font-weight:bold;color:'+(isRef?'#a81e34':'#0d6b52')+'">'+(isRef?'\u2212':'')+fmt(p.a)+'</td></tr>';
+  }).join('');
+  w.document.write(
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Payment Ledger \u2014 '+esc(c.n||'')+'</title><style>'
+    + '@page{size:A4 portrait;margin:14mm}'
+    + 'body{font-family:Georgia,"Times New Roman",serif;margin:0;color:#14202c}'
+    + '.co{font-size:20px;font-weight:bold;text-align:center}'
+    + '.sub{font-size:10.5px;color:#566;text-align:center;margin-top:2px}'
+    + '.ttl{text-align:center;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#667;margin:14px 0 4px}'
+    + '.meta{font-size:11px;color:#556;text-align:center;margin-bottom:14px}'
+    + 'table{width:100%;border-collapse:collapse;margin-top:6px;font-size:11px}'
+    + 'th{text-align:left;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#667;padding:6px 4px;border-bottom:1.5px solid #14202c}'
+    + 'td{padding:6px 4px;border-bottom:1px solid #e3e7ec}'
+    + '.tot{margin-top:10px;text-align:right;font-size:14px;font-weight:bold}'
+    + '.note{margin-top:16px;font-size:9.5px;color:#889;text-align:center}'
+    + '</style></head><body>'
+    + '<div class="co">'+esc(co.n||'')+'</div>'
+    + (co.a?'<div class="sub">'+esc(co.a)+'</div>':'')
+    + '<div class="ttl">Payment Ledger</div>'
+    + '<div class="meta">'+esc(c.n||'')+(c.pr?' \u00B7 '+esc(c.pr):'')+'</div>'
+    + '<table><thead><tr><th>Date</th><th>Details</th><th>Mode</th><th>Reference</th><th style="text-align:right">Amount</th></tr></thead><tbody>'
+    + trs
+    + '</tbody></table>'
+    + '<div class="tot">Total: '+fmt(total)+'</div>'
+    + '<div class="note">Generated from the project passbook on '+fmtD(P.d)+'. Use your browser\u2019s Print dialog to save as PDF.</div>'
+    + '</body></html>');
   w.document.close();
   w.onload = function(){ w.focus(); w.print(); };
 };
@@ -956,13 +1024,24 @@ function calc(){
   var over     = net - contract;
   var ph = P.ph||[];
   var prog = ph.length ? Math.round(ph.reduce(function(s,r){ return s+num(r[3]); },0)/ph.length) : 0;
+  var nextDue = null;
+  plan.forEach(function(st){
+    var sid=st[0], nm=st[1], amt=num(st[2]), due=st[3];
+    var paid = spays.filter(function(p){ return p[0]===sid; }).reduce(function(s,p){ return s+num(p[2]); },0);
+    var bal = amt-paid;
+    if(bal<=0) return;
+    var dueD = parseD(due);
+    if(!dueD) return;
+    if(!nextDue || dueD < nextDue.dueD){ nextDue = {name:nm, amount:bal, due:due, dueD:dueD}; }
+  });
   return {
     py:py, plan:plan, spays:spays, ph:ph,
     received:grossRec, refunded:refunded, net:net,
     budget:budget, agreed:agreed, contract:contract, voTotal:voTotal, retHeld:retHeld,
     balance:balance, over:over, prog:prog, noContract: !(contract>0),
     spent:num(f.sp), matVal:num(f.mv), ncTotal:num(f.nc),
-    payPct: contract>0 ? Math.min(Math.round(net/contract*100),100) : 0
+    payPct: contract>0 ? Math.min(Math.round(net/contract*100),100) : 0,
+    nextDue:nextDue
   };
 }
 
@@ -1003,7 +1082,29 @@ function render(){
      + (hasD(P.d) ? '<span class="chip">\uD83D\uDD52 '+T('asOf','As of')+' '+fmtD(P.d)+'</span>' : '')
      + '</div></div>';
 
-  /* ── KPIs ── */
+  /* ── next payment due banner ── */
+  if(K.nextDue){
+    var nd = K.nextDue;
+    var diff = daysBetween(nd.dueD, todayD());        /* future:+ overdue:- today:0 */
+    var overdue = diff<0, dueTod = diff===0;
+    var ndCol = overdue ? 'var(--alarm)' : (diff<=7 ? 'var(--rebar)' : 'var(--datum)');
+    var ndBg  = overdue ? 'rgba(240,84,79,.08)' : (diff<=7 ? 'rgba(217,164,65,.08)' : 'rgba(77,216,232,.06)');
+    var ndBd  = overdue ? 'rgba(240,84,79,.30)' : (diff<=7 ? 'rgba(217,164,65,.30)' : 'rgba(77,216,232,.25)');
+    var ndWhen = overdue
+      ? T('overdueBy','Overdue by')+' '+Math.abs(diff)+' '+T('daysWord','days')
+      : dueTod ? T('dueToday','Due today')
+      : T('dueInDays','Due in')+' '+diff+' '+T('daysWord','days');
+    H += '<div class="card in noprint" style="margin-top:11px;border-color:'+ndBd+';background:'+ndBg+'"><div class="row">'
+      + '<div style="min-width:0">'
+      +   '<div style="font-size:9.5px;font-weight:900;letter-spacing:1.6px;text-transform:uppercase;color:'+ndCol+'">\u23F0 '+T('nextPaymentDue','Next Payment Due')+'</div>'
+      +   '<div style="font-size:14px;font-weight:800;margin-top:4px">'+esc(nd.name)+'</div>'
+      +   '<div style="font-size:11px;font-weight:700;color:'+ndCol+';margin-top:3px">'+ndWhen+' \u00B7 '+fmtD(nd.due)+'</div>'
+      + '</div>'
+      + '<div style="text-align:right;flex-shrink:0">'
+      +   '<div class="mono" style="font-size:16px;font-weight:900;color:'+ndCol+'">'+fmt(nd.amount)+'</div>'
+      +   '<a href="#payNowSec" style="display:inline-block;margin-top:6px;padding:5px 12px;border-radius:20px;background:'+ndCol+';color:#07090F;font-size:10.5px;font-weight:900;text-decoration:none">'+T('payNow','Pay Now')+'</a>'
+      + '</div></div></div>';
+  }
   /* Each card is a drawing title block: a stamped field with its own
      reference number, hairline rules and corner registration ticks. The
      numerals settle into place like a levelling instrument finding zero. */
@@ -1057,7 +1158,7 @@ function render(){
     var waN = String(co.p||'').replace(/[^\d]/g,'');
     if(waN.length===10) waN='91'+waN;
     var waMsg = encodeURIComponent('Hello '+(co.n||'')+',\n\nI have made a payment for my project *'+(c.pr||c.n||'')+'*.\n\nAmount: '+fmt(K.balance)+'\nUTR / Reference: \n\nPlease confirm receipt. Thank you.');
-    H += '<div class="sec noprint"><div class="stitle"><b style="color:var(--mint)">\uD83D\uDCB3 '+T('payNow','Pay Now')+'</b>'
+    H += '<div class="sec noprint" id="payNowSec"><div class="stitle"><b style="color:var(--mint)">\uD83D\uDCB3 '+T('payNow','Pay Now')+'</b>'
       + '<span class="n">'+fmt(K.balance)+' '+T('due','due')+'</span></div>'
       + '<div class="upi">'
       + '<a class="ub" style="border-color:rgba(66,133,244,.35)" href="tez://upi/pay?'+q+'"><em>\uD83D\uDD35</em>GPay</a>'
@@ -1142,14 +1243,20 @@ function render(){
   window._ledger = allPays;
   if(allPays.length){
     H += '<div class="sec"><div class="stitle"><b style="color:var(--lime)">\uD83E\uDD1D '+T('paymentLedger','Payment Ledger')+'</b><span class="n">'+allPays.length+' '+T('entries','entries')+'</span></div>'
+      + '<div class="noprint" style="display:flex;gap:8px;margin-bottom:8px">'
+      +   '<input id="ledgerSearch" type="text" placeholder="'+esc(T('searchLedger','Search payments\u2026'))+'" oninput="filterLedger(this.value)" '
+      +     'style="flex:1;min-width:0;padding:9px 12px;border-radius:10px;border:1px solid var(--b1);background:var(--bg3);color:var(--text);font-size:12px;font-family:inherit">'
+      +   '<button onclick="exportLedger()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--b2);background:var(--bg3);color:var(--text2);font-size:11px;font-weight:800;font-family:inherit;cursor:pointer;white-space:nowrap">\u2B07 '+T('exportLedger','Export')+'</button>'
+      + '</div>'
       + '<div class="card in" style="padding:4px 4px 8px"><table class="tbl"><thead><tr>'
-      + '<th>'+T('date','Date')+'</th><th>'+T('details','Details')+'</th><th class="r">'+T('amount','Amount')+'</th></tr></thead><tbody>';
+      + '<th>'+T('date','Date')+'</th><th>'+T('details','Details')+'</th><th class="r">'+T('amount','Amount')+'</th></tr></thead><tbody id="ledgerBody">';
     var run = 0;
     allPays.slice().reverse().forEach(function(p){ p._run = (run += (String(p.t).toLowerCase()==='refund'? -p.a : p.a)); });
     allPays.forEach(function(p, pi){
       var isRef = String(p.t).toLowerCase()==='refund';
       var pcol  = isRef ? 'var(--coral)' : 'var(--lime)';
-      H += '<tr><td class="mono" style="white-space:nowrap;font-size:11px">'+fmtD(p.d)+'</td>'
+      var q = (fmtD(p.d)+' '+(p.src||p.t)+' '+p.m+' '+p.ref).toLowerCase();
+      H += '<tr data-q="'+esc(q)+'"><td class="mono" style="white-space:nowrap;font-size:11px">'+fmtD(p.d)+'</td>'
         + '<td><div style="font-weight:800;color:var(--text)">'+esc(p.src||p.t)+'</div>'
         + '<div style="font-size:10px;color:var(--text4);margin-top:2px">'+esc(p.m)+(p.ref?' \u00B7 '+esc(p.ref):'')
         + (isRef?'':' <button class="noprint" onclick="printReceipt('+pi+')" style="margin-left:4px;padding:1px 7px;border-radius:12px;border:1px solid var(--b2);background:var(--bg3);color:var(--text3);font-size:9px;font-weight:800;font-family:inherit;cursor:pointer">\uD83E\uDDFE '+T('receipt','Receipt')+'</button>')
@@ -1157,6 +1264,7 @@ function render(){
         + '<td class="r mono" style="font-weight:900;color:'+pcol+';white-space:nowrap">'+(isRef?'\u2212':'')+fmt(p.a)
         + '<div style="font-size:9.5px;color:var(--text4);font-weight:700;margin-top:2px">bal '+fmtS(p._run)+'</div></td></tr>';
     });
+    H += '<tr id="ledgerEmptyRow" class="noprint" style="display:none"><td colspan="3" style="text-align:center;color:var(--text4);padding:16px;font-size:11.5px;font-weight:700">'+T('noMatches','No matching payments')+'</td></tr>';
     H += '</tbody></table>'
       + '<div class="tot"><span>'+T('totalReceived','Total Received')+'</span><span class="mono" style="color:var(--lime)">'+fmt(K.net)+'</span></div>'
       + '</div></div>';
@@ -1542,3 +1650,4 @@ boot();
 </script>
 </body>
 </html>
+
