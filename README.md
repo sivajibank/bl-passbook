@@ -460,7 +460,9 @@ var STR = {
     preparing:'\u0BA4\u0BAF\u0BBE\u0BB0\u0BBE\u0B95\u0BBF\u0BB1\u0BA4\u0BC1\u2026',
     printNote:'\u0B87\u0BA4\u0BC1 \u0B85\u0B9A\u0BCD\u0B9A\u0BBF\u0B9F\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F \u0BAA\u0BA4\u0BBF\u0BB5\u0BC1. \u0B86\u0BB5\u0BA3\u0B99\u0BCD\u0B95\u0BB3\u0BC8\u0BAF\u0BC1\u0BAE\u0BCD \u0BAA\u0BC1\u0BB0\u0BC8\u0BAA\u0BCD\u0BAA\u0B9F\u0B99\u0BCD\u0B95\u0BB3\u0BC8\u0BAF\u0BC1\u0BAE\u0BCD \u0B87\u0BA3\u0BC8\u0BAF \u0BAA\u0BBE\u0BB8\u0BCD\u0BAA\u0BC1\u0BAF\u0BCD \u0B87\u0BA3\u0BCD\u0B95\u0BBF\u0BB2\u0BCD \u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BB2\u0BBE\u0BAE\u0BCD.',
     popupBlocked:'\u0BB0\u0B9A\u0BC0\u0BA4\u0BC1 \u0B85\u0B9A\u0BCD\u0B9A\u0BBF\u0B9F \u0BAA\u0BBE\u0BAA\u0BCD-\u0B85\u0BAA\u0BCD \u0B85\u0BA9\u0BC1\u0BAE\u0BA4\u0BBF\u0B95\u0BCD\u0B95\u0BB5\u0BC1\u0BAE\u0BCD.',
-    needNet:'\u0B87\u0BA3\u0BC8\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BC7\u0BB5\u0BC8'
+    needNet:'\u0B87\u0BA3\u0BC8\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BC7\u0BB5\u0BC8',
+    minCardOffline:'இணையம் இல்லை — இந்த கார்டில் விவரங்கள் சேமிக்கப்படவில்லை. மீண்டும் இணைந்து திறக்கவும்.',
+    snapshotOffline:'இணையம் இல்லை — கார்டில் சேமிக்கப்பட்ட விவரங்கள் காட்டப்படுகின்றன'
   }
 };
 function T(k, en){
@@ -755,16 +757,16 @@ function boot(){
       if(LIVE) LIVEST = 'pending';
     }
   }
-  if(!frag){ fail('No passbook data found in this link.','Ask your contractor to send the passbook link again \u2014 the part after the # sign is missing.'); return; }
+  if(!frag){ fail('noData'); return; }
   try {
     var json = LZString.decompressFromEncodedURIComponent(frag);
     if(!json) throw new Error('decompress failed');
     P = JSON.parse(json);
   } catch(e){
-    fail('This passbook link is damaged.','The link was probably cut short when it was forwarded. Please ask for a fresh link \u2014 copy it in full, including everything after the # sign.');
+    fail('damaged');
     return;
   }
-  if(!P || !P.c){ fail('Unrecognised passbook link.','This does not look like a BuildLedger passbook link.'); return; }
+  if(!P || !P.c){ fail('unrecognised'); return; }
   SECLEN = String(P.sec||'').length || 4;
   if(!P.sec){ unlock(true); return; }          /* no PIN set \u2192 open directly */
   buildPad();
@@ -777,12 +779,32 @@ function boot(){
   setTimeout(function(){ try{ $('pin').focus({preventScroll:true}); }catch(e){} }, 400);
 }
 
-function fail(title, msg){
+var FAILMSG = {
+  noData: {
+    en:['No passbook data found in this link.','Ask your contractor to send the passbook link again \u2014 the part after the # sign is missing.'],
+    ta:['இந்த லிங்கில் பாஸ்புக் தகவல் இல்லை.','கண்ட்ராக்டரிடம் பாஸ்புக் லிங்கை மீண்டும் அனுப்பச் சொல்லுங்கள் — # குறியீட்டுக்குப் பின்னுள்ள பகுதி இல்லை.']
+  },
+  damaged: {
+    en:['This passbook link is damaged.','The link was probably cut short when it was forwarded. Please ask for a fresh link \u2014 copy it in full, including everything after the # sign.'],
+    ta:['இந்த பாஸ்புக் லிங்க் சேதமடைந்துள்ளது.','அனுப்பும்போது லிங்க் குறைந்திருக்கலாம். புதிய லிங்க் கேளுங்கள் — # குறியீட்டுக்குப் பின்னுள்ள அனைத்தையும் முழுமையாக காப்பி செய்யவும்.']
+  },
+  unrecognised: {
+    en:['Unrecognised passbook link.','This does not look like a BuildLedger passbook link.'],
+    ta:['அடையாளம் காணப்படவில்லை.','இது BuildLedger பாஸ்புக் லிங்காக தெரியவில்லை.']
+  }
+};
+function fail(key){
+  var m = (FAILMSG[key] && FAILMSG[key][LANG]) || (FAILMSG[key] && FAILMSG[key].en) || ['Something went wrong.',''];
   $('gate').style.display='none';
   var a=$('app'); a.style.display='block';
   a.innerHTML = '<div class="err"><div style="font-size:44px;margin-bottom:12px">\u26A0\uFE0F</div>'
-    + '<div style="font-size:17px;font-weight:900;margin-bottom:8px">'+esc(title)+'</div>'
-    + '<div style="font-size:12.5px;color:var(--text3);line-height:1.7;font-weight:600">'+esc(msg)+'</div></div>';
+    + '<div style="font-size:17px;font-weight:900;margin-bottom:8px">'+esc(m[0])+'</div>'
+    + '<div style="font-size:12.5px;color:var(--text3);line-height:1.7;font-weight:600">'+esc(m[1])+'</div>'
+    + '<div class="tog" style="margin-top:18px">'
+    +   '<button onclick="location.reload()">\uD83D\uDD04 '+T('reload','Reload')+'</button>'
+    +   '<button onclick="setLang(\''+(LANG==='ta'?'en':'ta')+'\')" style="border-color:rgba(0,240,255,.35);color:var(--cyan)">'
+    +     (LANG==='ta'?'\uD83C\uDDEC\uD83C\uDDE7 English':'\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD')+'</button>'
+    + '</div></div>';
 }
 
 /* ── PIN gate ────────────────────────────────────────────── */
@@ -903,8 +925,8 @@ function paintLive(){
     el.style.background='rgba(255,176,32,.06)';
     el.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:var(--amber)"></span>'
       + '<span>' + (P.min
-          ? 'No internet \u2014 this card stores no details of its own. Please reconnect and reopen.'
-          : 'Offline \u2014 showing the details saved on this card ('+fmtD(P.d)+')')
+          ? T('minCardOffline','No internet \u2014 this card stores no details of its own. Please reconnect and reopen.')
+          : T('snapshotOffline','Offline \u2014 showing the details saved on this card')+' ('+fmtD(P.d)+')')
       + '</span>';
   } else {
     el.style.display='none';
@@ -1095,7 +1117,7 @@ function render(){
   }
 
   /* ── retention ── */
-  if(K.retHeld>0){
+  if(K.retHeld>0 || (P.rt && num(P.rt[1])>0)){
     H += '<div class="sec"><div class="card in" style="border-color:rgba(0,240,255,.25);background:rgba(0,240,255,.05)">'
       + '<div style="font-size:10px;font-weight:900;letter-spacing:1.6px;color:var(--cyan);text-transform:uppercase;margin-bottom:6px">\uD83D\uDD12 '+T('retention','Retention Held')+'</div>'
       + '<div class="row"><span style="font-size:12px;color:var(--text3);font-weight:600">'
@@ -1112,7 +1134,11 @@ function render(){
     var st = K.plan.filter(function(s){ return s[0]===r[0]; })[0];
     allPays.push({d:r[1], a:num(r[2]), m:r[3]||'', t:'Stage', ref:r[4]||'', src:st?st[1]:''});
   });
-  allPays.sort(function(a,b){ return String(b.d||'').localeCompare(String(a.d||'')); });
+  allPays.forEach(function(p,i){ p._i = i; });
+  allPays.sort(function(a,b){
+    var byDate = String(b.d||'').localeCompare(String(a.d||''));
+    return byDate!==0 ? byDate : (a._i - b._i);
+  });
   window._ledger = allPays;
   if(allPays.length){
     H += '<div class="sec"><div class="stitle"><b style="color:var(--lime)">\uD83E\uDD1D '+T('paymentLedger','Payment Ledger')+'</b><span class="n">'+allPays.length+' '+T('entries','entries')+'</span></div>'
