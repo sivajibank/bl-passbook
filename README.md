@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -188,6 +189,26 @@ body{min-height:100vh;overflow-x:hidden;padding-bottom:env(safe-area-inset-botto
 .tbl .r{text-align:right}
 .pill{font-size:9.5px;font-weight:900;padding:2.5px 8px;border-radius:20px;white-space:nowrap;display:inline-block}
 .tot{display:flex;justify-content:space-between;padding:9px 8px;font-size:12.5px;font-weight:900;border-top:1.5px solid var(--b2);margin-top:2px}
+
+/* ── v3.2 customer actions ─────────────────────────── */
+.act{display:grid;grid-template-columns:1fr;gap:9px}
+@media(min-width:480px){.act{grid-template-columns:repeat(2,1fr)}}
+.abtn{display:flex;align-items:center;gap:10px;width:100%;padding:13px 14px;border-radius:14px;cursor:pointer;
+  background:var(--bg3);border:1px solid var(--b1);color:var(--text2);font:inherit;font-size:12.5px;font-weight:800;text-align:left}
+.abtn em{font-size:20px;font-style:normal}
+.abtn:active{transform:scale(.98)}
+.pbf{display:none;margin-top:10px}
+.pbf.on{display:block}
+.pbf label{display:block;font-size:9.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:var(--text4);margin:9px 0 5px}
+.pbf input,.pbf select,.pbf textarea{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:11px;border:1px solid var(--b2);
+  background:var(--bg3);color:var(--text);font:inherit;font-size:14px;font-weight:700}
+.pbf textarea{min-height:84px;resize:vertical}
+.pbf .send{margin-top:12px;width:100%;padding:13px;border-radius:12px;border:none;cursor:pointer;font:inherit;font-size:13.5px;font-weight:900;
+  background:linear-gradient(135deg,#25D366,#128C7E);color:#fff}
+.vorow{display:flex;gap:8px;margin-top:10px}
+.vorow button{flex:1;padding:10px;border-radius:11px;font:inherit;font-size:12px;font-weight:900;cursor:pointer;border:1px solid var(--b1);background:var(--bg3);color:var(--text2)}
+.vorow button.ok{border-color:rgba(0,229,160,.45);color:var(--mint);background:rgba(0,229,160,.08)}
+.pbhint{font-size:10.5px;color:var(--text4);font-weight:600;line-height:1.6;margin-top:8px}
 
 /* ── UPI ───────────────────────────────────────────── */
 .upi{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
@@ -470,7 +491,24 @@ var STR = {
     daysWord:'நாட்கள்',
     searchLedger:'பணம் தேடுக\u2026',
     noMatches:'பொருந்தும் பணம் இல்லை',
-    exportLedger:'ஏற்றுமதி'
+    exportLedger:'ஏற்றுமதி',
+    yourActions:'உங்கள் கோரிக்கைகள்',
+    pendingApproval:'உங்கள் ஒப்புதலுக்காக காத்திருக்கும் மாற்றங்கள்',
+    approve:'ஒப்புக்கொள்கிறேன்',
+    askAbout:'இதைப் பற்றி கேள்வி',
+    iPaid:'நான் பணம் செலுத்திவிட்டேன்',
+    raiseRequest:'கோரிக்கை / புகார் அனுப்ப',
+    amountPaid:'செலுத்திய தொகை',
+    payDate:'செலுத்திய தேதி',
+    payMode:'செலுத்திய முறை',
+    utr:'UTR / பரிவர்த்தனை எண்',
+    category:'வகை',
+    describe:'விவரமாக எழுதவும்',
+    sendWa:'வாட்ஸ்அப்பில் அனுப்பு',
+    keepCode:'கடைசி வரியை (#BL1…) நீக்க வேண்டாம் — அதன் மூலம் உங்கள் கோரிக்கை பதிவாகும்.',
+    actionsNote:'இந்த பொத்தான்கள் உங்கள் கட்டுமானதாரருக்கு வாட்ஸ்அப் செய்தியை தயார் செய்யும். அவர் சரிபார்த்த பிறகே கணக்கில் மாற்றம் வரும்.',
+    enterAmount:'தொகையை உள்ளிடவும்',
+    writeSomething:'உங்கள் கோரிக்கையை எழுதவும்'
   }
 };
 function T(k, en){
@@ -1045,6 +1083,87 @@ function calc(){
   };
 }
 
+/* ══ v3.2 CUSTOMER ACTIONS ════════════════════════════════════════════════
+   Each action opens WhatsApp to the contractor with a readable message and a
+   last line like  #BL1.pay.12.MFRGGZDF…  (base32, so WhatsApp formatting
+   cannot damage it). The contractor pastes the message into BuildLedger's
+   Customer Requests screen; nothing changes in the books until they act. */
+function b32(str){
+  var A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567', b = new TextEncoder().encode(str), bits = 0, val = 0, out = '';
+  for(var i=0;i<b.length;i++){ val = (val<<8) | b[i]; bits += 8; while(bits>=5){ out += A[(val>>>(bits-5)) & 31]; bits -= 5; } }
+  if(bits>0) out += A[(val<<(5-bits)) & 31];
+  return out;
+}
+function pbCode(kind, obj){ return '#BL1.'+kind+'.'+(Number(P.ci)||0)+'.'+b32(JSON.stringify(obj)); }
+function pbWa(text){
+  var co = P.co||{}, n = String(co.p||'').replace(/[^\d]/g,'');
+  if(n.length===10) n = '91'+n;
+  var url = 'https://wa.me/'+n+'?text='+encodeURIComponent(text);
+  var w = null; try{ w = window.open(url, '_blank'); }catch(e){}
+  if(!w) location.href = url;
+}
+function pbHead(){ var c = P.c||{}; return 'Hello '+((P.co||{}).n||'')+',\n\n'+(c.n?'This is '+c.n+(c.pr?' ('+c.pr+')':'')+'.\n':''); }
+function pbToggle(id){ var el = document.getElementById(id); if(el) el.classList.toggle('on'); }
+function pbVo(i, ok){
+  var v = (P.vp||[])[i]; if(!v) return;
+  if(ok){
+    pbWa(pbHead()+'I APPROVE the following change to my project:\n\n'+(v[1]?v[1]+' \u2014 ':'')+v[3]+'\nAmount: '+fmt(v[4])+'\n\n'+pbCode('voa',{id:v[0],no:v[1],t:v[3]}));
+  } else {
+    var q = prompt(T('askAbout','Your question about this change')+':', '');
+    if(q===null) return;
+    pbWa(pbHead()+'I have a question about '+(v[1]||'the change')+' "'+v[3]+'" ('+fmt(v[4])+'):\n\n'+q+'\n\n'+pbCode('voq',{id:v[0],no:v[1],t:v[3],q:String(q).slice(0,200)}));
+  }
+}
+function pbSendPay(){
+  var a = Number(($('pbAmt')||{}).value)||0;
+  if(!(a>0)){ alert(T('enterAmount','Please enter the amount you paid.')); return; }
+  var d = ($('pbDate')||{}).value||'', m = ($('pbMode')||{}).value||'', r = String(($('pbRef')||{}).value||'').trim();
+  pbWa(pbHead()+'I have made a payment for my project.\n\nAmount: '+fmt(a)+'\nDate: '+(d?fmtD(d):'today')+'\nMode: '+m+(r?'\nUTR / Ref: '+r:'')
+    +'\n\nPlease confirm receipt. Thank you.\n\n'+pbCode('pay',{a:a,d:d,m:m,r:r.slice(0,40)}));
+}
+function pbSendReq(){
+  var t = String(($('pbReq')||{}).value||'').trim();
+  if(!t){ alert(T('writeSomething','Please write your request.')); return; }
+  var cat = ($('pbCat')||{}).value||'Other';
+  pbWa(pbHead()+'Request / complaint \u2014 '+cat+':\n\n'+t+'\n\n'+pbCode('cmp',{c:cat,t:t.slice(0,400)}));
+}
+function actionsHtml(K){
+  var H = '<div class="sec noprint"><div class="stitle"><b style="color:var(--violet)">\uD83D\uDCE8 '+T('yourActions','Your requests')+'</b></div>';
+  if((P.vp||[]).length){
+    H += '<div class="card in" style="border-color:rgba(155,93,229,.35)"><div style="font-size:10px;font-weight:900;letter-spacing:1.4px;color:var(--violet);text-transform:uppercase;margin-bottom:6px">'
+      + T('pendingApproval','Changes waiting for your approval')+'</div>';
+    P.vp.forEach(function(v, i){
+      H += '<div style="padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">'
+        + '<div class="row"><div style="min-width:0"><div style="font-size:12.5px;font-weight:800">'+esc(v[3])+'</div>'
+        + '<div style="font-size:10px;color:var(--text4);font-weight:700;margin-top:2px">'+esc(v[1])+(hasD(v[2])?' \u00B7 '+fmtD(v[2]):'')+'</div></div>'
+        + '<span class="mono" style="font-weight:900;color:var(--violet);flex-shrink:0">'+(num(v[4])<0?'\u2212':'+')+fmt(Math.abs(num(v[4])))+'</span></div>'
+        + (v[5]?'<div style="font-size:11px;color:var(--text3);margin-top:5px;line-height:1.5">'+esc(v[5])+'</div>':'')
+        + '<div class="vorow"><button class="ok" onclick="pbVo('+i+',1)">\u2705 '+T('approve','Approve')+'</button><button onclick="pbVo('+i+',0)">\u2753 '+T('askAbout','Ask about this')+'</button></div></div>';
+    });
+    H += '</div>';
+  }
+  var today = todayD(), iso = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  H += '<div class="act">'
+    + '<div class="card in" style="margin:0"><button class="abtn" onclick="pbToggle(\'pbPayF\')"><em>\uD83D\uDCB8</em>'+T('iPaid','I have made a payment')+'</button>'
+    +   '<div class="pbf" id="pbPayF">'
+    +     '<label>'+T('amountPaid','Amount paid')+' (\u20B9)</label><input id="pbAmt" type="number" inputmode="decimal" min="0" value="'+(K.nextDue?Math.round(K.nextDue.amount)||'':'')+'"/>'
+    +     '<label>'+T('payDate','Date')+'</label><input id="pbDate" type="date" value="'+iso+'"/>'
+    +     '<label>'+T('payMode','Mode')+'</label><select id="pbMode"><option>GPay</option><option>PhonePe</option><option>UPI (Other)</option><option>Bank Transfer</option><option>Cheque</option><option>Cash</option></select>'
+    +     '<label>'+T('utr','UTR / reference no.')+'</label><input id="pbRef" maxlength="40" autocomplete="off"/>'
+    +     '<button class="send" onclick="pbSendPay()">\uD83D\uDCF2 '+T('sendWa','Send on WhatsApp')+'</button>'
+    +   '</div></div>'
+    + '<div class="card in" style="margin:0"><button class="abtn" onclick="pbToggle(\'pbReqF\')"><em>\uD83D\uDEE0\uFE0F</em>'+T('raiseRequest','Raise a request / complaint')+'</button>'
+    +   '<div class="pbf" id="pbReqF">'
+    +     '<label>'+T('category','Category')+'</label><select id="pbCat"><option>Work quality</option><option>Delay</option><option>Change request</option><option>Payment / billing</option><option>Site cleanliness / safety</option><option>Other</option></select>'
+    +     '<label>'+T('describe','Describe')+'</label><textarea id="pbReq" maxlength="400"></textarea>'
+    +     '<button class="send" onclick="pbSendReq()">\uD83D\uDCF2 '+T('sendWa','Send on WhatsApp')+'</button>'
+    +   '</div></div>'
+    + '</div>'
+    + '<div class="pbhint">'+T('actionsNote','These buttons prepare a WhatsApp message to your contractor. Nothing in your account changes until they confirm it.')+' '+T('keepCode','Please do not delete the last line (#BL1…) \u2014 it records your request.')+'</div>'
+    + '</div>';
+  return H;
+}
+
 /* ══ RENDER ═══════════════════════════════════════════════ */
 function render(){
   var c = P.c||{}, co = P.co||{}, K = calc();
@@ -1157,7 +1276,8 @@ function render(){
     var q   = 'pa='+encodeURIComponent(vpa)+'&pn='+pn+'&am='+encodeURIComponent(amt)+'&cu=INR&tn='+note;
     var waN = String(co.p||'').replace(/[^\d]/g,'');
     if(waN.length===10) waN='91'+waN;
-    var waMsg = encodeURIComponent('Hello '+(co.n||'')+',\n\nI have made a payment for my project *'+(c.pr||c.n||'')+'*.\n\nAmount: '+fmt(K.balance)+'\nUTR / Reference: \n\nPlease confirm receipt. Thank you.');
+    var waMsg = encodeURIComponent('Hello '+(co.n||'')+',\n\nI have made a payment for my project *'+(c.pr||c.n||'')+'*.\n\nAmount: '+fmt(K.balance)+'\nUTR / Reference: \n\nPlease confirm receipt. Thank you.'
+      + (P.o && P.o.a ? '\n\n'+pbCode('pay',{a:Math.round(K.balance*100)/100,m:'UPI'}) : ''));
     H += '<div class="sec noprint" id="payNowSec"><div class="stitle"><b style="color:var(--mint)">\uD83D\uDCB3 '+T('payNow','Pay Now')+'</b>'
       + '<span class="n">'+fmt(K.balance)+' '+T('due','due')+'</span></div>'
       + '<div class="upi">'
@@ -1437,6 +1557,9 @@ function render(){
     H += '</div></div>';
   }
 
+  /* ── v3.2 customer actions ──────────────────────────────────────────── */
+  if(P.o && P.o.a && co.p) H += actionsHtml(K);
+
   /* ── contact the contractor ──────────────────────────────────────────── */
   if(P.o && P.o.q && co.p){
     var cw = String(co.p).replace(/[^\d]/g,'');
@@ -1497,7 +1620,7 @@ function render(){
     + '<div style="margin-top:12px;font-size:10px;color:var(--text4);line-height:1.7">'
     + (hasD(P.d) ? 'This passbook is a snapshot taken on '+fmtD(P.d)+'.<br>' : 'This passbook is a snapshot of your project account.<br>')
     + 'For the latest position please contact your contractor.<br>'
-    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v3.1</span></div>'
+    + '<span style="opacity:.6">Powered by BuildLedger \u00B7 Passbook v3.2</span></div>'
     + '</div>';
 
   $('app').innerHTML = H;
