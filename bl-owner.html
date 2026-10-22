@@ -100,6 +100,24 @@ nav button em{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;heig
 .toast{position:fixed;left:50%;bottom:calc(150px + var(--safe-b));transform:translate(-50%,20px);opacity:0;z-index:70;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:13.5px;transition:all .3s var(--ease);max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--b2);border-top-color:var(--cyan);border-radius:50%;animation:rot .8s linear infinite;vertical-align:-3px}
+
+[hidden]{display:none!important}
+.field label.btn{display:flex;margin:0;font-size:14px;letter-spacing:0;text-transform:none;color:var(--text)}
+.top{gap:6px}.tt b{font-size:15.5px}
+.tap{cursor:pointer}.card.tap:active,.row.tap:active{opacity:.75}
+.seg4{flex-wrap:wrap}.seg4 button{flex:1 1 45%;font-size:13px;height:36px}
+.heard{margin:10px 0 0;padding:8px 12px;border-radius:10px;background:var(--bg4);color:var(--text2);font-size:13.5px}
+.pv{display:flex;align-items:center;gap:10px;margin-top:8px}.pv img{width:84px;height:84px;object-fit:cover;border-radius:12px;border:1px solid var(--b2)}
+.phg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ph{position:relative;padding:0;border-radius:12px;overflow:hidden;aspect-ratio:1;background:var(--bg4)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}.ph span{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px;font-size:10.5px;font-weight:700;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.7));text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+img.big{width:100%;border-radius:14px;display:block}
+#ptr{position:fixed;top:64px;left:50%;z-index:25;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--bg3);border:1px solid var(--b2);color:var(--cyan);font-size:20px;opacity:0;transform:translate(-50%,0);pointer-events:none;transition:opacity .2s}
+#ptr.go{opacity:1!important;animation:rot .8s linear infinite}
+#en-mic.rec{background:color-mix(in srgb,var(--coral) 20%,var(--bg4));animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.ro #fab{display:none!important}.ro-pill{vertical-align:1px;font-size:10.5px;padding:1px 7px}
+.row .btn.sm{flex:0 0 auto}
+.top .ib{width:36px;height:36px;font-size:16px}
 @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
@@ -122,7 +140,8 @@ nav button em{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;heig
 
 <header class="top hide" id="top">
   <div class="logo">🏗</div>
-  <div class="tt"><b id="co">BuildLedger</b><small id="upd">—</small></div>
+  <div class="tt"><b id="co">BuildLedger</b><small><span id="upd">—</span> <span class="pill ro-pill" id="ro-pill" hidden>👁 Partner</span></small></div>
+  <button class="ib" id="b-find" aria-label="Search">🔍</button>
   <button class="ib" id="b-ref" aria-label="Refresh">⟳</button>
   <button class="ib" id="b-al" aria-label="Alerts">🔔<em id="al-n" hidden></em></button>
   <button class="ib" id="b-set" aria-label="Settings">⚙</button>
@@ -146,6 +165,10 @@ nav button em{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;heig
 <div class="veil" id="veil"></div>
 <div class="sheet" id="sh-entry"></div>
 <div class="sheet" id="sh-set"></div>
+<div class="sheet" id="sh-cust"></div>
+<div class="sheet" id="sh-find"></div>
+<div class="sheet" id="sh-photo"></div>
+<div id="ptr">⟳</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -161,6 +184,12 @@ var ITER = 150000, $ = function(id){ return document.getElementById(id); };
 var CLEARED = Promise.resolve(), CFG = null, KEY = null, SNAP = null, LANG = 'en', VIEW = 'home', SENT = {};
 var LS = {get:function(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set:function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }, del:function(k){ try{ localStorage.removeItem(k); }catch(e){} }};
 var T = {
+  share:["Share today's summary",'இன்றைய சுருக்கத்தைப் பகிர்'], plan:['Due today & overdue','இன்று செய்ய வேண்டியவை'], leads:['Enquiries to follow up','பின்தொடர வேண்டிய விசாரணைகள்'],
+  photos:['Site photos','தள புகைப்படங்கள்'], labour:['Labour today','இன்றைய ஆட்கள்'], wages:['Wages due this week','இந்த வார சம்பளம்'], stock:['Stock running low','குறைந்த சரக்கு'], orders:['Orders waiting','காத்திருக்கும் ஆர்டர்கள்'],
+  billpaid:['Bill paid','பில் கட்டினேன்'], sitelog:['Site log','தள பதிவு'], which:['Which bill','எந்த பில்'], nobills:['No bills due right now','இப்போது பில்கள் இல்லை'], needpc:['Update BuildLedger on the computer to mark bills paid from here','இதற்கு கணினியில் BuildLedger-ஐ புதுப்பிக்கவும்'],
+  workers:['Workers on site','ஆட்கள்'], workdone:['Work done','செய்த வேலை'], photo:['Photo','புகைப்படம்'], addphoto:['Take or choose a photo','புகைப்படம் எடு / தேர்ந்தெடு'], nophoto:['Could not read that photo','புகைப்படத்தைப் படிக்க முடியவில்லை'],
+  speak:['Speak','பேசு'], listening:['Listening…','கேட்கிறது…'], novoice:['Voice typing is not available in this browser','இந்த உலாவியில் குரல் பதிவு இல்லை'], novoice2:['Did not catch that — try again','புரியவில்லை — மீண்டும் முயற்சிக்கவும்'], micno:['Allow the microphone for this page','மைக்ரோஃபோனை அனுமதிக்கவும்'],
+  call:['Call','அழை'], recent:['Recent payments','சமீபத்திய வரவுகள்'], findph:['Customer, vendor, bill, material…','வாடிக்கையாளர், விற்பனையாளர், பில்…'],
   gone:['This link no longer works — the phone view was switched off or the PIN was changed on the computer. Scan the new QR code from BuildLedger → 📱 Owner Phone.','இந்த இணைப்பு இனி வேலை செய்யாது — கணினியில் BuildLedger → 📱 Owner Phone-ல் புதிய QR-ஐ ஸ்கேன் செய்யவும்.'],
   nophone:['No phone number saved — send it from the computer','தொலைபேசி எண் இல்லை — கணினியிலிருந்து அனுப்பவும்'], pickp:['Choose the project','திட்டத்தைத் தேர்ந்தெடுக்கவும்'],
   home:['Today','இன்று'], money:['Money','பணம்'], sites:['Sites','தளங்கள்'], ok:['Approve','அனுமதி'], alerts:['Alerts','அறிவிப்புகள்'],
@@ -286,7 +315,7 @@ function bioUnlock(){
 function show(snap, live){
   SNAP = snap; LANG = LS.get('blo_lang') || (snap.ta ? 'ta' : 'en');
   $('lock').classList.add('hide'); ['top', 'nav', 'fab'].forEach(function(id){ $(id).classList.remove('hide'); }); $('main').classList.remove('hide');
-  $('co').textContent = snap.co || 'BuildLedger';
+  $('co').textContent = snap.co || 'BuildLedger'; document.body.classList.toggle('ro', snap.role === 'partner'); $('ro-pill').hidden = snap.role !== 'partner'; if(snap.phid !== (PHOTOS && PHOTOS._id)) PHOTOS = null;
   $('upd').textContent = L('upd') + ' ' + ago(snap.at);
   $('offline').classList.toggle('hide', !!live); $('offline').textContent = '📴 ' + L('off') + ' · ' + ago(snap.at);
   [].forEach.call(document.querySelectorAll('[data-l]'), function(e){ e.textContent = L(e.getAttribute('data-l')); });
@@ -304,70 +333,123 @@ function render(){ home(); money(); sites(); approvals(); alerts(); }
 function tile(c, label, val, sub, i, wide){ return '<div class="tile' + (wide ? ' wide' : '') + '" style="--c:' + c + ';--i:' + (i || 0) + '"><small>' + esc(label) + '</small><b>' + val + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>'; }
 function empty(icon){ return '<div class="empty"><span class="e">' + icon + '</span>' + esc(L('none')) + '</div>'; }
 
-/* 1 + 2 */
+/* ── what the computer can send (newer BuildLedger adds the optional parts) ──
+   cust   [{id, n, p, ph}]                       pays  {cid:[{d, a, m, s}]}
+   bills  [{id, cid, v, a, due, w, late, ph}]     leads {open, won, due:[{id, n, ph, w, st, next, val}]}
+   labour {sites:[{cid, n, c, who:[]}], due:[{n, a}], dueTot}
+   stock  {low:[{n, left, u, pct}], po:[{v, a, st, d}]}
+   phid   id of the separate locked photo record {p:[{cid, d, cap, src}]}
+   role   'owner' | 'partner' (partner: read only, no mailbox)                */
+function todayIso(){ return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+function RO(){ return !!(SNAP && SNAP.role === 'partner'); }
+function custOf(cid){ var c = (SNAP.cust || []).filter(function(x){ return String(x.id) === String(cid); })[0] || {id:cid, n:'—'}; if(!c.ph){ var o = (SNAP.owed || []).filter(function(x){ return String(x.cid) === String(cid); })[0]; if(o){ c.ph = o.ph; c.p = c.p || o.p; } } return c; }
+function tel(ph){ var p = String(ph || '').replace(/[^\d+]/g, ''); return p ? '<a class="btn sm" href="tel:' + esc(p) + '" aria-label="Call">📞</a>' : ''; }
+function sec(t, link){ return '<h2>' + esc(t) + (link || '') + '</h2>'; }
+
+/* 1 + 2 · Today */
+function dueToday(){
+  var t = todayIso(), out = [];
+  (SNAP.stages || []).forEach(function(c){ c.s.forEach(function(st){ var bal = st.a - st.got; if(bal > 0.5 && st.due && st.due <= t) out.push({ic:'🧱', t:c.n + ' — ' + st.n, s:(st.due < t ? L('late') + ' ' : L('due') + ' ') + fd(st.due), a:bal, late:st.due < t, cid:c.cid, dir:'in'}); }); });
+  (SNAP.bills || []).forEach(function(b){ if(b.due && b.due <= t) out.push({ic:'🧾', t:b.v, s:esc(b.w) + ' · ' + (b.due < t ? L('late') + ' ' : L('due') + ' ') + fd(b.due), a:b.a, late:b.due < t, ph:b.ph, dir:'out'}); });
+  ((SNAP.today || {}).appts || []).forEach(function(a){ out.push({ic:'🤝', t:a.who, s:(a.tm ? a.tm + ' · ' : '') + a.what}); });
+  ((SNAP.leads || {}).due || []).forEach(function(l){ if(l.next && l.next <= t) out.push({ic:'📞', t:l.n, s:(LANG === 'ta' ? 'விசாரணை' : 'Enquiry') + ' · ' + (l.w || ''), ph:l.ph}); });
+  return out;
+}
 function home(){
   var s = SNAP, d = s.today || {}, c = s.cash || {}, h = '';
+  var waiting = (s.queue || []).filter(function(x){ return !SENT['q' + x.id]; }).length;
   h += '<div class="tiles">' + tile('var(--mint)', L('rin'), rs(d.rev), fd(d.date), 0) + tile('var(--coral)', L('rout'), rs(d.cost), '', 1)
     + tile('var(--cyan)', L('wk'), String(d.workers || 0), (d.logs || []).length + ' ' + (LANG === 'ta' ? 'பதிவுகள்' : 'site log entr' + ((d.logs || []).length === 1 ? 'y' : 'ies')), 2)
-    + tile('var(--amber)', L('queue'), String((s.queue || []).filter(function(x){ return !SENT['q' + x.id]; }).length), '', 3) + '</div>';
-  if((d.logs || []).length || (d.appts || []).length){
-    h += '<h2>' + esc(L('logs')) + '</h2><div class="card">' + (d.logs || []).map(function(l){ return '<div class="row"><div class="ic">📓</div><div class="m"><b>' + esc(l.c || '—') + '</b><small>' + esc(l.w || '') + (l.n ? ' · ' + l.n + ' 👷' : '') + '</small></div></div>'; }).join('')
-      + (d.appts || []).map(function(a){ return '<div class="row"><div class="ic">🤝</div><div class="m"><b>' + esc(a.who) + '</b><small>' + esc((a.tm ? a.tm + ' · ' : '') + a.what) + '</small></div></div>'; }).join('') + '</div>';
+    + tile('var(--amber)', L('queue'), String(waiting), '', 3) + '</div>';
+  h += '<div class="btns" style="margin-top:12px"><button class="btn" id="share-day" style="flex:1">📤 ' + esc(L('share')) + '</button></div>';
+  var due = dueToday();
+  h += sec('☀️ ' + L('plan')) + '<div class="card">' + (due.length ? due.slice(0, 12).map(function(x){
+    return '<div class="row"' + (x.cid ? ' data-cust="' + x.cid + '"' : '') + '><div class="ic">' + x.ic + '</div><div class="m"><b>' + esc(x.t) + '</b><small' + (x.late ? ' class="bad"' : '') + '>' + x.s + '</small></div>'
+      + (x.a ? '<div class="a ' + (x.dir === 'in' ? 'good' : '') + '">' + rs(x.a) + '</div>' : '') + (x.ph ? tel(x.ph) : '') + '</div>'; }).join('') + (due.length > 12 ? '<div class="row"><small>+' + (due.length - 12) + '</small></div>' : '') : empty('🌤')) + '</div>';
+  if((d.logs || []).length){
+    h += sec(L('logs')) + '<div class="card">' + d.logs.map(function(l){ return '<div class="row"><div class="ic">📓</div><div class="m"><b>' + esc(l.c || '—') + '</b><small>' + esc(l.w || '') + (l.n ? ' · ' + l.n + ' 👷' : '') + '</small></div></div>'; }).join('') + '</div>';
   }
-  h += '<h2>' + esc(L('cash')) + '</h2>';
+  if(s.leads){
+    var ld = s.leads;
+    h += sec('🎯 ' + L('leads'), '<a>' + (ld.open || 0) + ' ' + (LANG === 'ta' ? 'திறந்தவை' : 'open') + (ld.won != null ? ' · ' + ld.won + ' ' + (LANG === 'ta' ? 'வென்றவை' : 'won') : '') + '</a>');
+    h += '<div class="card">' + ((ld.due || []).length ? ld.due.map(function(l){
+      var late = l.next && l.next < todayIso();
+      return '<div class="row"><div class="ic">🎯</div><div class="m"><b>' + esc(l.n) + '</b><small>' + esc([l.w, l.st].filter(Boolean).join(' · ')) + (l.next ? ' · <span class="' + (late ? 'bad' : '') + '">' + (LANG === 'ta' ? 'அழைக்க ' : 'call ') + fd(l.next) + '</span>' : '') + '</small></div>'
+        + (l.val ? '<div class="a">' + short(l.val) + '</div>' : '') + tel(l.ph) + (l.ph && !RO() ? '<button class="btn wa sm" data-lead="' + esc(l.id) + '">💬</button>' : '') + '</div>'; }).join('') : empty('🎯')) + '</div>';
+  }
+  h += sec(L('cash'));
   var accs = c.accs || [], tot = accs.reduce(function(a, x){ return a + x.b; }, 0);
   h += '<div class="tiles">' + (accs.length ? tile('var(--lime)', LANG === 'ta' ? 'மொத்தம்' : 'Total cash + bank', short(tot), accs.map(function(a){ return esc(a.n) + ' ' + short(a.b); }).join(' · '), 0, true)
       : tile('var(--text3)', LANG === 'ta' ? 'கணக்குகள்' : 'Accounts', '—', LANG === 'ta' ? 'கணக்குகள் அமைக்கப்படவில்லை' : 'Set up Accounts → Cash & Bank on the computer', 0, true))
     + tile('var(--coral)', L('out7'), short(c.out7 || 0), '', 1) + tile('var(--mint)', L('in7'), short(c.in7 || 0), '', 2) + '</div>';
   if((c.lines || []).length) h += '<div class="card" style="margin-top:10px">' + c.lines.slice(0, 8).map(function(l){ return '<div class="row"><div class="ic">' + (l.dir === 'in' ? '⬇' : '⬆') + '</div><div class="m"><b>' + esc(l.x) + '</b><small>' + fd(l.d) + (l.od ? ' · <span class="bad">' + L('late') + '</span>' : '') + '</small></div><div class="a ' + (l.dir === 'in' ? 'good' : 'bad') + '">' + rs(l.a) + '</div></div>'; }).join('') + '</div>';
   $('v-home').innerHTML = h;
+  $('share-day').onclick = shareDay;
 }
-/* 3 + 5 + 7 */
+/* 3 + 5 + 7 · Money */
 function money(){
   var s = SNAP, h = '', od = (s.owed || []);
-  var totOd = od.reduce(function(a, x){ return a + x.od; }, 0), tot = od.reduce(function(a, x){ return a + x.tot; }, 0);
-  h += '<div class="tiles">' + tile('var(--coral)', L('overdue'), short(totOd), (function(n){ return n + ' ' + (LANG === 'ta' ? 'பேர்' : n === 1 ? 'customer' : 'customers'); })(od.filter(function(x){ return x.od > 0; }).length), 0) + tile('var(--amber)', LANG === 'ta' ? 'ஒப்பந்த மீதம்' : 'Left on contracts', short(tot), LANG === 'ta' ? 'இன்னும் வர வேண்டியது' : 'still to come', 1) + '</div>';
-  h += '<h2>' + esc(L('owed')) + '</h2><div class="card">' + (od.length ? od.map(function(x, i){
+  var totOd = od.reduce(function(a, x){ return a + x.od; }, 0), tot = od.reduce(function(a, x){ return a + x.tot; }, 0), nOd = od.filter(function(x){ return x.od > 0; }).length;
+  h += '<div class="tiles">' + tile('var(--coral)', L('overdue'), short(totOd), nOd + ' ' + (LANG === 'ta' ? 'பேர்' : nOd === 1 ? 'customer' : 'customers'), 0) + tile('var(--amber)', LANG === 'ta' ? 'ஒப்பந்த மீதம்' : 'Left on contracts', short(tot), LANG === 'ta' ? 'இன்னும் வர வேண்டியது' : 'still to come', 1) + '</div>';
+  h += sec(L('owed')) + '<div class="card">' + (od.length ? od.map(function(x){
     var sent = SENT['w' + x.cid];
-    return '<div class="row"><div class="ic">👷</div><div class="m"><b>' + esc(x.n) + '</b><small>' + (x.od > 0 ? '<span class="bad">' + rs(x.od) + ' ' + L('overdue') + (x.days ? ' · ' + x.days + ' ' + L('days') : '') + '</span>' : esc(x.p)) + '</small></div>'
-      + '<div class="a">' + rs(x.tot) + '<small>' + (LANG === 'ta' ? 'மீதம்' : 'left on contract') + '</small>' + (x.msg && x.ph && x.od > 0 ? '<small><button class="btn wa sm" data-wa="' + x.cid + '">' + (sent ? '✓' : '💬 ' + L('remind')) + '</button></small>' : '') + '</div></div>';
+    return '<div class="row tap" data-cust="' + x.cid + '"><div class="ic">👷</div><div class="m"><b>' + esc(x.n) + ' ›</b><small>' + (x.od > 0 ? '<span class="bad">' + rs(x.od) + ' ' + L('overdue') + (x.days ? ' · ' + x.days + ' ' + L('days') : '') + '</span>' : esc(x.p)) + '</small></div>'
+      + '<div class="a">' + rs(x.tot) + '<small>' + (LANG === 'ta' ? 'மீதம்' : 'left on contract') + '</small>' + (x.msg && x.ph && x.od > 0 && !RO() ? '<small><button class="btn wa sm" data-wa="' + x.cid + '">' + (sent ? '✓' : '💬 ' + L('remind')) + '</button></small>' : '') + '</div></div>';
   }).join('') : empty('🎉')) + '</div>';
   var b = s.bills || [];
-  h += '<h2>' + esc(L('bills')) + '</h2><div class="card">' + (b.length ? b.map(function(x){ return '<div class="row"><div class="ic">🧾</div><div class="m"><b>' + esc(x.v) + '</b><small>' + esc(x.w) + ' · ' + (x.late ? '<span class="bad">' + L('late') + ' ' + fd(x.due) + '</span>' : L('due') + ' ' + fd(x.due)) + '</small></div><div class="a">' + rs(x.a) + '</div></div>'; }).join('') : empty('✅')) + '</div>';
+  h += sec(L('bills')) + '<div class="card">' + (b.length ? b.map(function(x){ return '<div class="row"><div class="ic">🧾</div><div class="m"><b>' + esc(x.v) + '</b><small>' + esc(x.w) + ' · ' + (x.late ? '<span class="bad">' + L('late') + ' ' + fd(x.due) + '</span>' : L('due') + ' ' + fd(x.due)) + '</small></div><div class="a">' + rs(x.a) + '</div>' + tel(x.ph) + '</div>'; }).join('') : empty('✅')) + '</div>';
   if(s.pl){
     var p = s.pl, up = p.lm.p ? Math.round((p.tm.p - p.lm.p) / Math.abs(p.lm.p) * 100) : null;
-    h += '<h2>' + esc(L('pl')) + '</h2><div class="tiles">' + tile(p.tm.p >= 0 ? 'var(--mint)' : 'var(--coral)', L('tm'), short(p.tm.p), L('recv') + ' ' + short(p.tm.rev) + ' · ' + L('spent2') + ' ' + short(p.tm.cost) + (up != null ? ' · ' + (up >= 0 ? '▲' : '▼') + Math.abs(up) + '%' : ''), 0, true)
+    h += sec(L('pl')) + '<div class="tiles">' + tile(p.tm.p >= 0 ? 'var(--mint)' : 'var(--coral)', L('tm'), short(p.tm.p), L('recv') + ' ' + short(p.tm.rev) + ' · ' + L('spent2') + ' ' + short(p.tm.cost) + (up != null ? ' · ' + (up >= 0 ? '▲' : '▼') + Math.abs(up) + '%' : ''), 0, true)
       + tile(p.lm.p >= 0 ? 'var(--mint)' : 'var(--coral)', L('lm'), short(p.lm.p), L('recv') + ' ' + short(p.lm.rev) + ' · ' + L('spent2') + ' ' + short(p.lm.cost), 1, true) + '</div>';
     if((p.by || []).length) h += '<div class="card" style="margin-top:10px">' + p.by.map(function(x){ return '<div class="row"><div class="ic">🏗</div><div class="m"><b>' + esc(x.n) + '</b><small>' + L('recv') + ' ' + rs(x.rev) + ' · ' + L('spent2') + ' ' + rs(x.cost) + '</small></div><div class="a ' + (x.p >= 0 ? 'good' : 'bad') + '">' + rs(x.p) + '</div></div>'; }).join('') + '</div>';
   }
   $('v-money').innerHTML = h;
 }
-/* 4 + 6 */
-function sites(){
-  var s = SNAP, h = '<h2>' + esc(L('proj')) + '</h2>';
-  h += (s.projects || []).map(function(p, i){
-    var pct = Math.max(0, Math.min(100, Number(p.pct) || 0)), c = p.late ? 'var(--coral)' : p.used != null && p.used > 90 ? 'var(--amber)' : 'var(--mint)';
-    return '<div class="card" style="--i:' + i + '"><div class="row"><div class="ic">🏗</div><div class="m"><b>' + esc(p.n) + '</b><small>' + esc(p.p) + '</small></div><div class="a" style="color:' + c + '">' + pct + '%<small>' + L('work') + '</small></div></div>'
-      + '<div class="bar" style="--c:' + c + '"><i style="width:' + pct + '%"></i></div>'
-      + '<div class="btns">' + (p.used != null ? '<span class="pill">' + p.used + '% ' + L('budget') + '</span>' : '') + (p.late ? '<span class="pill bad">' + p.late + ' ' + L('late') + '</span>' : '') + (p.owed ? '<span class="pill">' + L('owes') + ' ' + short(p.owed) + '</span>' : '') + '</div></div>';
-  }).join('') || '<div class="card">' + empty('🏗') + '</div>';
-  h += '<h2>' + esc(L('stages')) + '</h2>';
-  h += (s.stages || []).map(function(c, i){
-    var tot = c.s.reduce(function(a, x){ return a + x.a; }, 0), got = c.s.reduce(function(a, x){ return a + Math.min(x.a, x.got); }, 0);
-    return '<div class="card" style="--i:' + i + '"><div class="row"><div class="ic">🧱</div><div class="m"><b>' + esc(c.n) + '</b><small>' + rs(got) + ' / ' + rs(tot) + '</small></div><div class="a">' + (tot ? Math.round(got / tot * 100) : 0) + '%</div></div>'
-      + '<div class="bar" style="--c:var(--lime)"><i style="width:' + (tot ? got / tot * 100 : 0).toFixed(1) + '%"></i></div>'
-      + c.s.map(function(st){ var bal = st.a - st.got, late = bal > 0.5 && st.due && st.due < new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-        return '<div class="stg"><span>' + (bal <= 0.5 ? '✅ ' : late ? '⚠️ ' : '⏳ ') + esc(st.n) + '</span><b class="' + (bal <= 0.5 ? 'good' : late ? 'bad' : '') + '">' + (bal <= 0.5 ? rs(st.a) : rs(bal) + ' ' + L('left')) + '</b>' + (st.due ? '<small>' + L('due') + ' ' + fd(st.due) + '</small>' : '') + '</div>'; }).join('') + '</div>';
-  }).join('') || '<div class="card">' + empty('🧱') + '</div>';
-  $('v-sites').innerHTML = h;
+/* 4 + 6 · Sites: projects, stages, labour, stock, photos */
+function projCard(p, i){
+  var pct = Math.max(0, Math.min(100, Number(p.pct) || 0)), c = p.late ? 'var(--coral)' : p.used != null && p.used > 90 ? 'var(--amber)' : 'var(--mint)';
+  return '<div class="card tap" data-cust="' + p.cid + '" style="--i:' + i + '"><div class="row"><div class="ic">🏗</div><div class="m"><b>' + esc(p.n) + ' ›</b><small>' + esc(p.p) + '</small></div><div class="a" style="color:' + c + '">' + pct + '%<small>' + L('work') + '</small></div></div>'
+    + '<div class="bar" style="--c:' + c + '"><i style="width:' + pct + '%"></i></div>'
+    + '<div class="btns">' + (p.used != null ? '<span class="pill' + (p.used > 100 ? ' bad' : '') + '">' + p.used + '% ' + L('budget') + '</span>' : '') + (p.late ? '<span class="pill bad">' + p.late + ' ' + L('late') + '</span>' : '') + (p.owed ? '<span class="pill">' + L('owes') + ' ' + short(p.owed) + '</span>' : '') + '</div></div>';
 }
+function stageRows(c){
+  var t = todayIso();
+  return c.s.map(function(st){ var bal = st.a - st.got, late = bal > 0.5 && st.due && st.due < t;
+    return '<div class="stg"><span>' + (bal <= 0.5 ? '✅ ' : late ? '⚠️ ' : '⏳ ') + esc(st.n) + '</span><b class="' + (bal <= 0.5 ? 'good' : late ? 'bad' : '') + '">' + (bal <= 0.5 ? rs(st.a) : rs(bal) + ' ' + L('left')) + '</b>' + (st.due ? '<small>' + L('due') + ' ' + fd(st.due) + '</small>' : '') + '</div>'; }).join('');
+}
+function stageCard(c, i){
+  var tot = c.s.reduce(function(a, x){ return a + x.a; }, 0), got = c.s.reduce(function(a, x){ return a + Math.min(x.a, x.got); }, 0);
+  return '<div class="card tap" data-cust="' + c.cid + '" style="--i:' + i + '"><div class="row"><div class="ic">🧱</div><div class="m"><b>' + esc(c.n) + ' ›</b><small>' + rs(got) + ' / ' + rs(tot) + '</small></div><div class="a">' + (tot ? Math.round(got / tot * 100) : 0) + '%</div></div>'
+    + '<div class="bar" style="--c:var(--lime)"><i style="width:' + (tot ? got / tot * 100 : 0).toFixed(1) + '%"></i></div>' + stageRows(c) + '</div>';
+}
+function sites(){
+  var s = SNAP, h = sec(L('proj'));
+  h += (s.projects || []).map(projCard).join('') || '<div class="card">' + empty('🏗') + '</div>';
+  if(s.phid) h += sec('📷 ' + L('photos')) + '<div class="card" id="ph-all">' + photoGrid(null) + '</div>';
+  if(s.labour){
+    var lb = s.labour;
+    h += sec('👷 ' + L('labour')) + '<div class="card">' + ((lb.sites || []).length ? lb.sites.map(function(x){ return '<div class="row"><div class="ic">👷</div><div class="m"><b>' + esc(x.n) + '</b><small>' + esc((x.who || []).slice(0, 8).join(', ') + ((x.who || []).length > 8 ? ' +' + (x.who.length - 8) : '')) + '</small></div><div class="a">' + (x.c || 0) + '<small>' + (LANG === 'ta' ? 'பேர்' : 'present') + '</small></div></div>'; }).join('') : empty('👷'))
+      + ((lb.due || []).length ? '<div class="row"><div class="ic">💵</div><div class="m"><b>' + esc(L('wages')) + '</b><small>' + esc(lb.due.slice(0, 6).map(function(w){ return w.n + ' ' + rs(w.a); }).join(' · ')) + (lb.due.length > 6 ? ' +' + (lb.due.length - 6) : '') + '</small></div><div class="a bad">' + rs(lb.dueTot != null ? lb.dueTot : lb.due.reduce(function(a, w){ return a + w.a; }, 0)) + '</div></div>' : '') + '</div>';
+  }
+  if(s.stock){
+    var sk = s.stock;
+    h += sec('📦 ' + L('stock')) + '<div class="card">' + ((sk.low || []).length ? sk.low.map(function(x){ var pc = Math.max(0, Math.min(100, Number(x.pct) || 0)); return '<div class="row"><div class="ic">📦</div><div class="m"><b>' + esc(x.n) + '</b><small>' + esc(x.left + ' ' + (x.u || '')) + ' ' + L('left') + '</small><div class="bar" style="--c:' + (pc < 20 ? 'var(--coral)' : 'var(--amber)') + '"><i style="width:' + pc + '%"></i></div></div></div>'; }).join('') : empty('📦'))
+      + ((sk.po || []).length ? '<div class="row"><div class="m"><b>' + esc(L('orders')) + '</b></div></div>' + sk.po.map(function(x){ return '<div class="row"><div class="ic">🛒</div><div class="m"><b>' + esc(x.v) + '</b><small>' + esc([x.st, x.d ? fd(x.d) : ''].filter(Boolean).join(' · ')) + '</small></div><div class="a">' + rs(x.a) + '</div></div>'; }).join('') : '') + '</div>';
+  }
+  h += sec(L('stages'));
+  h += (s.stages || []).map(stageCard).join('') || '<div class="card">' + empty('🧱') + '</div>';
+  $('v-sites').innerHTML = h;
+  if(s.phid && !PHOTOS) loadPhotos();
+}
+
 /* 8 */
 var JT = {chase:'💰', stagepaid:'🏁', stock:'📦', wages:'👷', bills:'🧾', checkup:'🩺', monthly:'📊', watch:'👀', passbook:'📘', phone:'📱'};
 function approvals(){
   var q = SNAP.queue || [], h = '<h2>' + esc(L('queue')) + '</h2>';
   h += q.length ? q.map(function(x, i){
     var st = SENT['q' + x.id];
-    var acts = st ? '<div class="done-note">' + esc(st) + '</div>'
+    var acts = RO() ? '' : st ? '<div class="done-note">' + esc(st) + '</div>'
       : x.k === 'wa' && x.ph ? '<div class="btns"><button class="btn wa" data-q="' + x.id + '" data-how="wa">💬 ' + (LANG === 'ta' ? 'WhatsApp-ல் அனுப்பு' : 'Send on WhatsApp') + '</button><button class="btn sm" data-q="' + x.id + '" data-how="skip">' + L('skip') + '</button></div>'
       : x.k === 'do' ? '<div class="btns"><button class="btn pri" data-q="' + x.id + '" data-how="do">✅ ' + L('approve') + '</button><button class="btn sm" data-q="' + x.id + '" data-how="skip">' + L('skip') + '</button></div>'
       : '<div class="btns"><span class="pill">💻 ' + esc(x.k === 'wa' ? L('nophone') : L('pc')) + '</span><button class="btn sm" data-q="' + x.id + '" data-how="skip">' + L('skip') + '</button></div>';
@@ -431,36 +513,216 @@ document.addEventListener('click', function(e){
   var n = e.target.closest('nav button'); if(n){ go(n.getAttribute('data-v')); return; }
 });
 
-/* ── 10 · quick entry ──────────────────────────────────────────────── */
-var ENT = {kind:'exp'};
+/* ── 10 · quick entry: spent, received, bill paid, site log — by hand, photo or voice ── */
+var ENT = {kind:'exp'}, IMG = null;
 function sheet(id, on){ $(id).classList.toggle('on', on); $('veil').classList.toggle('on', on || !!document.querySelector('.sheet.on')); }
 $('veil').onclick = function(){ [].forEach.call(document.querySelectorAll('.sheet.on'), function(s){ s.classList.remove('on'); }); $('veil').classList.remove('on'); };
-function entrySheet(){
-  var cs = SNAP.cust || [], today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  $('sh-entry').innerHTML = '<div class="grab"></div><h3>＋ ' + esc(L('entry')) + '</h3>'
-    + '<div class="seg" id="en-k"><button data-k="exp" class="' + (ENT.kind === 'exp' ? 'on' : '') + '">💸 ' + esc(L('spent')) + '</button><button data-k="rec" class="' + (ENT.kind === 'rec' ? 'on' : '') + '">💰 ' + esc(L('got')) + '</button></div>'
-    + '<div class="field" style="margin-top:14px"><label>' + esc(L('amt')) + '</label><input id="en-amt" type="number" inputmode="decimal" min="1" step="any" placeholder="0"></div>'
-    + '<div class="field"><label>' + esc(L('proj1')) + '</label><select id="en-c">' + (ENT.kind === 'exp' ? '<option value="">' + esc(L('company')) + '</option>' : cs.length ? '' : '<option value="">' + esc(L('none')) + '</option>') + cs.map(function(c){ return '<option value="' + c.id + '">' + esc(c.n) + '</option>'; }).join('') + '</select></div>'
-    + (ENT.kind === 'rec' ? '<div class="field"><label>' + esc(L('against')) + '</label><select id="en-s"></select></div>' : '')
-    + '<div class="field"><label>' + esc(L('mode')) + '</label><div class="seg" id="en-m">' + ['Cash', 'GPay', 'Bank Transfer', 'Cheque'].map(function(m, i){ return '<button data-m="' + m + '" class="' + (i ? '' : 'on') + '">' + m.replace('Bank Transfer', 'Bank') + '</button>'; }).join('') + '</div></div>'
-    + '<div class="field"><label>' + esc(L('note')) + '</label><input id="en-n" maxlength="120" placeholder="' + (ENT.kind === 'exp' ? 'Cement 50 bags' : 'Stage 3') + '"></div>'
-    + '<div class="field"><label>' + esc(L('date')) + '</label><input id="en-d" type="date" value="' + today + '"></div>'
-    + '<button class="btn pri" id="en-go" style="width:100%;height:50px;margin-top:6px">📨 ' + esc(L('send')) + '</button>'
+function opts(list, sel){ return list.map(function(c){ return '<option value="' + esc(c.id) + '"' + (String(c.id) === String(sel) ? ' selected' : '') + '>' + esc(c.n) + '</option>'; }).join(''); }
+function entrySheet(pre){
+  pre = pre || {};
+  var cs = SNAP.cust || [], k = ENT.kind, bills = (SNAP.bills || []).filter(function(b){ return b.id != null; });
+  var kinds = [['exp', '💸 ' + L('spent')], ['rec', '💰 ' + L('got')], ['paid', '🧾 ' + L('billpaid')], ['log', '📓 ' + L('sitelog')]];
+  var h = '<div class="grab"></div><h3 style="display:flex;align-items:center;gap:8px">＋ ' + esc(L('entry')) + (SR() && (k === 'exp' || k === 'rec') ? '<button class="btn sm" id="en-mic" style="margin-left:auto">🎤 ' + esc(L('speak')) + '</button>' : '') + '</h3>'
+    + '<div class="seg seg4" id="en-k">' + kinds.map(function(x){ return '<button data-k="' + x[0] + '" class="' + (k === x[0] ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</div><div id="en-heard" class="heard hide"></div>';
+  if(k === 'paid'){
+    h += bills.length ? '<div class="field" style="margin-top:14px"><label>' + esc(L('which')) + '</label><select id="en-b">' + bills.map(function(b){ return '<option value="' + esc(b.id) + '|' + esc(b.cid == null ? '' : b.cid) + '">' + esc(b.v + ' — ' + rs(b.a) + ' · ' + b.w + (b.late ? ' · ' + L('late') : '')) + '</option>'; }).join('') + '</select></div>'
+      : '<div class="card" style="margin-top:14px">' + esc(bills.length || !(SNAP.bills || []).length ? L('nobills') : L('needpc')) + '</div>';
+  } else if(k === 'log'){
+    h += '<div class="field" style="margin-top:14px"><label>' + esc(L('proj1')) + '</label><select id="en-c">' + opts(cs, pre.cid) + '</select></div>'
+      + '<div class="field"><label>' + esc(L('workers')) + '</label><input id="en-w" type="number" inputmode="numeric" min="0" placeholder="0"></div>'
+      + '<div class="field"><label>' + esc(L('workdone')) + '</label><textarea id="en-n" rows="2" maxlength="300" placeholder="' + (LANG === 'ta' ? 'முதல் தள செங்கல் வேலை' : 'Brickwork first floor') + '"></textarea></div>';
+  } else {
+    h += '<div class="field" style="margin-top:14px"><label>' + esc(L('amt')) + '</label><input id="en-amt" type="number" inputmode="decimal" min="1" step="any" placeholder="0" value="' + esc(pre.amt || '') + '"></div>'
+      + '<div class="field"><label>' + esc(L('proj1')) + '</label><select id="en-c">' + (k === 'exp' ? '<option value="">' + esc(L('company')) + '</option>' : cs.length ? '' : '<option value="">' + esc(L('none')) + '</option>') + opts(cs, pre.cid) + '</select></div>'
+      + (k === 'rec' ? '<div class="field"><label>' + esc(L('against')) + '</label><select id="en-s"></select></div>' : '')
+      + '<div class="field"><label>' + esc(L('note')) + '</label><input id="en-n" maxlength="120" placeholder="' + (k === 'exp' ? 'Cement 50 bags' : 'Stage 3') + '"></div>';
+  }
+  if(k !== 'log') h += '<div class="field"><label>' + esc(L('mode')) + '</label><div class="seg" id="en-m">' + ['Cash', 'GPay', 'Bank Transfer', 'Cheque'].map(function(m, i){ return '<button data-m="' + m + '" class="' + (i ? '' : 'on') + '">' + m.replace('Bank Transfer', 'Bank') + '</button>'; }).join('') + '</div></div>';
+  if(k === 'exp' || k === 'log') h += '<div class="field"><label>' + esc(L('photo')) + '</label><label class="btn" style="width:100%;height:46px" for="en-f">📷 ' + esc(L('addphoto')) + '</label><input id="en-f" type="file" accept="image/*" capture="environment" hidden><div id="en-pv" class="pv"></div></div>';
+  h += '<div class="field"><label>' + esc(L('date')) + '</label><input id="en-d" type="date" value="' + todayIso() + '"></div>'
+    + '<button class="btn pri" id="en-go" style="width:100%;height:50px;margin-top:6px"' + (k === 'paid' && !bills.length ? ' disabled' : '') + '>📨 ' + esc(L('send')) + '</button>'
     + '<p style="color:var(--text3);font-size:12.5px;margin-top:10px;text-align:center">' + (LANG === 'ta' ? 'கணினியில் மேஸ்திரி ஏஜென்டில் அனுமதித்ததும் கணக்கில் சேரும்.' : 'It goes into the books once you approve it in Mestri Agent on your computer.') + '</p>';
+  $('sh-entry').innerHTML = h; IMG = null;
   $('en-k').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; ENT.kind = b.getAttribute('data-k'); entrySheet(); };
-  $('en-m').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; [].forEach.call($('en-m').children, function(x){ x.classList.toggle('on', x === b); }); };
+  if($('en-m')) $('en-m').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; setMode(b.getAttribute('data-m')); };
+  if($('en-mic')) $('en-mic').onclick = listen;
+  if($('en-f')) $('en-f').onchange = function(){ var f = this.files && this.files[0]; if(!f) return; $('en-pv').innerHTML = '<span class="spin"></span>'; shrink(f).then(function(d){ IMG = d; $('en-pv').innerHTML = '<img src="' + d + '" alt=""><button class="btn sm" id="en-px">✕</button>'; $('en-px').onclick = function(){ IMG = null; $('en-pv').innerHTML = ''; $('en-f').value = ''; }; }, function(){ $('en-pv').textContent = L('nophoto'); }); };
   function stages(){ var s = $('en-s'); if(!s) return; var c = (SNAP.stages || []).filter(function(x){ return String(x.cid) === $('en-c').value; })[0]; s.innerHTML = '<option value="">' + esc(L('general')) + '</option>' + (c ? c.s.filter(function(x){ return x.a - x.got > 0.5; }).map(function(x){ return '<option value="' + x.id + '">' + esc(x.n) + ' — ' + rs(x.a - x.got) + '</option>'; }).join('') : ''); if(s.options.length > 1) s.selectedIndex = 1; }
-  $('en-c').onchange = stages; stages();
+  if($('en-c')) $('en-c').onchange = stages; stages();
   $('en-go').onclick = function(){
-    var amt = Number($('en-amt').value); if(!(amt > 0)){ $('en-amt').focus(); return; }
-    if(ENT.kind === 'rec' && !$('en-c').value){ toast(L('pickp')); $('en-c').focus(); return; }
-    var m = document.querySelector('#en-m .on');
-    send({type:'entry', kind:ENT.kind, amt:amt, cid:$('en-c').value ? Number($('en-c').value) : null, sid:$('en-s') && $('en-s').value ? Number($('en-s').value) : null, mode:m ? m.getAttribute('data-m') : 'Cash', note:$('en-n').value.trim(), date:$('en-d').value});
-    sheet('sh-entry', false); toast('📨 ' + L('queued'));
+    var m = document.querySelector('#en-m .on'), mode = m ? m.getAttribute('data-m') : 'Cash', date = $('en-d').value, msg;
+    if(k === 'paid'){
+      var bv = ($('en-b') || {}).value; if(!bv) return; var bp = bv.split('|'), bill = bills.filter(function(b){ return String(b.id) === bp[0] && String(b.cid == null ? '' : b.cid) === bp[1]; })[0] || {};
+      msg = {type:'entry', kind:'billpaid', bid:bill.id, bcid:bill.cid == null ? null : bill.cid, amt:bill.a, v:bill.v, mode:mode, date:date};
+    } else if(k === 'log'){
+      var w = Number($('en-w').value) || 0, wd = $('en-n').value.trim(); if(!$('en-c').value){ toast(L('pickp')); return; } if(!w && !wd){ $('en-n').focus(); return; }
+      msg = {type:'entry', kind:'log', cid:Number($('en-c').value), workers:w, work:wd, date:date, img:IMG || undefined};
+    } else {
+      var amt = Number($('en-amt').value); if(!(amt > 0)){ $('en-amt').focus(); return; }
+      if(k === 'rec' && !$('en-c').value){ toast(L('pickp')); $('en-c').focus(); return; }
+      msg = {type:'entry', kind:k, amt:amt, cid:$('en-c').value ? Number($('en-c').value) : null, sid:$('en-s') && $('en-s').value ? Number($('en-s').value) : null, mode:mode, note:$('en-n').value.trim(), date:date, img:k === 'exp' && IMG ? IMG : undefined};
+    }
+    send(msg); sheet('sh-entry', false); toast('📨 ' + L('queued'));
   };
-  sheet('sh-entry', true); setTimeout(function(){ $('en-amt').focus(); }, 300);
+  sheet('sh-entry', true);
+  if(pre.voice) setTimeout(listen, 350); else if($('en-amt')) setTimeout(function(){ $('en-amt').focus(); }, 300);
 }
+function setMode(m){ if(!$('en-m')) return; [].forEach.call($('en-m').children, function(x){ x.classList.toggle('on', x.getAttribute('data-m') === m); }); }
 $('fab').onclick = function(){ ENT.kind = 'exp'; entrySheet(); };
+/* make a photo small enough to travel: longest side 1280px, about 250 KB */
+function shrink(file){
+  return new Promise(function(ok, no){
+    var u = URL.createObjectURL(file), im = new Image();
+    im.onload = function(){ URL.revokeObjectURL(u); var max = 1280, w = im.naturalWidth, h = im.naturalHeight, r = Math.min(1, max / Math.max(w, h)), c = document.createElement('canvas');
+      c.width = Math.round(w * r); c.height = Math.round(h * r); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      var q = 0.72, d = c.toDataURL('image/jpeg', q); while(d.length > 340000 && q > 0.3){ q -= 0.1; d = c.toDataURL('image/jpeg', q); } ok(d); };
+    im.onerror = function(){ URL.revokeObjectURL(u); no(new Error('bad image')); }; im.src = u;
+  });
+}
+
+/* ── 11 · voice: “Ramesh site cement 5000 cash” / “ரமேஷ் 50 ஆயிரம் ஜிபே வந்தது” ── */
+function SR(){ return window.SpeechRecognition || window.webkitSpeechRecognition || null; }
+var TA = {'க':'k','ங':'n','ச':'s','ஞ':'n','ட':'t','ண':'n','த':'t','ந':'n','ப':'p','ம':'m','ய':'y','ர':'r','ல':'l','வ':'v','ழ':'l','ள':'l','ற':'r','ன':'n','ஜ':'j','ஷ':'s','ஸ':'s','ஹ':'h'};
+function bones(w){
+  w = String(w || '');
+  if(/[஀-௿]/.test(w)){ var o = ''; for(var i = 0; i < w.length; i++){ var ch = TA[w[i]]; if(ch) o += ch; } w = o; }
+  else w = w.toLowerCase().replace(/[^a-z]/g, '').replace(/ksh/g, 'ts').replace(/ch/g, 's').replace(/([stkdpg])h/g, '$1').replace(/x/g, 'ks').replace(/[aeiouh]/g, '')
+    .replace(/d/g, 't').replace(/b/g, 'p').replace(/g/g, 'k').replace(/c/g, 'k').replace(/q/g, 'k').replace(/z/g, 'l').replace(/w/g, 'v').replace(/f/g, 'p');
+  return w.replace(/(.)\1+/g, '$1');
+}
+var NUMW = {thousand:1e3, 'ஆயிரம்':1e3, aayiram:1e3, ayiram:1e3, k:1e3, lakh:1e5, lakhs:1e5, lac:1e5, 'லட்சம்':1e5, latcham:1e5, lacs:1e5, crore:1e7, 'கோடி':1e7, hundred:100, 'நூறு':100};
+function parseVoice(text){
+  var t = ' ' + String(text).toLowerCase().replace(/,(?=\d{2,3}\b)/g, '').replace(/₹|rs\.?|rupees?|ரூபாய்/g, ' ') + ' ', out = {note:[]};
+  var m = /(\d+(?:\.\d+)?)\s*(thousand|ஆயிரம்|aayiram|ayiram|lakhs?|lacs?|லட்சம்|latcham|crore|கோடி|hundred|நூறு|k\b)?/.exec(t);
+  if(m){ out.amt = Math.round(Number(m[1]) * (m[2] ? NUMW[m[2].replace(/\s/g, '')] || 1 : 1)); t = t.replace(m[0], ' '); }
+  var modes = [['GPay', /g\s?pay|gpay|ஜி\s?பே|ஜிபே|phone\s?pe|போன்\s?பே|upi|யுபிஐ/], ['Bank Transfer', /\bbank\b|neft|rtgs|imps|transfer|வங்கி|பேங்க்/], ['Cheque', /cheque|check|செக்/], ['Cash', /\bcash\b|கேஷ்|காசு|ரொக்கம்/]];
+  modes.some(function(x){ if(x[1].test(t)){ out.mode = x[0]; t = t.replace(x[1], ' '); return true; } });
+  if(/received|\bgot\b|vandh|vanth|வந்த|வரவு|வாங்கின|kuduthaanga|கொடுத்தாங்க|paid me|advance from/.test(t)) out.kind = 'rec';
+  else if(/spent|paid|kuduthen|கொடுத்தேன்|செலவு|selavu|bought|vanginen/.test(t)) out.kind = 'exp';
+  t = t.replace(/received|\bgot\b|vandh\w*|vanth\w*|வந்த\S*|வரவு|வாங்கின\S*|kuduth\w*|கொடுத்\S*|spent|paid|செலவு|selavu|\bsite\b|சைட்|from|for|to|the|ku\b|கு\b/g, ' ');
+  var words = t.split(/\s+/).filter(Boolean), best = null;
+  (SNAP.cust || []).forEach(function(c){ var parts = String(c.n).split(/\s+/).map(bones).filter(function(b){ return b.length >= 2; });
+    words.forEach(function(w, i){ var b = bones(w); if(b.length >= 2 && parts.some(function(p){ return p === b || (b.length >= 3 && p.indexOf(b) === 0) || (p.length >= 3 && b.indexOf(p) === 0); })){ if(!best || b.length > best.len) best = {c:c, i:i, len:b.length}; } }); });
+  if(best){ out.cid = best.c.id; words.splice(best.i, 1); }
+  out.note = words.join(' ').replace(/\s+/g, ' ').trim();
+  return out;
+}
+function listen(){
+  var S = SR(); if(!S){ toast(L('novoice')); return; }
+  var r = new S(), btn = $('en-mic'); r.lang = LANG === 'ta' ? 'ta-IN' : 'en-IN'; r.interimResults = false; r.maxAlternatives = 1;
+  if(btn){ btn.classList.add('rec'); btn.innerHTML = '🔴 ' + esc(L('listening')); }
+  r.onresult = function(e){ var said = e.results[0][0].transcript, v = parseVoice(said);
+    if(v.kind && v.kind !== ENT.kind){ ENT.kind = v.kind; entrySheet(); }
+    $('en-heard').classList.remove('hide'); $('en-heard').textContent = '🎤 “' + said + '”';
+    if(v.amt && $('en-amt')) $('en-amt').value = v.amt;
+    if(v.cid != null && $('en-c')){ $('en-c').value = String(v.cid); $('en-c').onchange && $('en-c').onchange(); }
+    if(v.mode) setMode(v.mode);
+    if(v.note && $('en-n')) $('en-n').value = v.note.slice(0, 120);
+  };
+  r.onerror = function(e){ toast(e.error === 'not-allowed' ? L('micno') : L('novoice2')); };
+  r.onend = function(){ var b = $('en-mic'); if(b){ b.classList.remove('rec'); b.innerHTML = '🎤 ' + esc(L('speak')); } };
+  try{ r.start(); }catch(e){ toast(L('novoice2')); }
+}
+
+/* ── 1 · one customer, everything about them ───────────────────────── */
+function custSheet(cid){
+  var c = custOf(cid), o = (SNAP.owed || []).filter(function(x){ return String(x.cid) === String(cid); })[0], p = (SNAP.projects || []).filter(function(x){ return String(x.cid) === String(cid); })[0];
+  var st = (SNAP.stages || []).filter(function(x){ return String(x.cid) === String(cid); })[0], pays = ((SNAP.pays || {})[cid] || []), ph = c.ph || (o && o.ph);
+  var h = '<div class="grab"></div><h3>' + esc(c.n) + '</h3><div style="color:var(--text3);margin:-8px 0 12px">' + esc(c.p || (p && p.p) || (o && o.p) || '') + (ph ? ' · ' + esc(ph) : '') + '</div>'
+    + '<div class="btns" style="margin:0 0 14px">' + (ph ? '<a class="btn" href="tel:' + esc(String(ph).replace(/[^\d+]/g, '')) + '">📞 ' + esc(L('call')) + '</a><button class="btn wa" id="cs-wa">💬 WhatsApp</button>' : '') + (!RO() ? '<button class="btn pri" id="cs-rec">💰 ' + esc(L('got')) + '</button>' : '') + '</div>';
+  h += '<div class="tiles">' + tile('var(--amber)', LANG === 'ta' ? 'ஒப்பந்த மீதம்' : 'Left on contract', o ? short(o.tot) : '₹0', '', 0) + tile(o && o.od > 0 ? 'var(--coral)' : 'var(--mint)', L('overdue'), o ? short(o.od) : '₹0', o && o.days ? o.days + ' ' + L('days') : '', 1)
+    + (p ? tile('var(--cyan)', L('work'), Math.min(100, p.pct) + '%', p.late ? p.late + ' ' + L('late') : '', 2) + tile(p.used > 100 ? 'var(--coral)' : 'var(--lime)', L('budget'), p.used != null ? p.used + '%' : '—', p.bud ? short(p.spent) + ' / ' + short(p.bud) : '', 3) : '') + '</div>';
+  if(st) h += sec(L('stages')) + '<div class="card">' + stageRows(st) + '</div>';
+  if(pays.length) h += sec(L('recent')) + '<div class="card">' + pays.map(function(x){ return '<div class="row"><div class="ic">⬇</div><div class="m"><b>' + rs(x.a) + '</b><small>' + fd(x.d) + ' · ' + esc([x.m, x.s].filter(Boolean).join(' · ')) + '</small></div></div>'; }).join('') + '</div>';
+  if(SNAP.phid) h += sec('📷 ' + L('photos')) + '<div class="card" id="ph-c" data-c="' + esc(cid) + '">' + photoGrid(cid) + '</div>';
+  $('sh-cust').innerHTML = h;
+  if($('cs-wa')) $('cs-wa').onclick = function(){ wa(ph, o && o.msg && o.od > 0 ? o.msg : ''); };
+  if($('cs-rec')) $('cs-rec').onclick = function(){ sheet('sh-cust', false); ENT.kind = 'rec'; entrySheet({cid:cid}); };
+  [].forEach.call(document.querySelectorAll('.sheet.on'), function(s){ s.classList.remove('on'); });
+  sheet('sh-cust', true);
+  if(SNAP.phid && !PHOTOS) loadPhotos();
+}
+
+/* ── 2 · search ────────────────────────────────────────────────────── */
+function findSheet(){
+  $('sh-find').innerHTML = '<div class="grab"></div><input id="fd-q" type="search" placeholder="🔍 ' + esc(L('findph')) + '" autocomplete="off"><div id="fd-r" style="margin-top:12px"></div>';
+  var q = $('fd-q'); q.oninput = function(){ $('fd-r').innerHTML = findRows(q.value); };
+  sheet('sh-find', true); setTimeout(function(){ q.focus(); }, 300);
+}
+function hit(hay, q){ hay = String(hay || '').toLowerCase(); if(hay.indexOf(q) >= 0) return true; var b = bones(q); return b.length >= 3 && hay.split(/\s+/).some(function(w){ return bones(w).indexOf(b) === 0; }); }
+function findRows(raw){
+  var q = String(raw || '').trim().toLowerCase(); if(q.length < 2) return '';
+  var r = [], seen = {};
+  (SNAP.cust || []).concat((SNAP.owed || []).map(function(o){ return {id:o.cid, n:o.n, p:o.p, ph:o.ph}; })).forEach(function(c){ if(seen[c.id] || !(hit(c.n, q) || hit(c.p, q) || String(c.ph || '').indexOf(q) >= 0)) return; seen[c.id] = 1; r.push('<div class="row tap" data-cust="' + esc(c.id) + '"><div class="ic">👷</div><div class="m"><b>' + esc(c.n) + ' ›</b><small>' + esc(c.p || '') + '</small></div></div>'); });
+  (SNAP.bills || []).forEach(function(b){ if(hit(b.v, q) || hit(b.w, q)) r.push('<div class="row tap" data-go="money"><div class="ic">🧾</div><div class="m"><b>' + esc(b.v) + '</b><small>' + esc(b.w) + ' · ' + L('due') + ' ' + fd(b.due) + '</small></div><div class="a">' + rs(b.a) + '</div></div>'); });
+  ((SNAP.leads || {}).due || []).forEach(function(l){ if(hit(l.n, q) || hit(l.w, q)) r.push('<div class="row tap" data-go="home"><div class="ic">🎯</div><div class="m"><b>' + esc(l.n) + '</b><small>' + esc(l.w || '') + '</small></div>' + tel(l.ph) + '</div>'); });
+  ((SNAP.stock || {}).low || []).forEach(function(x){ if(hit(x.n, q)) r.push('<div class="row tap" data-go="sites"><div class="ic">📦</div><div class="m"><b>' + esc(x.n) + '</b><small>' + esc(x.left + ' ' + (x.u || '')) + ' ' + L('left') + '</small></div></div>'); });
+  (SNAP.queue || []).forEach(function(x){ if(hit(x.t, q)) r.push('<div class="row tap" data-go="ok"><div class="ic">✅</div><div class="m"><b>' + esc(x.t) + '</b><small>' + esc(x.d) + '</small></div></div>'); });
+  return r.length ? '<div class="card">' + r.slice(0, 40).join('') + '</div>' : empty('🔍');
+}
+
+/* ── 3 · share today ───────────────────────────────────────────────── */
+function dayText(){
+  var s = SNAP, d = s.today || {}, c = s.cash || {}, od = (s.owed || []).filter(function(x){ return x.od > 0; }), ta = LANG === 'ta';
+  var cash = (c.accs || []).reduce(function(a, x){ return a + x.b; }, 0), bills7 = (s.bills || []).reduce(function(a, b){ return a + b.a; }, 0);
+  var L2 = function(en, t){ return ta ? t : en; }, lines = ['*' + (s.co || 'BuildLedger') + ' — ' + fd(d.date || todayIso()) + '*', ''];
+  lines.push(L2('Received today: ', 'இன்று வரவு: ') + rs(d.rev), L2('Spent today: ', 'இன்று செலவு: ') + rs(d.cost));
+  if((c.accs || []).length) lines.push(L2('Cash + bank: ', 'பணம் + வங்கி: ') + rs(cash));
+  lines.push(L2('Going out in 7 days: ', '7 நாளில் செலவு: ') + rs(c.out7 || 0), L2('Coming in 7 days: ', '7 நாளில் வரவு: ') + rs(c.in7 || 0));
+  if(od.length) lines.push(L2('Overdue from customers: ', 'தாமத வரவு: ') + rs(od.reduce(function(a, x){ return a + x.od; }, 0)) + ' (' + od.length + ')');
+  if(bills7) lines.push(L2('Bills due soon: ', 'கட்ட வேண்டிய பில்கள்: ') + rs(bills7));
+  lines.push(L2('Workers on site: ', 'தளத்தில் ஆட்கள்: ') + (d.workers || 0));
+  (d.logs || []).slice(0, 5).forEach(function(l){ lines.push('• ' + l.c + (l.w ? ' — ' + l.w : '')); });
+  if(s.pl) lines.push('', L2('Profit this month: ', 'இந்த மாத லாபம்: ') + rs(s.pl.tm.p));
+  return lines.join('\n');
+}
+function shareDay(){
+  var t = dayText();
+  if(navigator.share) navigator.share({text:t}).catch(function(e){ if(!e || e.name !== 'AbortError') window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank'); });
+  else window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank');
+}
+
+/* ── 6 · site photos: a separate locked record, fetched only when needed ── */
+var PHOTOS = null, phBusy = false;
+function loadPhotos(){
+  if(phBusy || !SNAP || !SNAP.phid || !KEY) return; phBusy = true;
+  fetch(CFG.url + '/p/' + SNAP.phid, {cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function(t){ return openBlob(t, KEY); }).then(function(p){ PHOTOS = (p && p.p) || []; PHOTOS._id = SNAP.phid; }, function(){ PHOTOS = PHOTOS || []; })
+    .then(function(){ phBusy = false; if($('ph-all')) $('ph-all').innerHTML = photoGrid(null); if($('ph-c')) $('ph-c').innerHTML = photoGrid($('ph-c').getAttribute('data-c')); });
+}
+function photoGrid(cid){
+  if(!PHOTOS) return '<div class="empty"><span class="spin"></span></div>';
+  var list = PHOTOS.filter(function(p){ return cid == null || String(p.cid) === String(cid); });
+  if(!list.length) return empty('📷');
+  return '<div class="phg">' + list.slice(0, cid == null ? 18 : 30).map(function(p){ var i = PHOTOS.indexOf(p); return '<button class="ph" data-ph="' + i + '"><img src="' + esc(p.src) + '" alt="" loading="lazy"><span>' + esc((cid == null ? custOf(p.cid).n + ' · ' : '') + fd(p.d)) + '</span></button>'; }).join('') + '</div>';
+}
+function photoView(i){
+  var p = PHOTOS[i]; if(!p) return;
+  $('sh-photo').innerHTML = '<div class="grab"></div><img class="big" src="' + esc(p.src) + '" alt=""><div style="margin-top:10px"><b>' + esc(custOf(p.cid).n) + '</b> · ' + fd(p.d) + (p.cap ? '<div style="color:var(--text3)">' + esc(p.cap) + '</div>' : '') + '</div>';
+  sheet('sh-photo', true);
+}
+
+/* ── taps on the new parts ─────────────────────────────────────────── */
+document.addEventListener('click', function(e){
+  if(!SNAP) return;
+  if(e.target.closest('a,button:not(.ph),select,input')){
+    var ph = e.target.closest('[data-ph]'); if(ph){ photoView(Number(ph.getAttribute('data-ph'))); return; }
+    var ld = e.target.closest('[data-lead]'); if(ld){ var l = ((SNAP.leads || {}).due || []).filter(function(x){ return String(x.id) === ld.getAttribute('data-lead'); })[0]; if(l) wa(l.ph, (LANG === 'ta' ? 'வணக்கம் ' : 'Hello ') + l.n + ', '); }
+    return;
+  }
+  var ph2 = e.target.closest('[data-ph]'); if(ph2){ photoView(Number(ph2.getAttribute('data-ph'))); return; }
+  var c = e.target.closest('[data-cust]'); if(c){ custSheet(c.getAttribute('data-cust')); return; }
+  var g = e.target.closest('[data-go]'); if(g){ [].forEach.call(document.querySelectorAll('.sheet.on'), function(s){ s.classList.remove('on'); }); $('veil').classList.remove('on'); go(g.getAttribute('data-go')); }
+});
+$('b-find').onclick = findSheet;
+
+/* ── 4 · pull down to refresh ──────────────────────────────────────── */
+(function(){
+  var y0 = null, dy = 0, ind = $('ptr');
+  document.addEventListener('touchstart', function(e){ y0 = (window.scrollY <= 0 && !document.querySelector('.sheet.on') && KEY) ? e.touches[0].clientY : null; dy = 0; }, {passive:true});
+  document.addEventListener('touchmove', function(e){ if(y0 == null) return; dy = e.touches[0].clientY - y0; if(dy > 0){ ind.style.transform = 'translate(-50%,' + Math.min(70, dy / 2) + 'px) rotate(' + dy * 2 + 'deg)'; ind.style.opacity = Math.min(1, dy / 120); } }, {passive:true});
+  document.addEventListener('touchend', function(){ if(y0 == null) return; if(dy > 120){ ind.classList.add('go'); refresh(true); setTimeout(function(){ ind.classList.remove('go'); ind.style.opacity = 0; ind.style.transform = ''; }, 900); } else { ind.style.opacity = 0; ind.style.transform = ''; } y0 = null; });
+})();
 
 /* ── settings: language, theme, fingerprint, alerts, lock ──────────── */
 function setSheet(){
@@ -469,13 +731,13 @@ function setSheet(){
     + '<div class="field"><label>' + esc(L('lang')) + '</label><div class="seg" id="st-l"><button data-v="en" class="' + (LANG === 'en' ? 'on' : '') + '">English</button><button data-v="ta" class="' + (LANG === 'ta' ? 'on' : '') + '">தமிழ்</button></div></div>'
     + '<div class="field"><label>' + esc(L('theme')) + '</label><div class="seg" id="st-t">' + [['auto', 'Auto'], ['dark', '🌙'], ['light', '☀️']].map(function(x){ return '<button data-v="' + x[0] + '" class="' + (th === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div></div>'
     + '<div class="opt"><span>👆 ' + esc(L('bio')) + '<small>' + (bioOk() ? (LANG === 'ta' ? 'PIN இல்லாமல் திறக்க' : 'Open without typing the PIN') : 'Needs the page on https and a phone with a fingerprint or face lock') + '</small></span><button class="sw' + (bio ? ' on' : '') + '" id="st-bio"></button></div>'
-    + '<div class="opt"><span>🔔 ' + esc(L('notif')) + '<small>' + ('PushManager' in window ? (LANG === 'ta' ? 'பணம் வந்தால், தவணை முடிந்தால்…' : 'Money received, stage paid, over budget, approvals') : 'Add this page to your home screen first') + '</small></span><button class="sw' + (notif ? ' on' : '') + '" id="st-n"></button></div>'
+    + (RO() ? '' : '<div class="opt"><span>🔔 ' + esc(L('notif')) + '<small>' + ('PushManager' in window ? (LANG === 'ta' ? 'பணம் வந்தால், தவணை முடிந்தால்…' : 'Money received, stage paid, over budget, approvals') : 'Add this page to your home screen first') + '</small></span><button class="sw' + (notif ? ' on' : '') + '" id="st-n"></button></div>')
     + '<div class="opt"><span>🔐 ' + esc(L('lockopt')) + '<small>' + (LANG === 'ta' ? '5 நிமிடத்திற்கு மேல் மூடினால்' : 'After 5 minutes away') + '</small></span><button class="sw' + (lockOn ? ' on' : '') + '" id="st-lk"></button></div>'
     + '<div class="btns" style="margin-top:16px"><button class="btn" id="st-now">🔒 ' + esc(L('lockn')) + '</button><button class="btn" id="st-forget" style="color:var(--coral)">' + esc(L('forget')) + '</button></div>';
   $('st-l').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; LANG = b.getAttribute('data-v'); LS.set('blo_lang', LANG); show(SNAP, $('offline').classList.contains('hide')); setSheet(); };
   $('st-t').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; LS.set('blo_theme', b.getAttribute('data-v')); theme(); setSheet(); };
   $('st-bio').onclick = function(){ if(LS.get('blo_bio')){ LS.del('blo_bio'); setSheet(); return; } bioRegister().then(function(){ toast('👆 ' + (LANG === 'ta' ? 'விரல்ரேகை தயார்' : 'Fingerprint unlock is on')); setSheet(); }, function(e){ toast(e && e.message ? e.message : 'Could not set up'); }); };
-  $('st-n').onclick = function(){ if(LS.get('blo_push')) pushOff().then(setSheet); else pushOn().then(setSheet); };
+  if($('st-n')) $('st-n').onclick = function(){ if(LS.get('blo_push')) pushOff().then(setSheet); else pushOn().then(setSheet); };
   $('st-lk').onclick = function(){ LS.set('blo_lock', LS.get('blo_lock') === false); setSheet(); };
   $('st-now').onclick = function(){ sheet('sh-set', false); lock(); };
   $('st-forget').onclick = function(){ if(!confirm(LANG === 'ta' ? 'இந்த தொலைபேசியிலிருந்து அனைத்தையும் நீக்கவா?' : 'Remove everything from this phone? You will need the link and PIN again.')) return; pushOff(); ['blo_cfg', 'blo_blob', 'blo_bio', 'blo_out', 'blo_sent', 'blo_push', 'blo_alseen'].forEach(LS.del); kvClear(); location.reload(); };
