@@ -31,7 +31,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--cyan);bo
 .ib{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--bg3);border:1px solid var(--b1);font-size:17px;position:relative}
 .ib em{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--coral);color:#fff;font:800 11px/18px system-ui;font-style:normal;text-align:center;padding:0 4px}
 .offline{margin:10px 16px 0;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--amber) 14%,transparent);color:var(--amber);font-size:12.5px;font-weight:700}
-main{padding:14px 16px 24px;max-width:720px;margin:0 auto}
+main{padding:14px 16px 96px;max-width:720px;margin:0 auto}
 .view{display:none}.view.on{display:block;animation:in .35s var(--ease) both}
 h2{font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--text3);margin:22px 2px 10px;display:flex;justify-content:space-between;align-items:center}
 h2 a{color:var(--cyan);text-transform:none;letter-spacing:0;font-size:13px;text-decoration:none}
@@ -57,7 +57,7 @@ h2 a{color:var(--cyan);text-transform:none;letter-spacing:0;font-size:13px;text-
 .btn.wa{background:#25d366;color:#04210f;border:0}
 .btn.sm{height:34px;padding:0 12px;font-size:13px;border-radius:10px}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:800;background:var(--bg4);color:var(--text3)}
+.pill{display:inline-block;white-space:normal;line-height:1.35;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:800;background:var(--bg4);color:var(--text3)}
 .empty{text-align:center;color:var(--text3);padding:26px 10px}.empty .e{font-size:38px;display:block;margin-bottom:6px;animation:float 3.4s ease-in-out infinite}
 .stg{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-top:1px solid var(--b1);font-size:13.5px}
 .stg:first-of-type{border-top:0}.stg small{grid-column:1/-1;color:var(--text3);font-size:12px}
@@ -158,9 +158,11 @@ nav button em{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;heig
    applies them through Mestri Agent. Nothing here changes the books.
    ══════════════════════════════════════════════════════════════════════ */
 var ITER = 150000, $ = function(id){ return document.getElementById(id); };
-var CFG = null, KEY = null, SNAP = null, LANG = 'en', VIEW = 'home', SENT = {};
+var CLEARED = Promise.resolve(), CFG = null, KEY = null, SNAP = null, LANG = 'en', VIEW = 'home', SENT = {};
 var LS = {get:function(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set:function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }, del:function(k){ try{ localStorage.removeItem(k); }catch(e){} }};
 var T = {
+  gone:['This link no longer works — the phone view was switched off or the PIN was changed on the computer. Scan the new QR code from BuildLedger → 📱 Owner Phone.','இந்த இணைப்பு இனி வேலை செய்யாது — கணினியில் BuildLedger → 📱 Owner Phone-ல் புதிய QR-ஐ ஸ்கேன் செய்யவும்.'],
+  nophone:['No phone number saved — send it from the computer','தொலைபேசி எண் இல்லை — கணினியிலிருந்து அனுப்பவும்'], pickp:['Choose the project','திட்டத்தைத் தேர்ந்தெடுக்கவும்'],
   home:['Today','இன்று'], money:['Money','பணம்'], sites:['Sites','தளங்கள்'], ok:['Approve','அனுமதி'], alerts:['Alerts','அறிவிப்புகள்'],
   pin:['Enter your owner PIN','உங்கள் PIN-ஐ உள்ளிடவும்'], wrong:['Wrong PIN — try again','தவறான PIN'], wait:['Too many tries — wait','அதிக முயற்சி — காத்திருக்கவும்'],
   rin:['Received today','இன்று வரவு'], rout:['Spent today','இன்று செலவு'], wk:['Workers on site','தளத்தில் ஆட்கள்'], logs:['Site log today','இன்றைய பதிவு'],
@@ -214,18 +216,18 @@ function readLink(){
     var url = ''; try{ url = new TextDecoder().decode(unb64u(m[4])); }catch(e){}
     if(/^https:\/\/[^\s/]+/.test(url) || /^http:\/\/(localhost|127\.)/.test(url)){
       var c = {id:m[1], inbox:m[2], salt:m[3], url:url.replace(/\/+$/, '')}, old = LS.get('blo_cfg');
-      if(!old || old.id !== c.id || old.salt !== c.salt){ LS.del('blo_blob'); LS.del('blo_bio'); kvClear(); }
+      if(!old || old.id !== c.id || old.salt !== c.salt){ ['blo_blob', 'blo_bio', 'blo_out', 'blo_sent', 'blo_fails'].forEach(LS.del); fails = {n:0, until:0}; CLEARED = kvClear(); }
       LS.set('blo_cfg', c);
       try{ history.replaceState(null, '', location.pathname); }catch(e){}
     }
   }
   CFG = LS.get('blo_cfg');
-  if(CFG) kvSet('cfg', CFG);
+  if(CFG) CLEARED.then(function(){ kvSet('cfg', CFG); });
 }
 function fetchBlob(){
-  return fetch(CFG.url + '/p/' + CFG.id, {cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+  return fetch(CFG.url + '/p/' + CFG.id, {cache:'no-store'}).then(function(r){ if(r.status === 404) throw new Error('gone'); if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
     .then(function(t){ LS.set('blo_blob', {b:t, at:Date.now()}); return {b:t, live:true}; })
-    .catch(function(){ var c = LS.get('blo_blob'); if(c && c.b) return {b:c.b, live:false}; throw new Error('offline'); });
+    .catch(function(e){ if(e && e.message === 'gone'){ LS.del('blo_blob'); throw e; } var c = LS.get('blo_blob'); if(c && c.b) return {b:c.b, live:false}; throw new Error('offline'); });
 }
 
 /* ── lock screen ───────────────────────────────────────────────────── */
@@ -250,11 +252,12 @@ function tryPin(){
   Promise.all([keyP, fetchBlob()]).then(function(r){ return openBlob(r[1].b, r[0]).then(function(snap){ return {key:r[0], snap:snap, live:r[1].live}; }); })
     .then(function(x){
       fails = {n:0, until:0}; LS.set('blo_fails', fails); PIN = ''; dots();
-      KEY = x.key; kvSet('key', KEY);
+      KEY = x.key; CLEARED.then(function(){ kvSet('key', KEY); });
       show(x.snap, x.live);
     }, function(e){
       PIN = ''; dots();
       if(e && e.message === 'offline'){ $('lk-msg').textContent = 'No connection and no saved copy yet.'; return; }
+      if(e && e.message === 'gone'){ $('lk-msg').textContent = L('gone'); return; }
       fails.n++; if(fails.n >= 5){ fails.until = Date.now() + 30000 * Math.pow(2, Math.min(4, fails.n - 5)); }
       LS.set('blo_fails', fails);
       $('lk-msg').textContent = L('wrong'); $('dots').classList.remove('shake'); void $('dots').offsetWidth; $('dots').classList.add('shake');
@@ -306,7 +309,7 @@ function home(){
   var s = SNAP, d = s.today || {}, c = s.cash || {}, h = '';
   h += '<div class="tiles">' + tile('var(--mint)', L('rin'), rs(d.rev), fd(d.date), 0) + tile('var(--coral)', L('rout'), rs(d.cost), '', 1)
     + tile('var(--cyan)', L('wk'), String(d.workers || 0), (d.logs || []).length + ' ' + (LANG === 'ta' ? 'பதிவுகள்' : 'site log entr' + ((d.logs || []).length === 1 ? 'y' : 'ies')), 2)
-    + tile('var(--amber)', L('queue'), String((s.queue || []).length), '', 3) + '</div>';
+    + tile('var(--amber)', L('queue'), String((s.queue || []).filter(function(x){ return !SENT['q' + x.id]; }).length), '', 3) + '</div>';
   if((d.logs || []).length || (d.appts || []).length){
     h += '<h2>' + esc(L('logs')) + '</h2><div class="card">' + (d.logs || []).map(function(l){ return '<div class="row"><div class="ic">📓</div><div class="m"><b>' + esc(l.c || '—') + '</b><small>' + esc(l.w || '') + (l.n ? ' · ' + l.n + ' 👷' : '') + '</small></div></div>'; }).join('')
       + (d.appts || []).map(function(a){ return '<div class="row"><div class="ic">🤝</div><div class="m"><b>' + esc(a.who) + '</b><small>' + esc((a.tm ? a.tm + ' · ' : '') + a.what) + '</small></div></div>'; }).join('') + '</div>';
@@ -323,7 +326,7 @@ function home(){
 function money(){
   var s = SNAP, h = '', od = (s.owed || []);
   var totOd = od.reduce(function(a, x){ return a + x.od; }, 0), tot = od.reduce(function(a, x){ return a + x.tot; }, 0);
-  h += '<div class="tiles">' + tile('var(--coral)', L('overdue'), short(totOd), od.filter(function(x){ return x.od > 0; }).length + ' ' + (LANG === 'ta' ? 'பேர்' : 'customers'), 0) + tile('var(--amber)', LANG === 'ta' ? 'ஒப்பந்த மீதம்' : 'Left on contracts', short(tot), LANG === 'ta' ? 'இன்னும் வர வேண்டியது' : 'still to come', 1) + '</div>';
+  h += '<div class="tiles">' + tile('var(--coral)', L('overdue'), short(totOd), (function(n){ return n + ' ' + (LANG === 'ta' ? 'பேர்' : n === 1 ? 'customer' : 'customers'); })(od.filter(function(x){ return x.od > 0; }).length), 0) + tile('var(--amber)', LANG === 'ta' ? 'ஒப்பந்த மீதம்' : 'Left on contracts', short(tot), LANG === 'ta' ? 'இன்னும் வர வேண்டியது' : 'still to come', 1) + '</div>';
   h += '<h2>' + esc(L('owed')) + '</h2><div class="card">' + (od.length ? od.map(function(x, i){
     var sent = SENT['w' + x.cid];
     return '<div class="row"><div class="ic">👷</div><div class="m"><b>' + esc(x.n) + '</b><small>' + (x.od > 0 ? '<span class="bad">' + rs(x.od) + ' ' + L('overdue') + (x.days ? ' · ' + x.days + ' ' + L('days') : '') + '</span>' : esc(x.p)) + '</small></div>'
@@ -343,9 +346,9 @@ function money(){
 function sites(){
   var s = SNAP, h = '<h2>' + esc(L('proj')) + '</h2>';
   h += (s.projects || []).map(function(p, i){
-    var c = p.late ? 'var(--coral)' : p.used != null && p.used > 90 ? 'var(--amber)' : 'var(--mint)';
-    return '<div class="card" style="--i:' + i + '"><div class="row"><div class="ic">🏗</div><div class="m"><b>' + esc(p.n) + '</b><small>' + esc(p.p) + '</small></div><div class="a" style="color:' + c + '">' + p.pct + '%<small>' + L('work') + '</small></div></div>'
-      + '<div class="bar" style="--c:' + c + '"><i style="width:' + p.pct + '%"></i></div>'
+    var pct = Math.max(0, Math.min(100, Number(p.pct) || 0)), c = p.late ? 'var(--coral)' : p.used != null && p.used > 90 ? 'var(--amber)' : 'var(--mint)';
+    return '<div class="card" style="--i:' + i + '"><div class="row"><div class="ic">🏗</div><div class="m"><b>' + esc(p.n) + '</b><small>' + esc(p.p) + '</small></div><div class="a" style="color:' + c + '">' + pct + '%<small>' + L('work') + '</small></div></div>'
+      + '<div class="bar" style="--c:' + c + '"><i style="width:' + pct + '%"></i></div>'
       + '<div class="btns">' + (p.used != null ? '<span class="pill">' + p.used + '% ' + L('budget') + '</span>' : '') + (p.late ? '<span class="pill bad">' + p.late + ' ' + L('late') + '</span>' : '') + (p.owed ? '<span class="pill">' + L('owes') + ' ' + short(p.owed) + '</span>' : '') + '</div></div>';
   }).join('') || '<div class="card">' + empty('🏗') + '</div>';
   h += '<h2>' + esc(L('stages')) + '</h2>';
@@ -353,7 +356,7 @@ function sites(){
     var tot = c.s.reduce(function(a, x){ return a + x.a; }, 0), got = c.s.reduce(function(a, x){ return a + Math.min(x.a, x.got); }, 0);
     return '<div class="card" style="--i:' + i + '"><div class="row"><div class="ic">🧱</div><div class="m"><b>' + esc(c.n) + '</b><small>' + rs(got) + ' / ' + rs(tot) + '</small></div><div class="a">' + (tot ? Math.round(got / tot * 100) : 0) + '%</div></div>'
       + '<div class="bar" style="--c:var(--lime)"><i style="width:' + (tot ? got / tot * 100 : 0).toFixed(1) + '%"></i></div>'
-      + c.s.map(function(st){ var bal = st.a - st.got, late = bal > 0.5 && st.due && st.due < new Date().toISOString().slice(0, 10);
+      + c.s.map(function(st){ var bal = st.a - st.got, late = bal > 0.5 && st.due && st.due < new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
         return '<div class="stg"><span>' + (bal <= 0.5 ? '✅ ' : late ? '⚠️ ' : '⏳ ') + esc(st.n) + '</span><b class="' + (bal <= 0.5 ? 'good' : late ? 'bad' : '') + '">' + (bal <= 0.5 ? rs(st.a) : rs(bal) + ' ' + L('left')) + '</b>' + (st.due ? '<small>' + L('due') + ' ' + fd(st.due) + '</small>' : '') + '</div>'; }).join('') + '</div>';
   }).join('') || '<div class="card">' + empty('🧱') + '</div>';
   $('v-sites').innerHTML = h;
@@ -367,7 +370,7 @@ function approvals(){
     var acts = st ? '<div class="done-note">' + esc(st) + '</div>'
       : x.k === 'wa' && x.ph ? '<div class="btns"><button class="btn wa" data-q="' + x.id + '" data-how="wa">💬 ' + (LANG === 'ta' ? 'WhatsApp-ல் அனுப்பு' : 'Send on WhatsApp') + '</button><button class="btn sm" data-q="' + x.id + '" data-how="skip">' + L('skip') + '</button></div>'
       : x.k === 'do' ? '<div class="btns"><button class="btn pri" data-q="' + x.id + '" data-how="do">✅ ' + L('approve') + '</button><button class="btn sm" data-q="' + x.id + '" data-how="skip">' + L('skip') + '</button></div>'
-      : '<div class="btns"><span class="pill">💻 ' + esc(L('pc')) + '</span><button class="btn sm" data-q="' + x.id + '" data-how="skip">' + L('skip') + '</button></div>';
+      : '<div class="btns"><span class="pill">💻 ' + esc(x.k === 'wa' ? L('nophone') : L('pc')) + '</span><button class="btn sm" data-q="' + x.id + '" data-how="skip">' + L('skip') + '</button></div>';
     return '<div class="card" style="--i:' + i + '"><div class="row"><div class="ic">' + (JT[x.jt] || '🤖') + '</div><div class="m"><b style="white-space:normal">' + esc(x.t) + '</b><small>' + esc(x.d) + '</small></div></div>' + acts + '</div>';
   }).join('') : '<div class="card">' + empty('✅') + '</div>';
   $('v-ok').innerHTML = h;
@@ -437,7 +440,7 @@ function entrySheet(){
   $('sh-entry').innerHTML = '<div class="grab"></div><h3>＋ ' + esc(L('entry')) + '</h3>'
     + '<div class="seg" id="en-k"><button data-k="exp" class="' + (ENT.kind === 'exp' ? 'on' : '') + '">💸 ' + esc(L('spent')) + '</button><button data-k="rec" class="' + (ENT.kind === 'rec' ? 'on' : '') + '">💰 ' + esc(L('got')) + '</button></div>'
     + '<div class="field" style="margin-top:14px"><label>' + esc(L('amt')) + '</label><input id="en-amt" type="number" inputmode="decimal" min="1" step="any" placeholder="0"></div>'
-    + '<div class="field"><label>' + esc(L('proj1')) + '</label><select id="en-c">' + (ENT.kind === 'exp' ? '<option value="">' + esc(L('company')) + '</option>' : '') + cs.map(function(c){ return '<option value="' + c.id + '">' + esc(c.n) + '</option>'; }).join('') + '</select></div>'
+    + '<div class="field"><label>' + esc(L('proj1')) + '</label><select id="en-c">' + (ENT.kind === 'exp' ? '<option value="">' + esc(L('company')) + '</option>' : cs.length ? '' : '<option value="">' + esc(L('none')) + '</option>') + cs.map(function(c){ return '<option value="' + c.id + '">' + esc(c.n) + '</option>'; }).join('') + '</select></div>'
     + (ENT.kind === 'rec' ? '<div class="field"><label>' + esc(L('against')) + '</label><select id="en-s"></select></div>' : '')
     + '<div class="field"><label>' + esc(L('mode')) + '</label><div class="seg" id="en-m">' + ['Cash', 'GPay', 'Bank Transfer', 'Cheque'].map(function(m, i){ return '<button data-m="' + m + '" class="' + (i ? '' : 'on') + '">' + m.replace('Bank Transfer', 'Bank') + '</button>'; }).join('') + '</div></div>'
     + '<div class="field"><label>' + esc(L('note')) + '</label><input id="en-n" maxlength="120" placeholder="' + (ENT.kind === 'exp' ? 'Cement 50 bags' : 'Stage 3') + '"></div>'
@@ -450,6 +453,7 @@ function entrySheet(){
   $('en-c').onchange = stages; stages();
   $('en-go').onclick = function(){
     var amt = Number($('en-amt').value); if(!(amt > 0)){ $('en-amt').focus(); return; }
+    if(ENT.kind === 'rec' && !$('en-c').value){ toast(L('pickp')); $('en-c').focus(); return; }
     var m = document.querySelector('#en-m .on');
     send({type:'entry', kind:ENT.kind, amt:amt, cid:$('en-c').value ? Number($('en-c').value) : null, sid:$('en-s') && $('en-s').value ? Number($('en-s').value) : null, mode:m ? m.getAttribute('data-m') : 'Cash', note:$('en-n').value.trim(), date:$('en-d').value});
     sheet('sh-entry', false); toast('📨 ' + L('queued'));
@@ -505,7 +509,7 @@ function refresh(manual){
   if(!KEY || !CFG) return;
   if(manual) $('b-ref').innerHTML = '<span class="spin"></span>';
   fetchBlob().then(function(r){ return openBlob(r.b, KEY).then(function(s){ var first = !SNAP || s.at !== SNAP.at; if(first) show(s, r.live); else $('offline').classList.toggle('hide', r.live); }); })
-    .catch(function(){}).then(function(){ $('b-ref').textContent = '⟳'; if(manual) toast('⟳ ' + L('upd') + ' ' + (SNAP ? ago(SNAP.at) : '')); });
+    .catch(function(e){ if(e && e.message === 'gone'){ lock(); $('lk-msg').textContent = L('gone'); } }).then(function(){ $('b-ref').textContent = '⟳'; if(manual) toast('⟳ ' + L('upd') + ' ' + (SNAP ? ago(SNAP.at) : '')); });
 }
 var hiddenAt = 0;
 document.addEventListener('visibilitychange', function(){
