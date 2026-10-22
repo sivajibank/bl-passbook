@@ -1,0 +1,15 @@
+{
+  "name": "BuildLedger Owner",
+  "short_name": "BL Owner",
+  "description": "Your BuildLedger business on your phone — locked with your PIN.",
+  "start_url": "bl-owner.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f1a",
+  "theme_color": "#0b0f1a",
+  "icons": [
+    {"src": "bl-owner-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "bl-owner-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
