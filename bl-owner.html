@@ -97,11 +97,23 @@ nav button em{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;heig
 .pad button:active{transform:scale(.93);background:var(--bg4)}
 .pad button.k{font-size:14px;font-weight:800;color:var(--text3)}
 .msg{min-height:20px;font-size:13.5px;font-weight:700;color:var(--coral);text-align:center}
-.toast{position:fixed;left:50%;bottom:calc(150px + var(--safe-b));transform:translate(-50%,20px);opacity:0;z-index:70;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:13.5px;transition:all .3s var(--ease);max-width:90vw;text-align:center}
+.toast{pointer-events:none;position:fixed;left:50%;bottom:calc(150px + var(--safe-b));transform:translate(-50%,20px);opacity:0;z-index:70;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:13.5px;transition:all .3s var(--ease);max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--b2);border-top-color:var(--cyan);border-radius:50%;animation:rot .8s linear infinite;vertical-align:-3px}
 
 [hidden]{display:none!important}
+.star{flex:0 0 auto;width:34px;height:34px;border-radius:10px;font-size:19px;line-height:1;color:var(--text3)}.star.on{color:var(--amber)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.res{margin:6px 0 12px}.res .note{display:block;color:var(--text3);font-size:12px;margin-top:8px}
+svg.flow{width:100%;height:auto;display:block}svg.flow text{font:600 10px system-ui;fill:var(--text3)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--text3);margin:6px 0 4px}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.att{display:flex;flex-direction:column;max-height:44vh;overflow:auto;border:1px solid var(--b1);border-radius:12px;margin-bottom:8px}
+.chk{display:flex!important;align-items:center;gap:12px;padding:10px 12px;border-top:1px solid var(--b1);margin:0!important;text-transform:none!important;letter-spacing:0!important;font-size:14px!important;color:var(--text)!important}
+.chk:first-child{border-top:0}.chk input{width:20px;height:20px;flex:0 0 20px;accent-color:var(--mint)}.chk small{display:block;color:var(--text3);font-weight:500;font-size:12px}
+textarea{resize:vertical;line-height:1.45}
+body.big{font-size:17px}.big .tile b{font-size:28px}.big .tile small{font-size:12.5px}.big .tile span{font-size:13.5px}.big .row .m b{font-size:17px}.big .row .m small{font-size:14px}.big .row .a{font-size:17px}
+.big h2{font-size:14.5px}.big nav button{font-size:12.5px}.big nav button i{font-size:23px}.big .stg{font-size:15.5px}.big .btn{font-size:15.5px;height:44px}
+
 .field label.btn{display:flex;margin:0;font-size:14px;letter-spacing:0;text-transform:none;color:var(--text)}
 .top{gap:6px}.tt b{font-size:15.5px}
 .tap{cursor:pointer}.card.tap:active,.row.tap:active{opacity:.75}
@@ -168,6 +180,7 @@ img.big{width:100%;border-radius:14px;display:block}
 <div class="sheet" id="sh-cust"></div>
 <div class="sheet" id="sh-find"></div>
 <div class="sheet" id="sh-photo"></div>
+<div class="sheet" id="sh-calc"></div>
 <div id="ptr">⟳</div>
 <div class="toast" id="toast"></div>
 
@@ -184,7 +197,16 @@ var ITER = 150000, $ = function(id){ return document.getElementById(id); };
 var CLEARED = Promise.resolve(), CFG = null, KEY = null, SNAP = null, LANG = 'en', VIEW = 'home', SENT = {};
 var LS = {get:function(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set:function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }, del:function(k){ try{ localStorage.removeItem(k); }catch(e){} }};
 var T = {
-  share:["Share today's summary",'இன்றைய சுருக்கத்தைப் பகிர்'], plan:['Due today & overdue','இன்று செய்ய வேண்டியவை'], leads:['Enquiries to follow up','பின்தொடர வேண்டிய விசாரணைகள்'],
+  week:['This week','இந்த வாரம்'], month:['This month','இந்த மாதம்'], flow:['Cash — next 30 days','அடுத்த 30 நாள் பணம்'], lowest:['Lowest point','குறைந்தபட்சம்'], short:['money runs short — plan ahead','பணம் குறையும் — முன்கூட்டியே திட்டமிடவும்'], in30:['after 30 days','30 நாளில்'],
+  quotes:['Quotes waiting for an answer','பதிலுக்குக் காத்திருக்கும் மதிப்பீடுகள்'], monthrep:['Share monthly report','மாத அறிக்கையைப் பகிர்'], passbook:['Passbook','பாஸ்புக்'], sendpb:['Send passbook','பாஸ்புக் அனுப்பு'],
+  remhead:['Payment reminder','பணம் நினைவூட்டல்'], gentle:['Gentle','மென்மை'], firm:['Firm','உறுதி'], stagedue:['Stage due','தவணை'], sendwa:['Send on WhatsApp','WhatsApp-ல் அனுப்பு'],
+  calc:['Calculator','கணக்கி'], carea:['Area × rate','பரப்பு × விலை'], cconc:['Concrete','கான்கிரீட்'], cplas:['Plaster','பூச்சு'], csqft:['Area (sq.ft)','பரப்பு (ச.அடி)'], crate:['Rate ₹ / sq.ft','விலை ₹ / ச.அடி'],
+  gstadd:['Add GST','GST சேர்'], gstout:['Take GST out','GST நீக்கு'], gstbase:['Before GST','GST இல்லாமல்'], total:['Total','மொத்தம்'], clen:['Length ft','நீளம் அடி'], cwid:['Width ft','அகலம் அடி'], cdep:['Depth ft','ஆழம் அடி'],
+  cgrade:['Grade','தரம்'], cbag:['Cement ₹ / bag (optional)','சிமெண்ட் ₹ / மூட்டை'], cthk:['Thickness mm','தடிமன் மி.மீ'], cmix:['Mix','கலவை'], cvol:['Volume','கன அளவு'], ccement:['Cement','சிமெண்ட்'], csand:['Sand','மணல்'], cjelly:['Jelly (20 mm)','ஜல்லி'],
+  ccost:['Cement cost','சிமெண்ட் செலவு'], bags:['bags','மூட்டை'], cuse:['Use this amount','இந்த தொகையைப் பயன்படுத்து'], cnote:['Rough site figures (dry volume ×1.54 concrete, ×1.27 plaster). Add a little for wastage.','தோராயமான அளவு. வீணாவதற்கு சிறிது சேர்க்கவும்.'],
+  attend:['Attendance','வருகை'], present:['Present today','இன்று வந்தவர்கள்'], all:['All','அனைவரும்'], nobody:['None','யாரும் இல்லை'], pickw:['Tick who came','வந்தவர்களைத் தேர்ந்தெடுக்கவும்'],
+  big:['Big numbers','பெரிய எழுத்து'], bigs:['Larger text for reading on site','தளத்தில் படிக்க பெரிய எழுத்து'], profit:['Profit','லாபம்'], loss:['Loss','நஷ்டம்'],
+  share:['Share today','இன்றைப் பகிர்'], plan:['Due today & overdue','இன்று செய்ய வேண்டியவை'], leads:['Enquiries to follow up','பின்தொடர வேண்டிய விசாரணைகள்'],
   photos:['Site photos','தள புகைப்படங்கள்'], labour:['Labour today','இன்றைய ஆட்கள்'], wages:['Wages due this week','இந்த வார சம்பளம்'], stock:['Stock running low','குறைந்த சரக்கு'], orders:['Orders waiting','காத்திருக்கும் ஆர்டர்கள்'],
   billpaid:['Bill paid','பில் கட்டினேன்'], sitelog:['Site log','தள பதிவு'], which:['Which bill','எந்த பில்'], nobills:['No bills due right now','இப்போது பில்கள் இல்லை'], needpc:['Update BuildLedger on the computer to mark bills paid from here','இதற்கு கணினியில் BuildLedger-ஐ புதுப்பிக்கவும்'],
   workers:['Workers on site','ஆட்கள்'], workdone:['Work done','செய்த வேலை'], photo:['Photo','புகைப்படம்'], addphoto:['Take or choose a photo','புகைப்படம் எடு / தேர்ந்தெடு'], nophoto:['Could not read that photo','புகைப்படத்தைப் படிக்க முடியவில்லை'],
@@ -358,10 +380,11 @@ function dueToday(){
 function home(){
   var s = SNAP, d = s.today || {}, c = s.cash || {}, h = '';
   var waiting = (s.queue || []).filter(function(x){ return !SENT['q' + x.id]; }).length;
-  h += '<div class="tiles">' + tile('var(--mint)', L('rin'), rs(d.rev), fd(d.date), 0) + tile('var(--coral)', L('rout'), rs(d.cost), '', 1)
+  h += periodTiles(s);
+  if(PERX === 'd') h += '<div class="tiles">' + tile('var(--mint)', L('rin'), rs(d.rev), fd(d.date), 0) + tile('var(--coral)', L('rout'), rs(d.cost), '', 1)
     + tile('var(--cyan)', L('wk'), String(d.workers || 0), (d.logs || []).length + ' ' + (LANG === 'ta' ? 'பதிவுகள்' : 'site log entr' + ((d.logs || []).length === 1 ? 'y' : 'ies')), 2)
     + tile('var(--amber)', L('queue'), String(waiting), '', 3) + '</div>';
-  h += '<div class="btns" style="margin-top:12px"><button class="btn" id="share-day" style="flex:1">📤 ' + esc(L('share')) + '</button></div>';
+  h += '<div class="btns" style="margin-top:12px"><button class="btn" id="share-day" style="flex:1">📤 ' + esc(L('share')) + '</button><button class="btn" id="calc-o">🧮 ' + esc(L('calc')) + '</button></div>';
   var due = dueToday();
   h += sec('☀️ ' + L('plan')) + '<div class="card">' + (due.length ? due.slice(0, 12).map(function(x){
     return '<div class="row"' + (x.cid ? ' data-cust="' + x.cid + '"' : '') + '><div class="ic">' + x.ic + '</div><div class="m"><b>' + esc(x.t) + '</b><small' + (x.late ? ' class="bad"' : '') + '>' + x.s + '</small></div>'
@@ -382,34 +405,40 @@ function home(){
   h += '<div class="tiles">' + (accs.length ? tile('var(--lime)', LANG === 'ta' ? 'மொத்தம்' : 'Total cash + bank', short(tot), accs.map(function(a){ return esc(a.n) + ' ' + short(a.b); }).join(' · '), 0, true)
       : tile('var(--text3)', LANG === 'ta' ? 'கணக்குகள்' : 'Accounts', '—', LANG === 'ta' ? 'கணக்குகள் அமைக்கப்படவில்லை' : 'Set up Accounts → Cash & Bank on the computer', 0, true))
     + tile('var(--coral)', L('out7'), short(c.out7 || 0), '', 1) + tile('var(--mint)', L('in7'), short(c.in7 || 0), '', 2) + '</div>';
+  h += flowChart(s);
   if((c.lines || []).length) h += '<div class="card" style="margin-top:10px">' + c.lines.slice(0, 8).map(function(l){ return '<div class="row"><div class="ic">' + (l.dir === 'in' ? '⬇' : '⬆') + '</div><div class="m"><b>' + esc(l.x) + '</b><small>' + fd(l.d) + (l.od ? ' · <span class="bad">' + L('late') + '</span>' : '') + '</small></div><div class="a ' + (l.dir === 'in' ? 'good' : 'bad') + '">' + rs(l.a) + '</div></div>'; }).join('') + '</div>';
   $('v-home').innerHTML = h;
-  $('share-day').onclick = shareDay;
+  $('share-day').onclick = shareDay; $('calc-o').onclick = calcSheet;
+  if($('per')) $('per').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; LS.set('blo_per', b.getAttribute('data-p')); home(); };
 }
 /* 3 + 5 + 7 · Money */
 function money(){
   var s = SNAP, h = '', od = (s.owed || []);
   var totOd = od.reduce(function(a, x){ return a + x.od; }, 0), tot = od.reduce(function(a, x){ return a + x.tot; }, 0), nOd = od.filter(function(x){ return x.od > 0; }).length;
   h += '<div class="tiles">' + tile('var(--coral)', L('overdue'), short(totOd), nOd + ' ' + (LANG === 'ta' ? 'பேர்' : nOd === 1 ? 'customer' : 'customers'), 0) + tile('var(--amber)', LANG === 'ta' ? 'ஒப்பந்த மீதம்' : 'Left on contracts', short(tot), LANG === 'ta' ? 'இன்னும் வர வேண்டியது' : 'still to come', 1) + '</div>';
+  od = favSort(od, function(x){ return x.cid; });
   h += sec(L('owed')) + '<div class="card">' + (od.length ? od.map(function(x){
     var sent = SENT['w' + x.cid];
-    return '<div class="row tap" data-cust="' + x.cid + '"><div class="ic">👷</div><div class="m"><b>' + esc(x.n) + ' ›</b><small>' + (x.od > 0 ? '<span class="bad">' + rs(x.od) + ' ' + L('overdue') + (x.days ? ' · ' + x.days + ' ' + L('days') : '') + '</span>' : esc(x.p)) + '</small></div>'
+    return '<div class="row tap" data-cust="' + x.cid + '"><div class="ic">👷</div><div class="m"><b>' + (isFav(x.cid) ? '★ ' : '') + esc(x.n) + ' ›</b><small>' + (x.od > 0 ? '<span class="bad">' + rs(x.od) + ' ' + L('overdue') + (x.days ? ' · ' + x.days + ' ' + L('days') : '') + '</span>' : esc(x.p)) + '</small></div>'
       + '<div class="a">' + rs(x.tot) + '<small>' + (LANG === 'ta' ? 'மீதம்' : 'left on contract') + '</small>' + (x.msg && x.ph && x.od > 0 && !RO() ? '<small><button class="btn wa sm" data-wa="' + x.cid + '">' + (sent ? '✓' : '💬 ' + L('remind')) + '</button></small>' : '') + '</div></div>';
   }).join('') : empty('🎉')) + '</div>';
   var b = s.bills || [];
   h += sec(L('bills')) + '<div class="card">' + (b.length ? b.map(function(x){ return '<div class="row"><div class="ic">🧾</div><div class="m"><b>' + esc(x.v) + '</b><small>' + esc(x.w) + ' · ' + (x.late ? '<span class="bad">' + L('late') + ' ' + fd(x.due) + '</span>' : L('due') + ' ' + fd(x.due)) + '</small></div><div class="a">' + rs(x.a) + '</div>' + tel(x.ph) + '</div>'; }).join('') : empty('✅')) + '</div>';
+  h += quotesCard(s);
   if(s.pl){
     var p = s.pl, up = p.lm.p ? Math.round((p.tm.p - p.lm.p) / Math.abs(p.lm.p) * 100) : null;
     h += sec(L('pl')) + '<div class="tiles">' + tile(p.tm.p >= 0 ? 'var(--mint)' : 'var(--coral)', L('tm'), short(p.tm.p), L('recv') + ' ' + short(p.tm.rev) + ' · ' + L('spent2') + ' ' + short(p.tm.cost) + (up != null ? ' · ' + (up >= 0 ? '▲' : '▼') + Math.abs(up) + '%' : ''), 0, true)
       + tile(p.lm.p >= 0 ? 'var(--mint)' : 'var(--coral)', L('lm'), short(p.lm.p), L('recv') + ' ' + short(p.lm.rev) + ' · ' + L('spent2') + ' ' + short(p.lm.cost), 1, true) + '</div>';
     if((p.by || []).length) h += '<div class="card" style="margin-top:10px">' + p.by.map(function(x){ return '<div class="row"><div class="ic">🏗</div><div class="m"><b>' + esc(x.n) + '</b><small>' + L('recv') + ' ' + rs(x.rev) + ' · ' + L('spent2') + ' ' + rs(x.cost) + '</small></div><div class="a ' + (x.p >= 0 ? 'good' : 'bad') + '">' + rs(x.p) + '</div></div>'; }).join('') + '</div>';
   }
+  if(s.pl) h += '<div class="btns" style="margin-top:12px"><button class="btn" id="share-month" style="flex:1">📄 ' + esc(L('monthrep')) + '</button></div>';
   $('v-money').innerHTML = h;
+  if($('share-month')) $('share-month').onclick = function(){ shareText(monthText()); };
 }
 /* 4 + 6 · Sites: projects, stages, labour, stock, photos */
 function projCard(p, i){
   var pct = Math.max(0, Math.min(100, Number(p.pct) || 0)), c = p.late ? 'var(--coral)' : p.used != null && p.used > 90 ? 'var(--amber)' : 'var(--mint)';
-  return '<div class="card tap" data-cust="' + p.cid + '" style="--i:' + i + '"><div class="row"><div class="ic">🏗</div><div class="m"><b>' + esc(p.n) + ' ›</b><small>' + esc(p.p) + '</small></div><div class="a" style="color:' + c + '">' + pct + '%<small>' + L('work') + '</small></div></div>'
+  return '<div class="card tap" data-cust="' + p.cid + '" style="--i:' + i + '"><div class="row"><div class="ic">🏗</div><div class="m"><b>' + esc(p.n) + ' ›</b><small>' + esc(p.p) + '</small></div>' + favBtn(p.cid) + '<div class="a" style="color:' + c + '">' + pct + '%<small>' + L('work') + '</small></div></div>'
     + '<div class="bar" style="--c:' + c + '"><i style="width:' + pct + '%"></i></div>'
     + '<div class="btns">' + (p.used != null ? '<span class="pill' + (p.used > 100 ? ' bad' : '') + '">' + p.used + '% ' + L('budget') + '</span>' : '') + (p.late ? '<span class="pill bad">' + p.late + ' ' + L('late') + '</span>' : '') + (p.owed ? '<span class="pill">' + L('owes') + ' ' + short(p.owed) + '</span>' : '') + '</div></div>';
 }
@@ -425,7 +454,7 @@ function stageCard(c, i){
 }
 function sites(){
   var s = SNAP, h = sec(L('proj'));
-  h += (s.projects || []).map(projCard).join('') || '<div class="card">' + empty('🏗') + '</div>';
+  h += favSort(s.projects || [], function(p){ return p.cid; }).map(projCard).join('') || '<div class="card">' + empty('🏗') + '</div>';
   if(s.phid) h += sec('📷 ' + L('photos')) + '<div class="card" id="ph-all">' + photoGrid(null) + '</div>';
   if(s.labour){
     var lb = s.labour;
@@ -438,7 +467,7 @@ function sites(){
       + ((sk.po || []).length ? '<div class="row"><div class="m"><b>' + esc(L('orders')) + '</b></div></div>' + sk.po.map(function(x){ return '<div class="row"><div class="ic">🛒</div><div class="m"><b>' + esc(x.v) + '</b><small>' + esc([x.st, x.d ? fd(x.d) : ''].filter(Boolean).join(' · ')) + '</small></div><div class="a">' + rs(x.a) + '</div></div>'; }).join('') : '') + '</div>';
   }
   h += sec(L('stages'));
-  h += (s.stages || []).map(stageCard).join('') || '<div class="card">' + empty('🧱') + '</div>';
+  h += favSort(s.stages || [], function(c){ return c.cid; }).map(stageCard).join('') || '<div class="card">' + empty('🧱') + '</div>';
   $('v-sites').innerHTML = h;
   if(s.phid && !PHOTOS) loadPhotos();
 }
@@ -521,10 +550,11 @@ function opts(list, sel){ return list.map(function(c){ return '<option value="' 
 function entrySheet(pre){
   pre = pre || {};
   var cs = SNAP.cust || [], k = ENT.kind, bills = (SNAP.bills || []).filter(function(b){ return b.id != null; });
-  var kinds = [['exp', '💸 ' + L('spent')], ['rec', '💰 ' + L('got')], ['paid', '🧾 ' + L('billpaid')], ['log', '📓 ' + L('sitelog')]];
-  var h = '<div class="grab"></div><h3 style="display:flex;align-items:center;gap:8px">＋ ' + esc(L('entry')) + (SR() && (k === 'exp' || k === 'rec') ? '<button class="btn sm" id="en-mic" style="margin-left:auto">🎤 ' + esc(L('speak')) + '</button>' : '') + '</h3>'
+  var kinds = [['exp', '💸 ' + L('spent')], ['rec', '💰 ' + L('got')], ['paid', '🧾 ' + L('billpaid')], ['log', '📓 ' + L('sitelog')]].concat((SNAP.workers || []).length ? [['att', '👷 ' + L('attend')]] : []);
+  var h = '<div class="grab"></div><h3 style="display:flex;align-items:center;gap:8px">＋ ' + esc(L('entry')) + ((k === 'exp' || k === 'rec') ? '<button class="btn sm" id="en-calc" aria-label="Calculator">🧮</button>' : '') + (SR() && (k === 'exp' || k === 'rec') ? '<button class="btn sm" id="en-mic" style="margin-left:auto">🎤 ' + esc(L('speak')) + '</button>' : '') + '</h3>'
     + '<div class="seg seg4" id="en-k">' + kinds.map(function(x){ return '<button data-k="' + x[0] + '" class="' + (k === x[0] ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</div><div id="en-heard" class="heard hide"></div>';
-  if(k === 'paid'){
+  if(k === 'att') h += attFields(pre);
+  else if(k === 'paid'){
     h += bills.length ? '<div class="field" style="margin-top:14px"><label>' + esc(L('which')) + '</label><select id="en-b">' + bills.map(function(b){ return '<option value="' + esc(b.id) + '|' + esc(b.cid == null ? '' : b.cid) + '">' + esc(b.v + ' — ' + rs(b.a) + ' · ' + b.w + (b.late ? ' · ' + L('late') : '')) + '</option>'; }).join('') + '</select></div>'
       : '<div class="card" style="margin-top:14px">' + esc(bills.length || !(SNAP.bills || []).length ? L('nobills') : L('needpc')) + '</div>';
   } else if(k === 'log'){
@@ -533,11 +563,11 @@ function entrySheet(pre){
       + '<div class="field"><label>' + esc(L('workdone')) + '</label><textarea id="en-n" rows="2" maxlength="300" placeholder="' + (LANG === 'ta' ? 'முதல் தள செங்கல் வேலை' : 'Brickwork first floor') + '"></textarea></div>';
   } else {
     h += '<div class="field" style="margin-top:14px"><label>' + esc(L('amt')) + '</label><input id="en-amt" type="number" inputmode="decimal" min="1" step="any" placeholder="0" value="' + esc(pre.amt || '') + '"></div>'
-      + '<div class="field"><label>' + esc(L('proj1')) + '</label><select id="en-c">' + (k === 'exp' ? '<option value="">' + esc(L('company')) + '</option>' : cs.length ? '' : '<option value="">' + esc(L('none')) + '</option>') + opts(cs, pre.cid) + '</select></div>'
+      + '<div class="field"><label>' + esc(L('proj1')) + '</label><select id="en-c">' + (k === 'exp' ? '<option value="">' + esc(L('company')) + '</option>' : cs.length ? '' : '<option value="">' + esc(L('none')) + '</option>') + opts(favSort(cs, function(c){ return c.id; }), pre.cid) + '</select></div>'
       + (k === 'rec' ? '<div class="field"><label>' + esc(L('against')) + '</label><select id="en-s"></select></div>' : '')
       + '<div class="field"><label>' + esc(L('note')) + '</label><input id="en-n" maxlength="120" placeholder="' + (k === 'exp' ? 'Cement 50 bags' : 'Stage 3') + '"></div>';
   }
-  if(k !== 'log') h += '<div class="field"><label>' + esc(L('mode')) + '</label><div class="seg" id="en-m">' + ['Cash', 'GPay', 'Bank Transfer', 'Cheque'].map(function(m, i){ return '<button data-m="' + m + '" class="' + (i ? '' : 'on') + '">' + m.replace('Bank Transfer', 'Bank') + '</button>'; }).join('') + '</div></div>';
+  if(k !== 'log' && k !== 'att') h += '<div class="field"><label>' + esc(L('mode')) + '</label><div class="seg" id="en-m">' + ['Cash', 'GPay', 'Bank Transfer', 'Cheque'].map(function(m, i){ return '<button data-m="' + m + '" class="' + (i ? '' : 'on') + '">' + m.replace('Bank Transfer', 'Bank') + '</button>'; }).join('') + '</div></div>';
   if(k === 'exp' || k === 'log') h += '<div class="field"><label>' + esc(L('photo')) + '</label><label class="btn" style="width:100%;height:46px" for="en-f">📷 ' + esc(L('addphoto')) + '</label><input id="en-f" type="file" accept="image/*" capture="environment" hidden><div id="en-pv" class="pv"></div></div>';
   h += '<div class="field"><label>' + esc(L('date')) + '</label><input id="en-d" type="date" value="' + todayIso() + '"></div>'
     + '<button class="btn pri" id="en-go" style="width:100%;height:50px;margin-top:6px"' + (k === 'paid' && !bills.length ? ' disabled' : '') + '>📨 ' + esc(L('send')) + '</button>'
@@ -549,9 +579,14 @@ function entrySheet(pre){
   if($('en-f')) $('en-f').onchange = function(){ var f = this.files && this.files[0]; if(!f) return; $('en-pv').innerHTML = '<span class="spin"></span>'; shrink(f).then(function(d){ IMG = d; $('en-pv').innerHTML = '<img src="' + d + '" alt=""><button class="btn sm" id="en-px">✕</button>'; $('en-px').onclick = function(){ IMG = null; $('en-pv').innerHTML = ''; $('en-f').value = ''; }; }, function(){ $('en-pv').textContent = L('nophoto'); }); };
   function stages(){ var s = $('en-s'); if(!s) return; var c = (SNAP.stages || []).filter(function(x){ return String(x.cid) === $('en-c').value; })[0]; s.innerHTML = '<option value="">' + esc(L('general')) + '</option>' + (c ? c.s.filter(function(x){ return x.a - x.got > 0.5; }).map(function(x){ return '<option value="' + x.id + '">' + esc(x.n) + ' — ' + rs(x.a - x.got) + '</option>'; }).join('') : ''); if(s.options.length > 1) s.selectedIndex = 1; }
   if($('en-c')) $('en-c').onchange = stages; stages();
+  if($('en-calc')) $('en-calc').onclick = calcSheet;
+  if(k === 'att'){ $('en-c').onchange = attList; attList(); $('at-l').onchange = attCount; $('at-all').onclick = function(){ [].forEach.call(document.querySelectorAll('#at-l input'), function(i){ i.checked = true; }); attCount(); }; $('at-none').onclick = function(){ [].forEach.call(document.querySelectorAll('#at-l input'), function(i){ i.checked = false; }); attCount(); }; }
   $('en-go').onclick = function(){
     var m = document.querySelector('#en-m .on'), mode = m ? m.getAttribute('data-m') : 'Cash', date = $('en-d').value, msg;
-    if(k === 'paid'){
+    if(k === 'att'){
+      var ids = [].map.call(document.querySelectorAll('#at-l input:checked'), function(i){ return Number(i.value); }); if(!ids.length){ toast(L('pickw')); return; }
+      msg = {type:'entry', kind:'att', cid:Number($('en-c').value), ids:ids, n:ids.length, date:date};
+    } else if(k === 'paid'){
       var bv = ($('en-b') || {}).value; if(!bv) return; var bp = bv.split('|'), bill = bills.filter(function(b){ return String(b.id) === bp[0] && String(b.cid == null ? '' : b.cid) === bp[1]; })[0] || {};
       msg = {type:'entry', kind:'billpaid', bid:bill.id, bcid:bill.cid == null ? null : bill.cid, amt:bill.a, v:bill.v, mode:mode, date:date};
     } else if(k === 'log'){
@@ -625,21 +660,23 @@ function listen(){
 }
 
 /* ── 1 · one customer, everything about them ───────────────────────── */
-function custSheet(cid){
+function custSheet(cid, keep){
   var c = custOf(cid), o = (SNAP.owed || []).filter(function(x){ return String(x.cid) === String(cid); })[0], p = (SNAP.projects || []).filter(function(x){ return String(x.cid) === String(cid); })[0];
   var st = (SNAP.stages || []).filter(function(x){ return String(x.cid) === String(cid); })[0], pays = ((SNAP.pays || {})[cid] || []), ph = c.ph || (o && o.ph);
-  var h = '<div class="grab"></div><h3>' + esc(c.n) + '</h3><div style="color:var(--text3);margin:-8px 0 12px">' + esc(c.p || (p && p.p) || (o && o.p) || '') + (ph ? ' · ' + esc(ph) : '') + '</div>'
-    + '<div class="btns" style="margin:0 0 14px">' + (ph ? '<a class="btn" href="tel:' + esc(String(ph).replace(/[^\d+]/g, '')) + '">📞 ' + esc(L('call')) + '</a><button class="btn wa" id="cs-wa">💬 WhatsApp</button>' : '') + (!RO() ? '<button class="btn pri" id="cs-rec">💰 ' + esc(L('got')) + '</button>' : '') + '</div>';
+  var h = '<div class="grab"></div><h3 style="display:flex;align-items:center;gap:8px">' + esc(c.n) + favBtn(cid) + '</h3><div style="color:var(--text3);margin:-8px 0 12px">' + esc(c.p || (p && p.p) || (o && o.p) || '') + (ph ? ' · ' + esc(ph) : '') + '</div>'
+    + '<div class="btns" style="margin:0 0 14px">' + (ph ? '<a class="btn" href="tel:' + esc(String(ph).replace(/[^\d+]/g, '')) + '">📞 ' + esc(L('call')) + '</a><button class="btn wa" id="cs-wa">💬 WhatsApp</button>' : '') + (!RO() ? '<button class="btn pri" id="cs-rec">💰 ' + esc(L('got')) + '</button>' : '') + (c.pb ? '<a class="btn" href="' + esc(c.pb) + '" target="_blank" rel="noopener">📘 ' + esc(L('passbook')) + '</a>' + (ph && !RO() ? '<button class="btn" id="cs-pb">📤 ' + esc(L('sendpb')) + '</button>' : '') : '') + '</div>';
   h += '<div class="tiles">' + tile('var(--amber)', LANG === 'ta' ? 'ஒப்பந்த மீதம்' : 'Left on contract', o ? short(o.tot) : '₹0', '', 0) + tile(o && o.od > 0 ? 'var(--coral)' : 'var(--mint)', L('overdue'), o ? short(o.od) : '₹0', o && o.days ? o.days + ' ' + L('days') : '', 1)
     + (p ? tile('var(--cyan)', L('work'), Math.min(100, p.pct) + '%', p.late ? p.late + ' ' + L('late') : '', 2) + tile(p.used > 100 ? 'var(--coral)' : 'var(--lime)', L('budget'), p.used != null ? p.used + '%' : '—', p.bud ? short(p.spent) + ' / ' + short(p.bud) : '', 3) : '') + '</div>';
+  h += remBlock(cid);
   if(st) h += sec(L('stages')) + '<div class="card">' + stageRows(st) + '</div>';
   if(pays.length) h += sec(L('recent')) + '<div class="card">' + pays.map(function(x){ return '<div class="row"><div class="ic">⬇</div><div class="m"><b>' + rs(x.a) + '</b><small>' + fd(x.d) + ' · ' + esc([x.m, x.s].filter(Boolean).join(' · ')) + '</small></div></div>'; }).join('') + '</div>';
   if(SNAP.phid) h += sec('📷 ' + L('photos')) + '<div class="card" id="ph-c" data-c="' + esc(cid) + '">' + photoGrid(cid) + '</div>';
   $('sh-cust').innerHTML = h;
+  remWire(cid);
+  if($('cs-pb')) $('cs-pb').onclick = function(){ wa(ph, (LANG === 'ta' ? 'வணக்கம் ' + c.n + ', உங்கள் கட்டுமான பாஸ்புக்: ' : 'Hello ' + c.n + ', your construction passbook: ') + c.pb + '\n\n' + (SNAP.co || '')); };
   if($('cs-wa')) $('cs-wa').onclick = function(){ wa(ph, o && o.msg && o.od > 0 ? o.msg : ''); };
   if($('cs-rec')) $('cs-rec').onclick = function(){ sheet('sh-cust', false); ENT.kind = 'rec'; entrySheet({cid:cid}); };
-  [].forEach.call(document.querySelectorAll('.sheet.on'), function(s){ s.classList.remove('on'); });
-  sheet('sh-cust', true);
+  if(!keep){ [].forEach.call(document.querySelectorAll('.sheet.on'), function(s){ s.classList.remove('on'); }); sheet('sh-cust', true); }
   if(SNAP.phid && !PHOTOS) loadPhotos();
 }
 
@@ -657,6 +694,7 @@ function findRows(raw){
   (SNAP.bills || []).forEach(function(b){ if(hit(b.v, q) || hit(b.w, q)) r.push('<div class="row tap" data-go="money"><div class="ic">🧾</div><div class="m"><b>' + esc(b.v) + '</b><small>' + esc(b.w) + ' · ' + L('due') + ' ' + fd(b.due) + '</small></div><div class="a">' + rs(b.a) + '</div></div>'); });
   ((SNAP.leads || {}).due || []).forEach(function(l){ if(hit(l.n, q) || hit(l.w, q)) r.push('<div class="row tap" data-go="home"><div class="ic">🎯</div><div class="m"><b>' + esc(l.n) + '</b><small>' + esc(l.w || '') + '</small></div>' + tel(l.ph) + '</div>'); });
   ((SNAP.stock || {}).low || []).forEach(function(x){ if(hit(x.n, q)) r.push('<div class="row tap" data-go="sites"><div class="ic">📦</div><div class="m"><b>' + esc(x.n) + '</b><small>' + esc(x.left + ' ' + (x.u || '')) + ' ' + L('left') + '</small></div></div>'); });
+  (SNAP.quotes || []).forEach(function(x){ if(hit(x.n, q) || hit(x.t, q)) r.push('<div class="row tap" data-go="money"><div class="ic">📝</div><div class="m"><b>' + esc(x.n) + '</b><small>' + esc(x.t || '') + '</small></div><div class="a">' + short(x.a) + '</div></div>'); });
   (SNAP.queue || []).forEach(function(x){ if(hit(x.t, q)) r.push('<div class="row tap" data-go="ok"><div class="ic">✅</div><div class="m"><b>' + esc(x.t) + '</b><small>' + esc(x.d) + '</small></div></div>'); });
   return r.length ? '<div class="card">' + r.slice(0, 40).join('') + '</div>' : empty('🔍');
 }
@@ -706,6 +744,7 @@ function photoView(i){
 document.addEventListener('click', function(e){
   if(!SNAP) return;
   if(e.target.closest('a,button:not(.ph),select,input')){
+    var fv = e.target.closest('[data-fav]'); if(fv){ e.stopPropagation(); toggleFav(fv.getAttribute('data-fav')); return; }
     var ph = e.target.closest('[data-ph]'); if(ph){ photoView(Number(ph.getAttribute('data-ph'))); return; }
     var ld = e.target.closest('[data-lead]'); if(ld){ var l = ((SNAP.leads || {}).due || []).filter(function(x){ return String(x.id) === ld.getAttribute('data-lead'); })[0]; if(l) wa(l.ph, (LANG === 'ta' ? 'வணக்கம் ' : 'Hello ') + l.n + ', '); }
     return;
@@ -715,6 +754,146 @@ document.addEventListener('click', function(e){
   var g = e.target.closest('[data-go]'); if(g){ [].forEach.call(document.querySelectorAll('.sheet.on'), function(s){ s.classList.remove('on'); }); $('veil').classList.remove('on'); go(g.getAttribute('data-go')); }
 });
 $('b-find').onclick = findSheet;
+
+
+/* ══ round 3 ═══════════════════════════════════════════════════════════
+   From newer BuildLedger (optional): wk {rev,cost,p} · flow [{d,in,out}] (30 days)
+   cust[].pb (passbook link) · quotes [{id,n,ph,t,a,d,days}] · workers [{id,n,tr,cid}]
+   pl.lmBy [{n,rev,cost,p}]                                                        */
+/* 5 · favourites first */
+function FAV(){ return LS.get('blo_fav') || {}; }
+function isFav(cid){ return !!FAV()[cid]; }
+function favSort(list, key){ var f = FAV(); return list.map(function(x, i){ return {x:x, i:i}; }).sort(function(a, b){ return (f[key(b.x)] ? 1 : 0) - (f[key(a.x)] ? 1 : 0) || a.i - b.i; }).map(function(o){ return o.x; }); }
+function favBtn(cid){ return '<button class="star' + (isFav(cid) ? ' on' : '') + '" data-fav="' + esc(cid) + '" aria-label="Favourite">' + (isFav(cid) ? '★' : '☆') + '</button>'; }
+function toggleFav(cid){ var f = FAV(); if(f[cid]) delete f[cid]; else f[cid] = 1; LS.set('blo_fav', f); render(); if($('sh-cust').classList.contains('on')) custSheet(cid, true); }
+
+/* 1 · today / this week / this month */
+var PERX = 'd';
+function periodTiles(s){
+  var per = LS.get('blo_per') || 'd', has = {d:1, w:!!s.wk, m:!!s.pl}; if(!has[per]) per = 'd'; PERX = per;
+  var h = '<div class="seg" id="per" style="margin-bottom:12px">' + [['d', L('home')], ['w', L('week')], ['m', L('month')]].filter(function(x){ return has[x[0]]; }).map(function(x){ return '<button data-p="' + x[0] + '" class="' + (per === x[0] ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>';
+  if(per === 'd') return h;
+  var pd = per === 'w' ? s.wk : s.pl.tm, cmp = per === 'm' && s.pl.lm ? s.pl.lm : null;
+  return h + '<div class="tiles">' + tile('var(--mint)', L('recv'), short(pd.rev), '', 0) + tile('var(--coral)', L('spent2'), short(pd.cost), '', 1)
+    + tile(pd.p >= 0 ? 'var(--lime)' : 'var(--coral)', pd.p >= 0 ? L('profit') : L('loss'), short(pd.p), cmp ? L('lm') + ' ' + short(cmp.p) : '', 2, true) + '</div>';
+}
+
+/* 6 · cash over the next 30 days */
+function flowChart(s){
+  var f = s.flow || []; if(!f.length) return '';
+  var start = ((s.cash || {}).accs || []).reduce(function(a, x){ return a + x.b; }, 0), wk = [], bal = start, low = {v:start, d:''};
+  f.forEach(function(x, i){ var w = Math.floor(i / 7); if(!wk[w]) wk[w] = {i:0, o:0, d:x.d}; wk[w].i += x.in || 0; wk[w].o += x.out || 0; bal += (x.in || 0) - (x.out || 0); if(bal < low.v) low = {v:bal, d:x.d}; });
+  var mx = Math.max.apply(null, [1].concat(wk.map(function(w){ return Math.max(w.i, w.o); }))), W = 300, H = 120, bw = W / wk.length;
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + (H + 18) + '" class="flow" role="img" aria-label="Cash in and out by week">' + wk.map(function(w, i){
+    var x = i * bw + bw * 0.18, b = bw * 0.3, hi = w.i / mx * H, ho = w.o / mx * H;
+    return '<rect x="' + x.toFixed(1) + '" y="' + (H - hi).toFixed(1) + '" width="' + b.toFixed(1) + '" height="' + hi.toFixed(1) + '" rx="3" fill="var(--mint)"/>'
+      + '<rect x="' + (x + b + 2).toFixed(1) + '" y="' + (H - ho).toFixed(1) + '" width="' + b.toFixed(1) + '" height="' + ho.toFixed(1) + '" rx="3" fill="var(--coral)"/>'
+      + '<text x="' + (i * bw + bw / 2).toFixed(1) + '" y="' + (H + 14) + '" text-anchor="middle">' + esc(fd(w.d)) + '</text>'; }).join('') + '</svg>';
+  return sec('📈 ' + L('flow')) + '<div class="card">' + svg + '<div class="legend"><span><i style="background:var(--mint)"></i>' + esc(L('recv')) + '</span><span><i style="background:var(--coral)"></i>' + esc(L('spent2')) + '</span></div>'
+    + '<div class="row"><div class="ic">' + (low.v < 0 ? '⚠️' : '✅') + '</div><div class="m"><b style="white-space:normal" class="' + (low.v < 0 ? 'bad' : '') + '">' + esc(L('lowest')) + ' ' + rs(low.v) + '</b><small>' + (low.d ? fd(low.d) : '') + (low.v < 0 ? ' · ' + esc(L('short')) : '') + '</small></div><div class="a">' + rs(bal) + '<small>' + esc(L('in30')) + '</small></div></div></div>';
+}
+
+/* 8 · quotes waiting */
+function quotesCard(s){
+  if(!s.quotes) return '';
+  return sec('📝 ' + L('quotes')) + '<div class="card">' + (s.quotes.length ? s.quotes.map(function(q){ return '<div class="row"><div class="ic">📝</div><div class="m"><b>' + esc(q.n) + '</b><small>' + esc(q.t || '') + (q.days != null ? ' · ' + q.days + ' ' + L('days') : '') + '</small></div><div class="a">' + short(q.a) + '</div>' + tel(q.ph) + '</div>'; }).join('') : empty('📝')) + '</div>';
+}
+
+/* 10 · monthly report */
+function monthText(){
+  var s = SNAP, p = s.pl, ta = LANG === 'ta', L2 = function(e, t){ return ta ? t : e; };
+  var d = new Date(), lm = new Date(d.getFullYear(), d.getMonth() - 1, 1), mn = function(x){ return x.toLocaleString(ta ? 'ta-IN' : 'en-IN', {month:'long', year:'numeric'}); };
+  var out = ['*' + (s.co || 'BuildLedger') + ' — ' + L2('Monthly report', 'மாத அறிக்கை') + '*', '', '*' + mn(lm) + '*',
+    L2('Received: ', 'வரவு: ') + rs(p.lm.rev), L2('Spent: ', 'செலவு: ') + rs(p.lm.cost), (p.lm.p >= 0 ? L2('Profit: ', 'லாபம்: ') : L2('Loss: ', 'நஷ்டம்: ')) + rs(p.lm.p)];
+  (p.lmBy || []).forEach(function(x){ out.push('• ' + x.n + ': ' + rs(x.p)); });
+  out.push('', '*' + mn(d) + ' ' + L2('so far', 'இதுவரை') + '*', L2('Received: ', 'வரவு: ') + rs(p.tm.rev), L2('Spent: ', 'செலவு: ') + rs(p.tm.cost), (p.tm.p >= 0 ? L2('Profit: ', 'லாபம்: ') : L2('Loss: ', 'நஷ்டம்: ')) + rs(p.tm.p));
+  (p.by || []).forEach(function(x){ out.push('• ' + x.n + ': ' + rs(x.p)); });
+  var od = (s.owed || []).reduce(function(a, x){ return a + x.od; }, 0); if(od) out.push('', L2('Overdue from customers: ', 'தாமத வரவு: ') + rs(od));
+  return out.join('\n');
+}
+function shareText(t){ if(navigator.share) navigator.share({text:t}).catch(function(e){ if(!e || e.name !== 'AbortError') window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank'); }); else window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank'); }
+
+/* 2 · payment reminder: three wordings, Tamil or English, editable */
+function remInfo(cid){
+  var o = (SNAP.owed || []).filter(function(x){ return String(x.cid) === String(cid); })[0], st = (SNAP.stages || []).filter(function(x){ return String(x.cid) === String(cid); })[0], t = todayIso();
+  var un = st ? st.s.filter(function(x){ return x.a - x.got > 0.5; }) : [], stage = un.filter(function(x){ return x.due && x.due <= t; })[0] || un[0] || null;
+  return {o:o, stage:stage, amt:o && o.od > 0 ? o.od : stage ? stage.a - stage.got : 0};
+}
+function remText(cid, tone, lang){
+  var c = custOf(cid), r = remInfo(cid), co = SNAP.co || '', p = c.p || (r.o && r.o.p) || '', amt = rs(r.amt), days = r.o && r.o.days ? r.o.days : 0;
+  var by = fd(new Date(Date.now() + 3 * 864e5 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)), st = r.stage;
+  var stDue = st ? (st.due && st.due <= todayIso() ? (lang === 'ta' ? 'நிறைவடைந்துள்ளது' : 'complete') : (lang === 'ta' ? fd(st.due) + ' அன்று வருகிறது' : 'due on ' + fd(st.due))) : '';
+  if(lang === 'ta'){
+    if(tone === 'firm') return 'அன்புள்ள ' + c.n + ',\n\nஉங்கள் திட்டத்தில் (' + p + ') ' + amt + (days ? ' ' + days + ' நாட்களாக' : '') + ' நிலுவையில் உள்ளது. வேலை தடையின்றி நடக்க ' + by + 'க்குள் செலுத்துமாறு கேட்டுக்கொள்கிறோம்.\n\nநன்றி,\n' + co;
+    if(tone === 'stage' && st) return 'அன்புள்ள ' + c.n + ',\n\nஉங்கள் திட்டத்தின் (' + p + ') ' + st.n + ' நிலை ' + stDue + '. ஒப்பந்தப்படி ' + rs(st.a - st.got) + ' இப்போது செலுத்த வேண்டும். தயவுசெய்து ஏற்பாடு செய்யவும்.\n\nநன்றி,\n' + co;
+    return 'அன்புள்ள ' + c.n + ',\n\nஉங்கள் திட்டத்தில் (' + p + ') ' + amt + ' நிலுவையில் உள்ளது. வசதியான நேரத்தில் செலுத்துமாறு அன்புடன் நினைவூட்டுகிறோம்.\n\nநன்றி,\n' + co;
+  }
+  if(tone === 'firm') return 'Dear ' + c.n + ',\n\n' + amt + ' on your project (' + p + ')' + (days ? ' has been pending for ' + days + ' days' : ' is pending') + '. Please arrange the payment by ' + by + ' so that work continues on schedule.\n\nRegards,\n' + co;
+  if(tone === 'stage' && st) return 'Dear ' + c.n + ',\n\nThe ' + st.n + ' stage of your project (' + p + ') is ' + stDue + '. As agreed, ' + rs(st.a - st.got) + ' is now due. Kindly arrange the payment.\n\nThank you,\n' + co;
+  return 'Dear ' + c.n + ',\n\nA gentle reminder — ' + amt + ' is pending on your project (' + p + '). Kindly arrange it when you can.\n\nThank you,\n' + co;
+}
+var REM = {tone:'gentle', lang:null};
+function remBlock(cid){
+  var r = remInfo(cid), c = custOf(cid); if(RO() || !(r.amt > 0.5) || !c.ph) return '';
+  var lang = REM.lang || LANG;
+  return sec('💬 ' + L('remhead')) + '<div class="card"><div class="seg" id="rm-t">' + [['gentle', L('gentle')], ['firm', L('firm')], ['stage', L('stagedue')]].filter(function(x){ return x[0] !== 'stage' || r.stage; }).map(function(x){ return '<button data-t="' + x[0] + '" class="' + (REM.tone === x[0] ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>'
+    + '<div class="seg" id="rm-l" style="margin-top:8px"><button data-l="en" class="' + (lang === 'en' ? 'on' : '') + '">English</button><button data-l="ta" class="' + (lang === 'ta' ? 'on' : '') + '">தமிழ்</button></div>'
+    + '<textarea id="rm-x" rows="7" style="margin-top:10px">' + esc(remText(cid, REM.tone, lang)) + '</textarea><button class="btn wa" id="rm-go" style="width:100%;height:46px;margin-top:10px">💬 ' + esc(L('sendwa')) + '</button></div>';
+}
+function remWire(cid){
+  if(!$('rm-go')) return;
+  $('rm-t').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; REM.tone = b.getAttribute('data-t'); custSheet(cid, true); };
+  $('rm-l').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; REM.lang = b.getAttribute('data-l'); custSheet(cid, true); };
+  $('rm-go').onclick = function(){ var c = custOf(cid); wa(c.ph, $('rm-x').value);
+    var q = (SNAP.queue || []).filter(function(y){ return y.jt === 'chase' && y.k === 'wa' && String(y.ph).replace(/\D/g, '').slice(-10) === String(c.ph).replace(/\D/g, '').slice(-10); })[0];
+    if(q){ send({type:'approve', qid:q.id, how:'sent'}); mark('q' + q.id, L('sent')); } mark('w' + cid, 'sent'); money(); approvals(); badges(); };
+}
+
+/* 3 · calculator */
+var CALC = {t:'area'};
+function num(id){ var v = parseFloat(($(id) || {}).value); return isFinite(v) ? v : 0; }
+function calcSheet(){
+  var t = CALC.t, f = function(id, lab, ph){ return '<div class="field"><label>' + esc(lab) + '</label><input id="' + id + '" type="number" inputmode="decimal" step="any" placeholder="' + (ph || '0') + '" value="' + esc(CALC[id] || '') + '"></div>'; };
+  var h = '<div class="grab"></div><h3>🧮 ' + esc(L('calc')) + '</h3><div class="seg seg4" id="ca-t">' + [['area', L('carea')], ['gst', 'GST'], ['conc', L('cconc')], ['plas', L('cplas')]].map(function(x){ return '<button data-t="' + x[0] + '" class="' + (t === x[0] ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</div><div style="margin-top:14px">';
+  if(t === 'area') h += '<div class="two">' + f('c1', L('csqft'), '1200') + f('c2', L('crate'), '2200') + '</div>';
+  if(t === 'gst') h += f('c1', L('amt'), '100000') + '<div class="field"><label>GST %</label><div class="seg" id="ca-g">' + [5, 12, 18, 28].map(function(g){ return '<button data-g="' + g + '" class="' + ((CALC.g || 18) === g ? 'on' : '') + '">' + g + '%</button>'; }).join('') + '</div></div><div class="seg" id="ca-w"><button data-w="add" class="' + (CALC.w !== 'out' ? 'on' : '') + '">' + esc(L('gstadd')) + '</button><button data-w="out" class="' + (CALC.w === 'out' ? 'on' : '') + '">' + esc(L('gstout')) + '</button></div>';
+  if(t === 'conc') h += '<div class="three">' + f('c1', L('clen'), '20') + f('c2', L('cwid'), '10') + f('c3', L('cdep'), '0.42') + '</div><div class="field"><label>' + esc(L('cgrade')) + '</label><div class="seg" id="ca-m">' + ['M15', 'M20', 'M25'].map(function(m){ return '<button data-m="' + m + '" class="' + ((CALC.m || 'M20') === m ? 'on' : '') + '">' + m + '</button>'; }).join('') + '</div></div>' + f('c4', L('cbag'), '380');
+  if(t === 'plas') h += '<div class="two">' + f('c1', L('csqft'), '1000') + f('c2', L('cthk'), '12') + '</div><div class="field"><label>' + esc(L('cmix')) + '</label><div class="seg" id="ca-x">' + ['1:4', '1:5', '1:6'].map(function(m){ return '<button data-x="' + m + '" class="' + ((CALC.x || '1:4') === m ? 'on' : '') + '">' + m + '</button>'; }).join('') + '</div></div>' + f('c4', L('cbag'), '380');
+  h += '</div><div class="card res" id="ca-r"></div><button class="btn pri" id="ca-use" style="width:100%;height:48px">↩ ' + esc(L('cuse')) + '</button>';
+  $('sh-calc').innerHTML = h;
+  var segs = {'ca-g':'g', 'ca-w':'w', 'ca-m':'m', 'ca-x':'x'};
+  $('ca-t').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; CALC.t = b.getAttribute('data-t'); calcSheet(); };
+  Object.keys(segs).forEach(function(id){ if($(id)) $(id).onclick = function(e){ var b = e.target.closest('button'); if(!b) return; var v = b.getAttribute('data-' + segs[id]); CALC[segs[id]] = segs[id] === 'g' ? Number(v) : v; [].forEach.call($(id).children, function(x){ x.classList.toggle('on', x === b); }); calc(); }; });
+  ['c1', 'c2', 'c3', 'c4'].forEach(function(id){ if($(id)) $(id).oninput = function(){ CALC[id] = this.value; calc(); }; });
+  $('ca-use').onclick = function(){ var a = Math.round(CALC.out || 0); if(!(a > 0)) return; sheet('sh-calc', false); if($('sh-entry').classList.contains('on') && $('en-amt')) $('en-amt').value = a; else { ENT.kind = 'exp'; entrySheet({amt:a}); } };
+  calc(); sheet('sh-calc', true);
+}
+function calc(){
+  var t = CALC.t, r = [], out = 0, a = num('c1');
+  if(t === 'area'){ out = a * num('c2'); r.push([L('total'), rs(out)]); }
+  if(t === 'gst'){ var g = CALC.g || 18; if(CALC.w === 'out'){ var base = a / (1 + g / 100); r.push([L('gstbase'), rs(base)], ['GST ' + g + '%', rs(a - base)]); out = base; } else { r.push(['GST ' + g + '%', rs(a * g / 100)], [L('total'), rs(a * (1 + g / 100))]); out = a * (1 + g / 100); } }
+  if(t === 'conc'){ var vol = a * num('c2') * num('c3') / 35.315, mix = {M15:[1, 2, 4], M20:[1, 1.5, 3], M25:[1, 1, 2]}[CALC.m || 'M20'], sum = mix[0] + mix[1] + mix[2], dry = vol * 1.54;
+    var bags = dry * mix[0] / sum * 1440 / 50; out = Math.ceil(bags) * num('c4');
+    r.push([L('cvol'), (vol).toFixed(2) + ' m³ · ' + (vol * 35.315).toFixed(1) + ' cft'], [L('ccement'), Math.ceil(bags) + ' ' + L('bags')], [L('csand'), (dry * mix[1] / sum * 35.315).toFixed(1) + ' cft'], [L('cjelly'), (dry * mix[2] / sum * 35.315).toFixed(1) + ' cft']); if(out) r.push([L('ccost'), rs(out)]); }
+  if(t === 'plas'){ var m2 = a / 10.764, wet = m2 * num('c2') / 1000, dry2 = wet * 1.27, x = Number((CALC.x || '1:4').split(':')[1]), bg = dry2 / (1 + x) * 1440 / 50; out = Math.ceil(bg) * num('c4');
+    r.push([L('ccement'), Math.ceil(bg) + ' ' + L('bags')], [L('csand'), (dry2 * x / (1 + x) * 35.315).toFixed(1) + ' cft']); if(out) r.push([L('ccost'), rs(out)]); }
+  CALC.out = out;
+  $('ca-r').innerHTML = r.map(function(x){ return '<div class="stg"><span>' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>'; }).join('') + (t === 'conc' || t === 'plas' ? '<small class="note">' + esc(L('cnote')) + '</small>' : '');
+  $('ca-use').disabled = !(out > 0);
+}
+
+/* 9 · attendance from the phone */
+function attFields(pre){
+  var ws = SNAP.workers || [], cs = SNAP.cust || [], cid = pre.cid || (cs[0] && cs[0].id);
+  return '<div class="field" style="margin-top:14px"><label>' + esc(L('proj1')) + '</label><select id="en-c">' + opts(favSort(cs, function(c){ return c.id; }), cid) + '</select></div>'
+    + '<div class="field"><label>' + esc(L('present')) + ' <span id="at-n" class="pill">0</span></label><div class="att" id="at-l"></div><div class="btns"><button class="btn sm" id="at-all">' + esc(L('all')) + '</button><button class="btn sm" id="at-none">' + esc(L('nobody')) + '</button></div></div>';
+}
+function attList(){
+  var cid = $('en-c').value, ws = (SNAP.workers || []).slice().sort(function(a, b){ return (String(b.cid) === cid ? 1 : 0) - (String(a.cid) === cid ? 1 : 0); });
+  $('at-l').innerHTML = ws.map(function(w){ var here = String(w.cid) === cid; return '<label class="chk"><input type="checkbox" value="' + esc(w.id) + '"' + (here ? ' checked' : '') + '><span><b>' + esc(w.n) + '</b><small>' + esc([w.tr, !here && w.cid ? custOf(w.cid).n : ''].filter(Boolean).join(' · ')) + '</small></span></label>'; }).join('') || empty('👷');
+  attCount();
+}
+function attCount(){ $('at-n').textContent = document.querySelectorAll('#at-l input:checked').length; }
 
 /* ── 4 · pull down to refresh ──────────────────────────────────────── */
 (function(){
@@ -732,6 +911,7 @@ function setSheet(){
     + '<div class="field"><label>' + esc(L('theme')) + '</label><div class="seg" id="st-t">' + [['auto', 'Auto'], ['dark', '🌙'], ['light', '☀️']].map(function(x){ return '<button data-v="' + x[0] + '" class="' + (th === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div></div>'
     + '<div class="opt"><span>👆 ' + esc(L('bio')) + '<small>' + (bioOk() ? (LANG === 'ta' ? 'PIN இல்லாமல் திறக்க' : 'Open without typing the PIN') : 'Needs the page on https and a phone with a fingerprint or face lock') + '</small></span><button class="sw' + (bio ? ' on' : '') + '" id="st-bio"></button></div>'
     + (RO() ? '' : '<div class="opt"><span>🔔 ' + esc(L('notif')) + '<small>' + ('PushManager' in window ? (LANG === 'ta' ? 'பணம் வந்தால், தவணை முடிந்தால்…' : 'Money received, stage paid, over budget, approvals') : 'Add this page to your home screen first') + '</small></span><button class="sw' + (notif ? ' on' : '') + '" id="st-n"></button></div>')
+    + '<div class="opt"><span>🔠 ' + esc(L('big')) + '<small>' + esc(L('bigs')) + '</small></span><button class="sw' + (LS.get('blo_big') ? ' on' : '') + '" id="st-big"></button></div>'
     + '<div class="opt"><span>🔐 ' + esc(L('lockopt')) + '<small>' + (LANG === 'ta' ? '5 நிமிடத்திற்கு மேல் மூடினால்' : 'After 5 minutes away') + '</small></span><button class="sw' + (lockOn ? ' on' : '') + '" id="st-lk"></button></div>'
     + '<div class="btns" style="margin-top:16px"><button class="btn" id="st-now">🔒 ' + esc(L('lockn')) + '</button><button class="btn" id="st-forget" style="color:var(--coral)">' + esc(L('forget')) + '</button></div>';
   $('st-l').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; LANG = b.getAttribute('data-v'); LS.set('blo_lang', LANG); show(SNAP, $('offline').classList.contains('hide')); setSheet(); };
@@ -739,6 +919,7 @@ function setSheet(){
   $('st-bio').onclick = function(){ if(LS.get('blo_bio')){ LS.del('blo_bio'); setSheet(); return; } bioRegister().then(function(){ toast('👆 ' + (LANG === 'ta' ? 'விரல்ரேகை தயார்' : 'Fingerprint unlock is on')); setSheet(); }, function(e){ toast(e && e.message ? e.message : 'Could not set up'); }); };
   if($('st-n')) $('st-n').onclick = function(){ if(LS.get('blo_push')) pushOff().then(setSheet); else pushOn().then(setSheet); };
   $('st-lk').onclick = function(){ LS.set('blo_lock', LS.get('blo_lock') === false); setSheet(); };
+  $('st-big').onclick = function(){ LS.set('blo_big', !LS.get('blo_big')); bigMode(); setSheet(); };
   $('st-now').onclick = function(){ sheet('sh-set', false); lock(); };
   $('st-forget').onclick = function(){ if(!confirm(LANG === 'ta' ? 'இந்த தொலைபேசியிலிருந்து அனைத்தையும் நீக்கவா?' : 'Remove everything from this phone? You will need the link and PIN again.')) return; pushOff(); ['blo_cfg', 'blo_blob', 'blo_bio', 'blo_out', 'blo_sent', 'blo_push', 'blo_alseen'].forEach(LS.del); kvClear(); location.reload(); };
   sheet('sh-set', true);
@@ -746,6 +927,7 @@ function setSheet(){
 $('b-set').onclick = setSheet;
 $('b-al').onclick = function(){ go('alerts'); };
 $('b-ref').onclick = function(){ refresh(true); };
+function bigMode(){ document.body.classList.toggle('big', !!LS.get('blo_big')); }
 function theme(){ var t = LS.get('blo_theme') || 'auto'; if(t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t); var m = document.querySelector('meta[name=theme-color]'); if(m) m.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0b0f1a'; }
 
 /* ── 9 · phone notifications ───────────────────────────────────────── */
@@ -783,7 +965,7 @@ window.addEventListener('online', function(){ refresh(false); flushOut(); });
 setInterval(function(){ if(!document.hidden) refresh(false); }, 60000);
 
 /* ── start ─────────────────────────────────────────────────────────── */
-theme(); readLink(); padBuild();
+theme(); bigMode(); readLink(); padBuild();
 LANG = LS.get('blo_lang') || 'en';
 $('lk-bio').onclick = bioUnlock;
 if(!CFG){
