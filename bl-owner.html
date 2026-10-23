@@ -102,6 +102,7 @@ nav button em{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;heig
 .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--b2);border-top-color:var(--cyan);border-radius:50%;animation:rot .8s linear infinite;vertical-align:-3px}
 
 [hidden]{display:none!important}
+.note2{color:var(--text3);font-size:12.5px;line-height:1.5;margin-top:12px}
 .star{flex:0 0 auto;width:34px;height:34px;border-radius:10px;font-size:19px;line-height:1;color:var(--text3)}.star.on{color:var(--amber)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .res{margin:6px 0 12px}.res .note{display:block;color:var(--text3);font-size:12px;margin-top:8px}
@@ -181,6 +182,7 @@ img.big{width:100%;border-radius:14px;display:block}
 <div class="sheet" id="sh-find"></div>
 <div class="sheet" id="sh-photo"></div>
 <div class="sheet" id="sh-calc"></div>
+<div class="sheet" id="sh-diag"></div>
 <div id="ptr">⟳</div>
 <div class="toast" id="toast"></div>
 
@@ -197,6 +199,20 @@ var ITER = 150000, $ = function(id){ return document.getElementById(id); };
 var CLEARED = Promise.resolve(), CFG = null, KEY = null, SNAP = null, LANG = 'en', VIEW = 'home', SENT = {};
 var LS = {get:function(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set:function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }, del:function(k){ try{ localStorage.removeItem(k); }catch(e){} }};
 var T = {
+  diag:['Alerts check','அறிவிப்பு சோதனை'], testal:['Show a test alert','சோதனை அறிவிப்பு'], repair:['Switch off & on again','மீண்டும் இயக்கு'], testbody:['Test — alerts can appear on this phone ✅','சோதனை — இந்த தொலைபேசியில் அறிவிப்புகள் வரும் ✅'], testsent:['Test alert shown — check the top of your screen','சோதனை அறிவிப்பு காட்டப்பட்டது'],
+  howal:['Alerts are sent by the BuildLedger Windows app on your computer while it is running (it stays in the tray, even with the window closed). They come when something new happens: money received above your minimum, a stage paid in full, a project over budget, new approvals, bills past due. BuildLedger opened in a web browser does not send alerts.','அறிவிப்புகளை உங்கள் கணினியில் இயங்கும் BuildLedger Windows செயலி அனுப்புகிறது. புதிதாக ஏதாவது நடக்கும்போது (பணம் வந்தால், தவணை முடிந்தால், பட்ஜெட் மீறினால், அனுமதி தேவைப்பட்டால்) வரும்.'],
+  d_pc:['Your computer is set up for alerts','கணினி அறிவிப்புகளுக்குத் தயார்'], d_browser:['This browser can receive alerts','இந்த உலாவி அறிவிப்புகளைப் பெறும்'], d_perm:['Notifications allowed for this page','அறிவிப்புகளுக்கு அனுமதி'], d_permask:['Turn on “Alerts on this phone” and tap Allow','“அறிவிப்புகள்” இயக்கி அனுமதி கொடுக்கவும்'],
+  d_sw:['Alerts helper is running','அறிவிப்பு உதவி இயங்குகிறது'], d_sub:['This phone is signed up','இந்த தொலைபேசி பதிவு செய்யப்பட்டது'], d_subno:['Not signed up yet — turn on “Alerts on this phone” in ⚙','இன்னும் பதிவு இல்லை — ⚙-ல் இயக்கவும்'], d_subold:['Signed up with an old key — tap “Switch off & on again”','பழைய பதிவு — “மீண்டும் இயக்கு” அழுத்தவும்'],
+  d_got:['Your computer has this phone on its list','கணினியில் இந்த தொலைபேசி பதிவாகியுள்ளது'], d_wait:['Waiting for BuildLedger on your computer to read it (it checks every 2 minutes while open) — sent','கணினியில் BuildLedger திறந்திருக்கும்போது 2 நிமிடத்தில் படிக்கும் — அனுப்பியது'], d_queued:['Not sent yet — no internet on this phone','இன்னும் அனுப்பப்படவில்லை — இணையம் இல்லை'],
+  d_last:['Last alert from your computer','கணினியிலிருந்து கடைசி அறிவிப்பு'], d_none:['None yet — alerts come when something new happens','இன்னும் இல்லை'],
+  inapp:['This page is open inside another app (WhatsApp, Facebook…), which cannot show alerts. Tap ⋮ → “Open in Chrome” (iPhone: open in Safari), then turn alerts on there.','இது வேறு செயலியின் உள்ளே திறந்துள்ளது. ⋮ → “Chrome-ல் திற” அழுத்தி அங்கே இயக்கவும்.'],
+  iosicon:['On iPhone, alerts work only from the home-screen icon: tap Share ⬆ → “Add to Home Screen”, open BuildLedger from that icon, enter your PIN, then turn alerts on.','iPhone-ல்: பகிர் ⬆ → “Add to Home Screen”, அந்த ஐகானிலிருந்து திறந்து அறிவிப்புகளை இயக்கவும்.'],
+  iosold:['This iPhone needs iOS 16.4 or newer for alerts (Settings → General → Software Update).','அறிவிப்புகளுக்கு iOS 16.4 அல்லது புதியது தேவை.'],
+  nopush:['This browser cannot receive alerts. Use Chrome on Android.','இந்த உலாவியில் அறிவிப்புகள் இல்லை. Android-ல் Chrome பயன்படுத்தவும்.'],
+  blocked:['Alerts are blocked for this page. In Chrome tap 🔒 (left of the address) → Permissions → Notifications → Allow, then try again.','அறிவிப்புகள் தடுக்கப்பட்டுள்ளன. Chrome-ல் 🔒 → Permissions → Notifications → Allow.'],
+  novapid:['Open BuildLedger on your computer once so it can set up alerts, then pull down to refresh here.','கணினியில் BuildLedger-ஐ ஒருமுறை திறக்கவும்.'],
+  nosw:['This page must be opened from your https site address','https முகவரியிலிருந்து திறக்கவும்'], swslow:['The alerts helper did not start — reload the page and try again','உதவி தொடங்கவில்லை — மீண்டும் ஏற்றவும்'],
+  pushok:['Alerts are on. Your computer adds this phone within 2 minutes while BuildLedger is open.','அறிவிப்புகள் இயக்கப்பட்டன. கணினி 2 நிமிடத்தில் சேர்க்கும்.'], pushq:['Alerts are on here — this phone will be sent to your computer when it is back online.','இயக்கப்பட்டது — இணையம் வந்ததும் கணினிக்கு அனுப்பப்படும்.'], pushfail:['Could not switch alerts on','இயக்க முடியவில்லை'],
   week:['This week','இந்த வாரம்'], month:['This month','இந்த மாதம்'], flow:['Cash — next 30 days','அடுத்த 30 நாள் பணம்'], lowest:['Lowest point','குறைந்தபட்சம்'], short:['money runs short — plan ahead','பணம் குறையும் — முன்கூட்டியே திட்டமிடவும்'], in30:['after 30 days','30 நாளில்'],
   quotes:['Quotes waiting for an answer','பதிலுக்குக் காத்திருக்கும் மதிப்பீடுகள்'], monthrep:['Share monthly report','மாத அறிக்கையைப் பகிர்'], passbook:['Passbook','பாஸ்புக்'], sendpb:['Send passbook','பாஸ்புக் அனுப்பு'],
   remhead:['Payment reminder','பணம் நினைவூட்டல்'], gentle:['Gentle','மென்மை'], firm:['Firm','உறுதி'], stagedue:['Stage due','தவணை'], sendwa:['Send on WhatsApp','WhatsApp-ல் அனுப்பு'],
@@ -341,7 +357,7 @@ function show(snap, live){
   $('upd').textContent = L('upd') + ' ' + ago(snap.at);
   $('offline').classList.toggle('hide', !!live); $('offline').textContent = '📴 ' + L('off') + ' · ' + ago(snap.at);
   [].forEach.call(document.querySelectorAll('[data-l]'), function(e){ e.textContent = L(e.getAttribute('data-l')); });
-  pruneSent(); render(); badges(); flushOut();
+  pruneSent(); render(); badges(); flushOut(); setTimeout(pushHeal, 1500);
   kvSet('seenAlert', Math.max.apply(null, [0].concat((snap.alerts || []).map(function(a){ return a.at; }))));
 }
 function badges(){
@@ -905,19 +921,20 @@ function attCount(){ $('at-n').textContent = document.querySelectorAll('#at-l in
 
 /* ── settings: language, theme, fingerprint, alerts, lock ──────────── */
 function setSheet(){
-  var th = LS.get('blo_theme') || 'auto', bio = !!LS.get('blo_bio'), lockOn = LS.get('blo_lock') !== false, notif = !!LS.get('blo_push');
+  var th = LS.get('blo_theme') || 'auto', bio = !!LS.get('blo_bio'), lockOn = LS.get('blo_lock') !== false, notif = !!LS.get('blo_push') && !pushBlock();
   $('sh-set').innerHTML = '<div class="grab"></div><h3>⚙ ' + esc(L('set')) + '</h3>'
     + '<div class="field"><label>' + esc(L('lang')) + '</label><div class="seg" id="st-l"><button data-v="en" class="' + (LANG === 'en' ? 'on' : '') + '">English</button><button data-v="ta" class="' + (LANG === 'ta' ? 'on' : '') + '">தமிழ்</button></div></div>'
     + '<div class="field"><label>' + esc(L('theme')) + '</label><div class="seg" id="st-t">' + [['auto', 'Auto'], ['dark', '🌙'], ['light', '☀️']].map(function(x){ return '<button data-v="' + x[0] + '" class="' + (th === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div></div>'
     + '<div class="opt"><span>👆 ' + esc(L('bio')) + '<small>' + (bioOk() ? (LANG === 'ta' ? 'PIN இல்லாமல் திறக்க' : 'Open without typing the PIN') : 'Needs the page on https and a phone with a fingerprint or face lock') + '</small></span><button class="sw' + (bio ? ' on' : '') + '" id="st-bio"></button></div>'
-    + (RO() ? '' : '<div class="opt"><span>🔔 ' + esc(L('notif')) + '<small>' + ('PushManager' in window ? (LANG === 'ta' ? 'பணம் வந்தால், தவணை முடிந்தால்…' : 'Money received, stage paid, over budget, approvals') : 'Add this page to your home screen first') + '</small></span><button class="sw' + (notif ? ' on' : '') + '" id="st-n"></button></div>')
+    + (RO() ? '' : '<div class="opt"><span>🔔 ' + esc(L('notif')) + '<small>' + ('PushManager' in window ? (LANG === 'ta' ? 'பணம் வந்தால், தவணை முடிந்தால்…' : 'Money received, stage paid, over budget, approvals') : 'Add this page to your home screen first') + '</small></span><button class="sw' + (notif ? ' on' : '') + '" id="st-n"></button></div><button class="btn sm" id="st-dg" style="margin:2px 0 6px">🩺 ' + esc(L('diag')) + '</button>')
     + '<div class="opt"><span>🔠 ' + esc(L('big')) + '<small>' + esc(L('bigs')) + '</small></span><button class="sw' + (LS.get('blo_big') ? ' on' : '') + '" id="st-big"></button></div>'
     + '<div class="opt"><span>🔐 ' + esc(L('lockopt')) + '<small>' + (LANG === 'ta' ? '5 நிமிடத்திற்கு மேல் மூடினால்' : 'After 5 minutes away') + '</small></span><button class="sw' + (lockOn ? ' on' : '') + '" id="st-lk"></button></div>'
     + '<div class="btns" style="margin-top:16px"><button class="btn" id="st-now">🔒 ' + esc(L('lockn')) + '</button><button class="btn" id="st-forget" style="color:var(--coral)">' + esc(L('forget')) + '</button></div>';
   $('st-l').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; LANG = b.getAttribute('data-v'); LS.set('blo_lang', LANG); show(SNAP, $('offline').classList.contains('hide')); setSheet(); };
   $('st-t').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; LS.set('blo_theme', b.getAttribute('data-v')); theme(); setSheet(); };
   $('st-bio').onclick = function(){ if(LS.get('blo_bio')){ LS.del('blo_bio'); setSheet(); return; } bioRegister().then(function(){ toast('👆 ' + (LANG === 'ta' ? 'விரல்ரேகை தயார்' : 'Fingerprint unlock is on')); setSheet(); }, function(e){ toast(e && e.message ? e.message : 'Could not set up'); }); };
-  if($('st-n')) $('st-n').onclick = function(){ if(LS.get('blo_push')) pushOff().then(setSheet); else pushOn().then(setSheet); };
+  if($('st-n')) $('st-n').onclick = function(){ if(LS.get('blo_push')) pushOff().then(setSheet); else pushOn().then(function(){ if($('sh-set').classList.contains('on')) setSheet(); }); };
+  if($('st-dg')) $('st-dg').onclick = diagSheet;
   $('st-lk').onclick = function(){ LS.set('blo_lock', LS.get('blo_lock') === false); setSheet(); };
   $('st-big').onclick = function(){ LS.set('blo_big', !LS.get('blo_big')); bigMode(); setSheet(); };
   $('st-now').onclick = function(){ sheet('sh-set', false); lock(); };
@@ -931,21 +948,91 @@ function bigMode(){ document.body.classList.toggle('big', !!LS.get('blo_big')); 
 function theme(){ var t = LS.get('blo_theme') || 'auto'; if(t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t); var m = document.querySelector('meta[name=theme-color]'); if(m) m.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0b0f1a'; }
 
 /* ── 9 · phone notifications ───────────────────────────────────────── */
-function swReg(){ return 'serviceWorker' in navigator && window.isSecureContext ? navigator.serviceWorker.register('bl-owner-sw.js').then(function(){ return navigator.serviceWorker.ready; }) : Promise.reject(new Error('no sw')); }
+function swReg(){
+  if(!('serviceWorker' in navigator) || !window.isSecureContext) return Promise.reject(new Error(L('nosw')));
+  return Promise.race([navigator.serviceWorker.register('bl-owner-sw.js').then(function(){ return navigator.serviceWorker.ready; }),
+    new Promise(function(_, no){ setTimeout(function(){ no(new Error(L('swslow'))); }, 15000); })]);
+}
+function isIOS(){ return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+function standalone(){ return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+/* why this phone cannot get alerts, in plain words — '' when it can */
+function pushBlock(){
+  var ua = navigator.userAgent;
+  if(/FBAN|FBAV|Instagram|Line\/|WhatsApp|; wv\)/.test(ua)) return L('inapp');
+  if(isIOS() && !standalone()) return L('iosicon');
+  if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return isIOS() ? L('iosold') : L('nopush');
+  if(Notification.permission === 'denied') return L('blocked');
+  return '';
+}
+function sameKey(sub){ try{ var k = sub.options && sub.options.applicationServerKey; return !k || b64u(k) === SNAP.vapid; }catch(e){ return true; } }
+function subscribe(reg){
+  var opt = {userVisibleOnly:true, applicationServerKey:unb64u(SNAP.vapid)};
+  return reg.pushManager.getSubscription().then(function(old){
+    if(old && sameKey(old)) return old;
+    return (old ? old.unsubscribe() : Promise.resolve()).then(function(){ return reg.pushManager.subscribe(opt); });
+  }).catch(function(e){
+    if(e && /InvalidState|already/i.test(e.name + e.message)) return reg.pushManager.getSubscription().then(function(o){ return o && o.unsubscribe(); }).then(function(){ return reg.pushManager.subscribe(opt); });
+    throw e;
+  });
+}
+function devName(){ return isIOS() ? 'iPhone' : /Android/.test(navigator.userAgent) ? 'Android phone' : 'Phone'; }
+function signUp(sub){
+  var id = b64u(rand(9)); LS.set('blo_push', sub.endpoint); LS.set('blo_subid', {id:id, at:Date.now(), ep:sub.endpoint});
+  return send({id:id, type:'sub', sub:sub.toJSON(), dev:devName()});
+}
 function pushOn(){
-  if(!SNAP || !SNAP.vapid) { toast('Open BuildLedger on the computer once so it can set up alerts.'); return Promise.resolve(); }
-  return Notification.requestPermission().then(function(p){
-    if(p !== 'granted') throw new Error(LANG === 'ta' ? 'அனுமதி மறுக்கப்பட்டது' : 'Notifications were not allowed');
+  if(!SNAP || !SNAP.vapid){ toast(L('novapid')); return Promise.resolve(); }
+  var why = pushBlock(); if(why){ diagSheet(); return Promise.resolve(); }
+  var asked;
+  try{ asked = Notification.requestPermission(); }catch(e){ asked = null; }
+  return Promise.resolve(asked || new Promise(function(ok){ Notification.requestPermission(ok); })).then(function(p){
+    if(p !== 'granted') throw new Error(L('blocked'));
     return swReg();
-  }).then(function(reg){ return reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:unb64u(SNAP.vapid)}); })
-    .then(function(sub){ LS.set('blo_push', sub.endpoint); var dev = /iPhone|iPad/.test(navigator.userAgent) ? 'iPhone' : /Android/.test(navigator.userAgent) ? 'Android phone' : 'Phone'; return send({type:'sub', sub:sub.toJSON(), dev:dev}); })
-    .then(function(){ toast('🔔 ' + (LANG === 'ta' ? 'அறிவிப்புகள் இயக்கப்பட்டன' : 'Alerts are on for this phone')); })
-    .catch(function(e){ toast(e && e.message ? e.message : 'Could not switch alerts on'); });
+  }).then(subscribe).then(signUp).then(function(sent){
+    toast('🔔 ' + (sent ? L('pushok') : L('pushq')));
+  }).catch(function(e){ toast('⚠ ' + (e && e.message ? e.message : L('pushfail'))); });
 }
 function pushOff(){
-  var ep = LS.get('blo_push'); LS.del('blo_push');
+  var ep = LS.get('blo_push'); LS.del('blo_push'); LS.del('blo_subid');
   if(ep) send({type:'unsub', endpoint:ep});
   return swReg().then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(s){ return s && s.unsubscribe(); }).catch(function(){});
+}
+/* the browser can quietly replace a phone's push address; sign up again when that happens */
+function pushHeal(){
+  if(!LS.get('blo_push') || RO() || !SNAP || !SNAP.vapid || pushBlock() || Notification.permission !== 'granted') return;
+  swReg().then(function(reg){ return reg.pushManager.getSubscription().then(function(s){ return s && sameKey(s) ? s : subscribe(reg); }); })
+    .then(function(s){ var mine = LS.get('blo_subid'); if(!mine || mine.ep !== s.endpoint) signUp(s); }).catch(function(){});
+}
+/* ── Alerts check: every step, and what to do about the one that fails ── */
+function diagSheet(){
+  $('sh-diag').innerHTML = '<div class="grab"></div><h3>🩺 ' + esc(L('diag')) + '</h3><div class="card" id="dg-l"><div class="empty"><span class="spin"></span></div></div>'
+    + '<div class="btns"><button class="btn pri" id="dg-test" style="flex:1">🔔 ' + esc(L('testal')) + '</button><button class="btn" id="dg-fix">🔄 ' + esc(L('repair')) + '</button></div>'
+    + '<p class="note2">' + esc(L('howal')) + '</p>';
+  [].forEach.call(document.querySelectorAll('.sheet.on'), function(s){ s.classList.remove('on'); });
+  sheet('sh-diag', true); diagRun();
+  $('dg-test').onclick = function(){ swReg().then(function(reg){ return reg.showNotification(SNAP.co || 'BuildLedger', {body:L('testbody'), icon:'bl-owner-icon-192.png', badge:'bl-owner-icon-192.png', tag:'bl-test'}); })
+    .then(function(){ toast('🔔 ' + L('testsent')); }, function(e){ toast('⚠ ' + (e && e.message ? e.message : L('pushfail'))); }); };
+  $('dg-fix').onclick = function(){ pushOff().then(function(){ return pushOn(); }).then(function(){ setTimeout(diagRun, 1500); }); };
+}
+function diagRun(){
+  var rows = [], add = function(ok, t, s){ rows.push('<div class="row"><div class="ic">' + (ok === true ? '✅' : ok === false ? '❌' : '⏳') + '</div><div class="m"><b style="white-space:normal">' + esc(t) + '</b>' + (s ? '<small style="white-space:normal">' + esc(s) + '</small>' : '') + '</div></div>'); };
+  var why = pushBlock(), mine = LS.get('blo_subid'), acked = mine && (SNAP.acks || []).indexOf(mine.id) >= 0, queued = mine && outbox().some(function(m){ return m.id === mine.id; });
+  add(!!SNAP.vapid, L('d_pc'), SNAP.vapid ? '' : L('novapid'));
+  add(!why, L('d_browser'), why);
+  var perm = 'Notification' in window ? Notification.permission : 'default';
+  if(!why) add(perm === 'granted' ? true : perm === 'denied' ? false : null, L('d_perm'), perm === 'granted' ? '' : perm === 'denied' ? L('blocked') : L('d_permask'));
+  var done = function(reg, sub){
+    if(!why){
+      add(!!(reg && reg.active), L('d_sw'), reg && reg.active ? '' : L('swslow'));
+      add(!!sub && sameKey(sub), L('d_sub'), !sub ? L('d_subno') : sameKey(sub) ? '' : L('d_subold'));
+      add(acked ? true : mine ? null : false, L('d_got'), acked ? '' : queued ? L('d_queued') : mine ? L('d_wait') + ' ' + ago(mine.at) : L('d_subno'));
+    }
+    var last = (SNAP.alerts || []).slice(-1)[0];
+    add(last ? true : null, L('d_last'), last ? last.t + ' · ' + ago(last.at) : L('d_none'));
+    $('dg-l').innerHTML = rows.join('');
+  };
+  if(why || !('serviceWorker' in navigator)) return done(null, null);
+  navigator.serviceWorker.getRegistration().then(function(reg){ return reg ? reg.pushManager.getSubscription().then(function(s){ done(reg, s); }) : done(null, null); }).catch(function(){ done(null, null); });
 }
 
 /* ── 12 · staying fresh, and offline ───────────────────────────────── */
