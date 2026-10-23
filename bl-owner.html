@@ -141,6 +141,112 @@ img.big{width:100%;border-radius:14px;display:block}
 @keyframes shake{0%,100%{transform:none}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 @keyframes rot{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ══ Owner phone · design layer (colour, depth, motion) ══════════════════ */
+:root{--r-card:20px;--r-tile:20px;--glass:color-mix(in srgb,var(--bg2) 72%,transparent);--violet2:#7c5cff;--pink:#ff5fa2;
+  --g-hero:linear-gradient(135deg,#3b1d8f 0%,#5b2bd6 38%,#0e7490 100%);--g-pri:linear-gradient(135deg,#c6f432 0%,#5eead4 100%);--shadow:0 18px 40px -22px rgba(0,0,0,.65)}
+:root[data-theme=light]{--glass:color-mix(in srgb,#ffffff 78%,transparent);--shadow:0 16px 34px -22px rgba(30,41,90,.35)}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]){--glass:color-mix(in srgb,#ffffff 78%,transparent);--shadow:0 16px 34px -22px rgba(30,41,90,.35)}}
+body{font-feature-settings:"tnum" 1}
+/* living background: soft colour fields that drift slowly */
+body::before{content:'';position:fixed;inset:-20vmax;z-index:-1;pointer-events:none;opacity:.55;
+  background:radial-gradient(38vmax 30vmax at 12% 8%,color-mix(in srgb,var(--violet2) 38%,transparent),transparent 70%),
+             radial-gradient(34vmax 28vmax at 92% 18%,color-mix(in srgb,var(--cyan) 30%,transparent),transparent 70%),
+             radial-gradient(40vmax 30vmax at 50% 105%,color-mix(in srgb,var(--lime) 22%,transparent),transparent 70%),
+             radial-gradient(30vmax 26vmax at 0% 70%,color-mix(in srgb,var(--pink) 20%,transparent),transparent 70%);
+  filter:blur(10px);animation:aurora 26s ease-in-out infinite alternate}
+:root[data-theme=light] body::before{opacity:.35}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]) body::before{opacity:.35}}
+@keyframes aurora{0%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(-3vmax,2vmax,0) rotate(6deg)}100%{transform:translate3d(2vmax,-2vmax,0) rotate(-4deg)}}
+/* header */
+.top{background:var(--glass);border-bottom:1px solid color-mix(in srgb,var(--b2) 60%,transparent);box-shadow:0 8px 24px -18px rgba(0,0,0,.5)}
+.logo{background:conic-gradient(from 210deg,#c6f432,#22d3ee,#7c5cff,#ff5fa2,#c6f432);color:#0b0f1a;box-shadow:0 6px 18px -6px color-mix(in srgb,var(--cyan) 70%,transparent)}
+.tt b{letter-spacing:.2px}
+.ib{background:var(--glass);border-color:color-mix(in srgb,var(--b2) 70%,transparent);transition:transform .15s,background .2s}
+.ib:active{transform:scale(.92)}
+.ib em,nav button em{box-shadow:0 0 0 2px var(--bg2);animation:badge 2.4s ease-in-out infinite}
+@keyframes badge{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+/* section heads */
+h2{margin:26px 2px 12px;font-size:12px;letter-spacing:1.6px;color:var(--text3)}
+h2::before{content:'';display:inline-block;width:8px;height:8px;border-radius:3px;margin-right:9px;vertical-align:1px;background:var(--g-pri);box-shadow:0 0 10px color-mix(in srgb,var(--cyan) 70%,transparent)}
+h2{display:flex;align-items:center;justify-content:flex-start;gap:0}h2 a{margin-left:auto;padding-left:10px}
+/* cards */
+.card{border-radius:var(--r-card);background:linear-gradient(180deg,color-mix(in srgb,var(--bg3) 92%,var(--cyan) 8%),var(--bg3));border:1px solid color-mix(in srgb,var(--b2) 70%,transparent);box-shadow:var(--shadow);padding:14px 16px}
+.row{gap:12px;padding:12px 0}.row .ic{border-radius:13px;background:linear-gradient(145deg,color-mix(in srgb,var(--cyan) 16%,var(--bg4)),var(--bg4));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--b2) 60%,transparent)}
+.row.tap,.card.tap{transition:transform .15s var(--ease)}.row.tap:active,.card.tap:active{transform:scale(.985);opacity:1}
+/* ── hero ─────────────────────────────────────────────────────────────── */
+.hero{position:relative;overflow:hidden;border-radius:24px;padding:18px 18px 16px;margin-bottom:12px;color:#fff;background:var(--g-hero);
+  box-shadow:0 22px 44px -22px rgba(91,43,214,.75);animation:pop .6s var(--ease) both}
+.hero::before{content:'';position:absolute;inset:-40% -10% auto auto;width:70%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(198,244,50,.45),transparent 65%);animation:orb 9s ease-in-out infinite alternate}
+.hero::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.18) 45%,transparent 60%);transform:translateX(-120%);animation:sheen 3.2s 0.8s var(--ease) both}
+@keyframes orb{to{transform:translate(-18%,22%) scale(1.15)}}
+@keyframes sheen{to{transform:translateX(120%)}}
+.hero small{position:relative;display:block;font-size:11.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;opacity:.85}
+.hero .hero-v{position:relative;display:block;font-size:34px;font-weight:900;letter-spacing:-.5px;margin:4px 0 12px;line-height:1.1;font-variant-numeric:tabular-nums}
+.hero .split{position:relative;display:flex;height:10px;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.18)}
+.hero .split i{display:block;height:100%;transform-origin:left;animation:grow 1s var(--ease) both .25s}
+.hero .split .in{background:linear-gradient(90deg,#34d399,#a7f3d0)}.hero .split .out{background:linear-gradient(90deg,#fb7185,#fda4af);transform-origin:right}
+.hero .legend2{position:relative;display:flex;justify-content:space-between;gap:10px;margin-top:10px;font-size:13px;font-weight:700}
+.hero .legend2 span{display:flex;align-items:center;gap:6px;white-space:nowrap}.hero .legend2 i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.hero .chip{position:absolute;top:14px;right:14px;padding:4px 10px;border-radius:99px;font-size:11.5px;font-weight:800;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+/* ── KPI tiles ────────────────────────────────────────────────────────── */
+.tiles{gap:12px}
+.tile{border-radius:var(--r-tile);padding:14px 14px 14px 15px;min-height:104px;isolation:isolate;
+  background:linear-gradient(155deg,color-mix(in srgb,var(--c) 24%,var(--bg3)) 0%,color-mix(in srgb,var(--c) 6%,var(--bg3)) 55%,var(--bg3) 100%);
+  border:1px solid color-mix(in srgb,var(--c) 34%,transparent);box-shadow:0 14px 28px -18px color-mix(in srgb,var(--c) 75%,transparent);
+  transition:transform .18s var(--ease),box-shadow .25s;animation:tileIn .6s var(--ease) both;animation-delay:calc(var(--i,0)*70ms)}
+.tile:active{transform:scale(.97)}
+.tile::before{left:auto;right:-30%;top:-45%;bottom:auto;width:85%;aspect-ratio:1;height:auto;border-radius:50%;z-index:-1;
+  background:radial-gradient(circle,color-mix(in srgb,var(--c) 38%,transparent),transparent 68%);animation:orb 7s ease-in-out infinite alternate}
+.tile::after{content:'';position:absolute;inset:0;border-radius:inherit;z-index:-1;background:linear-gradient(115deg,transparent 35%,color-mix(in srgb,#fff 16%,transparent) 48%,transparent 60%);transform:translateX(-130%);animation:sheen 1.6s var(--ease) both;animation-delay:calc(.35s + var(--i,0)*70ms)}
+.tile small{padding-right:34px;font-size:10.5px;letter-spacing:.7px;line-height:1.3;min-height:2.6em}
+.tile b{font-size:24px;letter-spacing:-.3px;margin-top:8px;position:relative}
+.tile span{font-size:12px}
+.tile .ti{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:10px;font-size:14px!important;display:grid;place-items:center;font-size:16px;font-style:normal;
+  background:color-mix(in srgb,var(--c) 22%,var(--bg4));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent),0 6px 14px -8px var(--c)}
+.tile .tbar{display:block;height:4px;border-radius:4px;margin-top:9px;background:color-mix(in srgb,var(--c) 18%,transparent);overflow:hidden}
+.tile .tbar i{display:block;height:100%;width:var(--w,0%);border-radius:4px;background:linear-gradient(90deg,var(--c),color-mix(in srgb,var(--c) 45%,#fff));transform-origin:left;animation:grow 1.1s var(--ease) both .3s}
+@keyframes tileIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+/* numbers count up on screen; the real figure stays in the page */
+.cu{color:transparent!important}
+.cu::after{content:attr(data-cu);position:absolute;left:0;top:0;color:var(--cc,currentColor);white-space:nowrap}
+.tile b.cu::after{color:var(--c)}
+.hero .cu::after{color:#fff}
+/* bars and progress */
+.bar{height:8px;background:color-mix(in srgb,var(--c,var(--cyan)) 14%,var(--bg4))}
+.bar i{background:linear-gradient(90deg,var(--c,var(--cyan)),color-mix(in srgb,var(--c,var(--cyan)) 50%,#fff));position:relative;overflow:hidden}
+.bar i::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-100%);animation:sheen 1.8s 1s var(--ease) both}
+.pill{background:color-mix(in srgb,var(--cyan) 12%,var(--bg4));border:1px solid color-mix(in srgb,var(--b2) 60%,transparent)}
+/* segmented controls & buttons */
+.seg{background:color-mix(in srgb,var(--bg4) 85%,transparent);border:1px solid color-mix(in srgb,var(--b2) 50%,transparent)}
+.seg button{transition:background .25s,color .2s,box-shadow .25s}
+.seg button.on{background:var(--bg2);box-shadow:0 6px 14px -8px rgba(0,0,0,.45),inset 0 0 0 1px color-mix(in srgb,var(--cyan) 35%,transparent);color:var(--text)}
+#per{padding:5px}#per button{height:36px}
+.btn{border-radius:13px;transition:transform .12s,box-shadow .2s}
+.btn.pri{background:var(--g-pri);color:#082018;box-shadow:0 10px 22px -12px rgba(94,234,212,.8)}
+.btn.wa{box-shadow:0 10px 20px -12px rgba(37,211,102,.8)}
+/* floating navigation with a sliding highlight */
+nav{left:10px;right:10px;bottom:calc(8px + var(--safe-b));padding:6px;border-radius:24px;background:var(--glass);border:1px solid color-mix(in srgb,var(--b2) 70%,transparent);box-shadow:0 18px 40px -16px rgba(0,0,0,.55)}
+nav .nav-ind{position:absolute;top:6px;bottom:6px;left:6px;width:0;border-radius:18px;z-index:0;pointer-events:none;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--cyan) 26%,transparent),color-mix(in srgb,var(--violet2) 26%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cyan) 35%,transparent);
+  transition:transform .42s cubic-bezier(.3,1.35,.5,1),width .42s cubic-bezier(.3,1.35,.5,1)}
+nav button{position:relative;z-index:1}
+body{padding-bottom:calc(96px + var(--safe-b))}
+.fab{bottom:calc(92px + var(--safe-b));border-radius:20px;background:conic-gradient(from 200deg,#c6f432,#22d3ee,#7c5cff,#c6f432);box-shadow:0 16px 34px -12px rgba(34,211,238,.7)}
+.fab::after{content:'';position:absolute;inset:-6px;border-radius:24px;border:2px solid color-mix(in srgb,var(--cyan) 60%,transparent);animation:ring 2.8s ease-out infinite}
+@keyframes ring{0%{opacity:.8;transform:scale(.92)}100%{opacity:0;transform:scale(1.25)}}
+/* views slide in from the side you are going to */
+.view.on{animation:viewIn .42s var(--ease) both}
+main.back .view.on{animation-name:viewBack}
+@keyframes viewIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@keyframes viewBack{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+/* sheets & lock */
+.sheet{background:var(--bg2);box-shadow:0 -20px 50px -20px rgba(0,0,0,.6);border-top:1px solid color-mix(in srgb,var(--b2) 70%,transparent)}
+#lock{background:radial-gradient(70% 50% at 50% 0%,color-mix(in srgb,var(--violet2) 32%,transparent),transparent 70%),radial-gradient(60% 40% at 50% 100%,color-mix(in srgb,var(--cyan) 22%,transparent),transparent 70%),var(--bg)}
+#lock .logo{animation:pop .6s var(--ease) both,float 4s ease-in-out 1s infinite}
+.pad button{border-radius:22px;background:var(--glass);box-shadow:0 8px 18px -12px rgba(0,0,0,.5)}
+.dots i.f{background:var(--g-pri);border-color:transparent;box-shadow:0 0 12px color-mix(in srgb,var(--cyan) 70%,transparent)}
+@media (prefers-reduced-motion:reduce){body::before,.tile::before,.hero::before{animation:none}.cu{color:inherit!important}.cu::after{content:none}}
 </style>
 </head>
 <body>
@@ -1214,6 +1320,71 @@ if(!CFG){
   else if(LS.get('blo_bio') && bioOk()) setTimeout(bioUnlock, 400);
 }
 window.BLO = {go:go, refresh:refresh, send:send, flushOut:flushOut, state:function(){ return {snap:SNAP, sent:SENT, out:outbox(), view:VIEW, lang:LANG}; }, lock:lock};
+</script>
+<script>
+/* ══ Owner phone · design layer: hero, tile icons, count-up, sliding nav ══ */
+(function(){
+'use strict';
+var ICON = {'var(--mint)':'↘', 'var(--coral)':'↗', 'var(--cyan)':'👷', 'var(--amber)':'⏳', 'var(--lime)':'🏦', 'var(--violet)':'📊', 'var(--text3)':'🏦'};
+var tile0 = tile;
+tile = function(c, label, val, sub, i, wide){
+  var h = tile0(c, label, val, sub, i, wide), ic = ICON[c] || '•';
+  if(/received|வரவு|recv/i.test(label)) ic = '💰'; else if(/spent|செலவு/i.test(label)) ic = '💸'; else if(/profit|loss|லாபம்|நஷ்டம்/i.test(label)) ic = '📈';
+  else if(/overdue|தாமதம்/i.test(label)) ic = '⏰'; else if(/contract|ஒப்பந்த/i.test(label)) ic = '📑'; else if(/going out|செலவு/i.test(label)) ic = '↗'; else if(/coming in|வரவு/i.test(label)) ic = '↘';
+  return h.replace('<small>', '<i class="ti" aria-hidden="true">' + ic + '</i><small>');
+};
+/* the hero: net for the day, and how received and spent compare */
+var home0 = home;
+home = function(){
+  home0();
+  if(!SNAP || PERX !== 'd') return;
+  var d = SNAP.today || {}, rev = Number(d.rev) || 0, cost = Number(d.cost) || 0, net = rev - cost, tot = rev + cost, pin = tot ? rev / tot * 100 : 50;
+  var ta = LANG === 'ta', h = '<div class="hero"><span class="chip">' + esc(fd(d.date || todayIso())) + '</span><small>' + (ta ? 'இன்றைய நிகரம்' : 'Net today') + '</small>'
+    + '<b class="hero-v">' + rs(net) + '</b><div class="split"><i class="in" style="width:' + pin.toFixed(1) + '%"></i><i class="out" style="width:' + (100 - pin).toFixed(1) + '%"></i></div>'
+    + '<div class="legend2"><span><i style="background:#34d399"></i>' + (ta ? 'வரவு ' : 'In ') + rs(rev) + '</span><span><i style="background:#fb7185"></i>' + (ta ? 'செலவு ' : 'Out ') + rs(cost) + '</span></div></div>';
+  var host = $('v-home'), seg = $('per');
+  if(seg) seg.insertAdjacentHTML('afterend', h); else host.insertAdjacentHTML('afterbegin', h);
+  if(VIEW === 'home') setTimeout(function(){ strips(); countUp($('v-home'), 'home'); }, 0);
+};
+/* ── numbers count up: the page keeps the true figure, the screen animates ── */
+var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, seen = {};
+function parse(t){
+  var m = /^([−-]?)(₹?)([\d,]+(?:\.\d+)?)(\s*(?:L|Cr|%))?$/.exec(String(t).trim()); if(!m) return null;
+  var raw = m[3].replace(/,/g, ''), dec = (raw.split('.')[1] || '').length;
+  return {neg:m[1], cur:m[2], v:Number(raw), dec:dec, suf:m[4] || '', grp:m[3].indexOf(',') >= 0 || (m[2] && Number(raw) >= 1000)};
+}
+function fmt(p, v){ var s = p.dec ? v.toFixed(p.dec) : String(Math.round(v)); if(p.grp && !p.dec) s = Math.round(v).toLocaleString('en-IN'); return p.neg + p.cur + s + p.suf; }
+function countUp(root, key){
+  if(reduce || !root) return;
+  [].forEach.call(root.querySelectorAll('.tile b, .hero-v'), function(el, i){
+    var txt = el.textContent, p = parse(txt), k = key + ':' + i; if(!p || !(p.v > 0)) return;
+    if(seen[k] === txt) return; seen[k] = txt;
+    var t0 = performance.now(), dur = 900 + Math.min(500, i * 60);
+    el.classList.add('cu'); el.setAttribute('data-cu', fmt(p, 0));
+    (function step(now){ var x = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - x, 3); el.setAttribute('data-cu', fmt(p, p.v * e));
+      if(x < 1 && el.isConnected) requestAnimationFrame(step); else { el.classList.remove('cu'); el.removeAttribute('data-cu'); } })(t0);
+  });
+}
+/* tile progress strip where a share makes sense */
+function strips(){
+  var d = (SNAP && SNAP.today) || {}, lim = Number(LS.get('blo_limit')) || 0, tiles = document.querySelectorAll('#v-home .tiles:not(#per) .tile');
+  if(tiles[1] && lim > 0 && !tiles[1].querySelector('.tbar')) tiles[1].insertAdjacentHTML('beforeend', '<span class="tbar"><i style="--w:' + Math.min(100, (d.cost || 0) / lim * 100).toFixed(1) + '%"></i></span>');
+}
+var render0 = render;
+render = function(){ render0(); strips(); countUp($('v-' + VIEW), VIEW); };
+/* sliding highlight under the bottom navigation */
+var nav = $('nav'), ind = document.createElement('span'); ind.className = 'nav-ind'; nav.insertBefore(ind, nav.firstChild);
+function slide(){ var b = nav.querySelector('button.on'); if(!b || !nav.offsetWidth) return; ind.style.width = b.offsetWidth + 'px'; ind.style.transform = 'translateX(' + (b.offsetLeft - 6) + 'px)'; }
+var ORDER = ['home', 'money', 'sites', 'ok', 'alerts'], go0 = go;
+go = function(v){
+  var back = ORDER.indexOf(v) < ORDER.indexOf(VIEW); $('main').classList.toggle('back', back);
+  go0(v); slide(); countUp($('v-' + v), v);
+};
+window.addEventListener('resize', slide);
+new MutationObserver(slide).observe(nav, {attributes:true, attributeFilter:['class']});
+if(window.BLO) BLO.go = go;
+setTimeout(slide, 400);
+})();
 </script>
 </body>
 </html>
