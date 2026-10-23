@@ -102,6 +102,9 @@ nav button em{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;heig
 .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--b2);border-top-color:var(--cyan);border-radius:50%;animation:rot .8s linear infinite;vertical-align:-3px}
 
 [hidden]{display:none!important}
+.card.limit{border-color:color-mix(in srgb,var(--amber) 55%,transparent);background:color-mix(in srgb,var(--amber) 12%,var(--bg3))}.card.limit b{display:block;color:var(--amber)}.card.limit small{color:var(--text2)}
+.plr{padding:9px 0;border-top:1px solid var(--b1)}.plr:first-child{border-top:0}.pln{display:flex;justify-content:space-between;gap:10px;font-size:14px}.pln b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pln span{font-weight:800;white-space:nowrap}
+.plb{height:8px;border-radius:8px;background:var(--bg4);margin:6px 0 3px;overflow:hidden}.plb i{display:block;height:100%;border-radius:8px;transform-origin:left;animation:grow .8s var(--ease) both}.plr small{color:var(--text3);font-size:12px}
 .note2{color:var(--text3);font-size:12.5px;line-height:1.5;margin-top:12px}
 .star{flex:0 0 auto;width:34px;height:34px;border-radius:10px;font-size:19px;line-height:1;color:var(--text3)}.star.on{color:var(--amber)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -118,7 +121,7 @@ body.big{font-size:17px}.big .tile b{font-size:28px}.big .tile small{font-size:1
 .field label.btn{display:flex;margin:0;font-size:14px;letter-spacing:0;text-transform:none;color:var(--text)}
 .top{gap:6px}.tt b{font-size:15.5px}
 .tap{cursor:pointer}.card.tap:active,.row.tap:active{opacity:.75}
-.seg4{flex-wrap:wrap}.seg4 button{flex:1 1 45%;font-size:13px;height:36px}
+.seg4{flex-wrap:wrap}.seg4 button{flex:1 1 30%;font-size:12.5px;height:36px;padding:0 4px}
 .heard{margin:10px 0 0;padding:8px 12px;border-radius:10px;background:var(--bg4);color:var(--text2);font-size:13.5px}
 .pv{display:flex;align-items:center;gap:10px;margin-top:8px}.pv img{width:84px;height:84px;object-fit:cover;border-radius:12px;border:1px solid var(--b2)}
 .phg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ph{position:relative;padding:0;border-radius:12px;overflow:hidden;aspect-ratio:1;background:var(--bg4)}
@@ -199,6 +202,15 @@ var ITER = 150000, $ = function(id){ return document.getElementById(id); };
 var CLEARED = Promise.resolve(), CFG = null, KEY = null, SNAP = null, LANG = 'en', VIEW = 'home', SENT = {};
 var LS = {get:function(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set:function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }, del:function(k){ try{ localStorage.removeItem(k); }catch(e){} }};
 var T = {
+  qnote:['Note','குறிப்பு'], qnotet:['Remind me to…','நினைவூட்ட வேண்டியது…'], qnoteph:['Call Balaji about TMT rate','பாலாஜியிடம் TMT விலை கேட்க'], qwhen:['Remind me on','எப்போது நினைவூட்ட'], qtime:['Time (optional)','நேரம் (விருப்பம்)'],
+  visit:['Site visit','தள வருகை'], imhere:["I'm at the site",'நான் தளத்தில் இருக்கிறேன்'], vnote:['What you saw (optional)','பார்த்தது (விருப்பம்)'], vnoteph:['Slab shuttering ready, 2 masons short','ஷட்டரிங் தயார்'],
+  promise:['Promise','வாக்குறுதி'], pwhen:['Promised date','வாக்களித்த தேதி'], promises:['Payment promises','பண வாக்குறுதிகள்'], p_open:['Waiting','காத்திருக்கிறது'], p_kept:['Kept — paid','நிறைவேற்றப்பட்டது'], p_missed:['Promise missed','வாக்குறுதி தவறியது'], p_today:['Promised today','இன்று வாக்களித்தது'],
+  vpaid:['Vendor paid','விற்பனையாளர்'], vendor:['Vendor','விற்பனையாளர்'], billsn:['bill(s)','பில்'], vpaynote:['Marks everything owed to this vendor as paid, once you approve it on the computer.','கணினியில் அனுமதித்ததும் இந்த விற்பனையாளருக்கு உள்ள அனைத்தும் கட்டப்பட்டதாகும்.'],
+  vdues:['Owed to vendors','விற்பனையாளர்களுக்கு தர வேண்டியது'], since:['since','முதல்'], markpaid:['Mark paid','கட்டியது'], projpl:['Profit by project — all time','திட்ட வாரியான லாபம்'],
+  reqs:['Material requests from site','தளத்திலிருந்து பொருள் கோரிக்கைகள்'], reject:['Reject','நிராகரி'], needby:['need by','தேவை'], rejwhy:['Reason for rejecting (optional)','நிராகரிக்க காரணம்'], reqok:['Approved — your computer will update the request','அனுமதிக்கப்பட்டது'], reqno:['Rejected — your computer will update the request','நிராகரிக்கப்பட்டது'],
+  cancel:['Cancel','ரத்து'], cancelq:['Cancel this entry? It will not go into the books.','இந்த பதிவை ரத்து செய்யவா?'], t_cx:['Cancelled from this phone','இந்த தொலைபேசியில் ரத்து செய்யப்பட்டது'],
+  receipt:['Receipt','ரசீது'], stmt:['Statement','கணக்கு'], visits:['Site visits','தள வருகைகள்'],
+  limit:['Limit','வரம்பு'], limitt:['Daily spending limit ₹','தினசரி செலவு வரம்பு ₹'], limits:['Today turns amber when spending goes over it','அதை மீறினால் எச்சரிக்கை'], limitoff:['Daily limit off','வரம்பு இல்லை'], overlim:['Spending today is over your daily limit','இன்றைய செலவு வரம்பை மீறியது'],
   needupd:['Site log, bill paid, attendance and photos from the phone need the BuildLedger update on your computer. Until then, enter those on the computer.','தள பதிவு, பில், வருகை, புகைப்படம் — கணினியில் BuildLedger புதுப்பிப்பு தேவை. அதுவரை கணினியில் பதிவு செய்யவும்.'],
   sentfrom:['Sent from this phone','இந்த தொலைபேசியிலிருந்து அனுப்பியவை'],
   t_queued:['Not sent yet — no internet on this phone','இன்னும் அனுப்பவில்லை — இணையம் இல்லை'],
@@ -398,14 +410,17 @@ function dueToday(){
   (SNAP.stages || []).forEach(function(c){ c.s.forEach(function(st){ var bal = st.a - st.got; if(bal > 0.5 && st.due && st.due <= t) out.push({ic:'🧱', t:c.n + ' — ' + st.n, s:(st.due < t ? L('late') + ' ' : L('due') + ' ') + fd(st.due), a:bal, late:st.due < t, cid:c.cid, dir:'in'}); }); });
   (SNAP.bills || []).forEach(function(b){ if(b.due && b.due <= t) out.push({ic:'🧾', t:b.v, s:esc(b.w) + ' · ' + (b.due < t ? L('late') + ' ' : L('due') + ' ') + fd(b.due), a:b.a, late:b.due < t, ph:b.ph, dir:'out'}); });
   ((SNAP.today || {}).appts || []).forEach(function(a){ out.push({ic:'🤝', t:a.who, s:(a.tm ? a.tm + ' · ' : '') + a.what}); });
+  (SNAP.promises || []).forEach(function(p){ if(p.st === 'missed' || (p.st === 'open' && p.date <= t)) out.push({ic:'🤝', t:p.n, s:(p.st === 'missed' ? L('p_missed') + ' · ' : L('p_today') + ' · ') + fd(p.date), a:p.amt, late:p.st === 'missed', cid:p.cid, dir:'in'}); });
   ((SNAP.leads || {}).due || []).forEach(function(l){ if(l.next && l.next <= t) out.push({ic:'📞', t:l.n, s:(LANG === 'ta' ? 'விசாரணை' : 'Enquiry') + ' · ' + (l.w || ''), ph:l.ph}); });
   return out;
 }
 function home(){
   var s = SNAP, d = s.today || {}, c = s.cash || {}, h = '';
   var waiting = (s.queue || []).filter(function(x){ return !SENT['q' + x.id]; }).length;
+  var lim = Number(LS.get('blo_limit')) || 0;
+  if(lim > 0 && (d.cost || 0) > lim) h += '<div class="card limit"><b>⚠️ ' + esc(L('overlim')) + '</b><small>' + rs(d.cost) + ' / ' + rs(lim) + '</small></div>';
   h += periodTiles(s);
-  if(PERX === 'd') h += '<div class="tiles">' + tile('var(--mint)', L('rin'), rs(d.rev), fd(d.date), 0) + tile('var(--coral)', L('rout'), rs(d.cost), '', 1)
+  if(PERX === 'd') h += '<div class="tiles">' + tile('var(--mint)', L('rin'), rs(d.rev), fd(d.date), 0) + tile(lim > 0 && (d.cost || 0) > lim ? 'var(--amber)' : 'var(--coral)', L('rout'), rs(d.cost), lim > 0 ? L('limit') + ' ' + rs(lim) : '', 1)
     + tile('var(--cyan)', L('wk'), String(d.workers || 0), (d.logs || []).length + ' ' + (LANG === 'ta' ? 'பதிவுகள்' : 'site log entr' + ((d.logs || []).length === 1 ? 'y' : 'ies')), 2)
     + tile('var(--amber)', L('queue'), String(waiting), '', 3) + '</div>';
   h += '<div class="btns" style="margin-top:12px"><button class="btn" id="share-day" style="flex:1">📤 ' + esc(L('share')) + '</button><button class="btn" id="calc-o">🧮 ' + esc(L('calc')) + '</button></div>';
@@ -448,6 +463,7 @@ function money(){
   }).join('') : empty('🎉')) + '</div>';
   var b = s.bills || [];
   h += sec(L('bills')) + '<div class="card">' + (b.length ? b.map(function(x){ return '<div class="row"><div class="ic">🧾</div><div class="m"><b>' + esc(x.v) + '</b><small>' + esc(x.w) + ' · ' + (x.late ? '<span class="bad">' + L('late') + ' ' + fd(x.due) + '</span>' : L('due') + ' ' + fd(x.due)) + '</small></div><div class="a">' + rs(x.a) + '</div>' + tel(x.ph) + '</div>'; }).join('') : empty('✅')) + '</div>';
+  if(s.vdues) h += sec('🏪 ' + L('vdues')) + '<div class="card">' + (s.vdues.length ? s.vdues.map(function(v){ return '<div class="row"><div class="ic">🏪</div><div class="m"><b>' + esc(v.v) + '</b><small>' + v.n + ' ' + esc(L('billsn')) + (v.old ? ' · ' + L('since') + ' ' + fd(v.old) : '') + '</small></div><div class="a bad">' + rs(v.a) + '</div>' + tel(v.ph) + (CAN('vpay') && !RO() ? '<button class="btn sm" data-vpay="' + esc(v.v) + '">✓ ' + esc(L('markpaid')) + '</button>' : '') + '</div>'; }).join('') : empty('✅')) + '</div>';
   h += quotesCard(s);
   if(s.pl){
     var p = s.pl, up = p.lm.p ? Math.round((p.tm.p - p.lm.p) / Math.abs(p.lm.p) * 100) : null;
@@ -455,6 +471,7 @@ function money(){
       + tile(p.lm.p >= 0 ? 'var(--mint)' : 'var(--coral)', L('lm'), short(p.lm.p), L('recv') + ' ' + short(p.lm.rev) + ' · ' + L('spent2') + ' ' + short(p.lm.cost), 1, true) + '</div>';
     if((p.by || []).length) h += '<div class="card" style="margin-top:10px">' + p.by.map(function(x){ return '<div class="row"><div class="ic">🏗</div><div class="m"><b>' + esc(x.n) + '</b><small>' + L('recv') + ' ' + rs(x.rev) + ' · ' + L('spent2') + ' ' + rs(x.cost) + '</small></div><div class="a ' + (x.p >= 0 ? 'good' : 'bad') + '">' + rs(x.p) + '</div></div>'; }).join('') + '</div>';
   }
+  h += plChart(s);
   if(s.pl) h += '<div class="btns" style="margin-top:12px"><button class="btn" id="share-month" style="flex:1">📄 ' + esc(L('monthrep')) + '</button></div>';
   $('v-money').innerHTML = h;
   if($('share-month')) $('share-month').onclick = function(){ shareText(monthText()); };
@@ -477,7 +494,8 @@ function stageCard(c, i){
     + '<div class="bar" style="--c:var(--lime)"><i style="width:' + (tot ? got / tot * 100 : 0).toFixed(1) + '%"></i></div>' + stageRows(c) + '</div>';
 }
 function sites(){
-  var s = SNAP, h = sec(L('proj'));
+  var s = SNAP, h = CAN('visit') && !RO() ? '<div class="btns" style="margin-top:4px"><button class="btn pri" id="visit-go" style="flex:1;height:46px">📍 ' + esc(L('imhere')) + '</button></div>' : '';
+  h += sec(L('proj'));
   h += favSort(s.projects || [], function(p){ return p.cid; }).map(projCard).join('') || '<div class="card">' + empty('🏗') + '</div>';
   if(s.phid) h += sec('📷 ' + L('photos')) + '<div class="card" id="ph-all">' + photoGrid(null) + '</div>';
   if(s.labour){
@@ -493,6 +511,7 @@ function sites(){
   h += sec(L('stages'));
   h += favSort(s.stages || [], function(c){ return c.cid; }).map(stageCard).join('') || '<div class="card">' + empty('🧱') + '</div>';
   $('v-sites').innerHTML = h;
+  if($('visit-go')) $('visit-go').onclick = function(){ ENT.kind = 'visit'; entrySheet({cid:FAVFIRST()}); };
   if(s.phid && !PHOTOS) loadPhotos();
 }
 
@@ -505,21 +524,45 @@ function entrySum(m){
   if(m.kind === 'billpaid') return '🧾 ' + (ta ? 'பில் கட்டியது: ' : 'Bill paid: ') + (m.v || '') + ' ' + rs(m.amt);
   if(m.kind === 'log') return '📓 ' + (ta ? 'தள பதிவு — ' : 'Site log — ') + c + (m.workers ? ' · ' + m.workers + ' 👷' : '');
   if(m.kind === 'att') return '👷 ' + (ta ? 'வருகை — ' : 'Attendance — ') + c + ' · ' + (m.n || 0);
+  if(m.kind === 'note') return '📝 ' + (ta ? 'நினைவூட்டல்: ' : 'Reminder: ') + String(m.text || '').slice(0, 50) + ' · ' + fd(m.date);
+  if(m.kind === 'visit') return '📍 ' + (ta ? 'தள வருகை — ' : 'Site visit — ') + c;
+  if(m.kind === 'promise') return '🤝 ' + c + ' ' + (ta ? 'வாக்குறுதி ' : 'promised ') + rs(m.amt) + ' · ' + fd(m.date);
+  if(m.kind === 'vpay') return '🏪 ' + (m.v || '') + ' ' + (ta ? 'முழுவதும் கட்டப்பட்டது ' : 'paid in full ') + rs(m.amt);
   return m.kind;
 }
-function track(m){ var t = (LS.get('blo_track') || []).filter(function(x){ return Date.now() - x.at < 7 * 864e5; }); t.push({id:m.id, at:Date.now(), kind:m.kind, amt:m.amt || 0, sum:entrySum(m)}); LS.set('blo_track', t.slice(-20)); }
+function track(m){ var t = (LS.get('blo_track') || []).filter(function(x){ return Date.now() - x.at < 7 * 864e5; }); t.push({id:m.id, at:Date.now(), kind:m.kind, amt:m.amt || 0, cid:m.cid == null ? null : m.cid, d:m.date || todayIso(), sum:entrySum(m)}); LS.set('blo_track', t.slice(-20)); }
+function cancelled(){ return LS.get('blo_cancel') || {}; }
+function rcptFor(x){ if(x.kind !== 'rec' || x.cid == null) return null; var l = (SNAP.pays || {})[x.cid] || []; for(var i = 0; i < l.length; i++){ if(l[i].r && Math.abs(l[i].a - x.amt) < 1 && l[i].d === x.d) return i; } return null; }
 function trackRows(){
   var t = (LS.get('blo_track') || []).filter(function(x){ return Date.now() - x.at < 7 * 864e5; }).reverse(); if(!t.length) return '';
-  var acks = SNAP.acks || [], out = outbox(), phoneQ = (SNAP.queue || []).filter(function(q){ return q.jt === 'phone'; });
+  var acks = SNAP.acks || [], out = outbox(), phoneQ = (SNAP.queue || []).filter(function(q){ return q.jt === 'phone'; }), cx = cancelled();
   return '<h2>📨 ' + esc(L('sentfrom')) + '</h2><div class="card">' + t.map(function(x){
-    var st, cls = '';
-    if(out.some(function(m){ return m.id === x.id; })){ st = '📶 ' + L('t_queued'); cls = 'warn'; }
-    else if(acks.indexOf(x.id) < 0){ st = '🕑 ' + L('t_way'); cls = 'warn'; }
+    var st, cls = '', canX = false, rc = null;
+    var waiting = phoneQ.some(function(q){ return q.ref ? q.ref === x.id : x.amt && q.t.indexOf(rs(x.amt)) >= 0; });
+    if(cx[x.id]){ st = '↩ ' + L('t_cx'); }
+    else if(out.some(function(m){ return m.id === x.id; })){ st = '📶 ' + L('t_queued'); cls = 'warn'; canX = true; }
+    else if(acks.indexOf(x.id) < 0){ st = '🕑 ' + L('t_way'); cls = 'warn'; canX = true; }
     else if((x.kind === 'log' || x.kind === 'att' || x.kind === 'billpaid') && !CAN(x.kind === 'billpaid' ? 'billpaid' : x.kind)){ st = '❌ ' + L('t_old'); cls = 'bad'; }
-    else if(x.amt && phoneQ.some(function(q){ return q.t.indexOf(rs(x.amt)) >= 0 || q.t.indexOf(rs(x.amt).replace('₹', '₹ ')) >= 0; })){ st = '🟡 ' + L('t_wait'); cls = 'warn'; }
-    else { st = '✅ ' + L('t_done'); cls = 'good'; }
-    return '<div class="row"><div class="m"><b style="white-space:normal">' + esc(x.sum) + '</b><small class="' + cls + '" style="white-space:normal">' + esc(st) + '</small><small>' + esc(ago(x.at)) + '</small></div></div>';
+    else if(waiting){ st = '🟡 ' + L('t_wait'); cls = 'warn'; canX = CAN('cancel'); }
+    else { st = '✅ ' + L('t_done'); cls = 'good'; rc = rcptFor(x); }
+    return '<div class="row"><div class="m"><b style="white-space:normal">' + esc(x.sum) + '</b><small class="' + cls + '" style="white-space:normal">' + esc(st) + '</small><small>' + esc(ago(x.at)) + '</small></div>'
+      + (canX && !RO() ? '<button class="btn sm" data-cancel="' + esc(x.id) + '">↩ ' + esc(L('cancel')) + '</button>' : '')
+      + (rc != null ? '<button class="btn sm wa" data-rcpt="' + esc(x.cid) + '|' + rc + '">🧾 ' + esc(L('receipt')) + '</button>' : '') + '</div>';
   }).join('') + '</div>';
+}
+function cancelEntry(id){
+  if(!confirm(L('cancelq'))) return;
+  var c = cancelled(); c[id] = Date.now(); LS.set('blo_cancel', c);
+  LS.set('blo_out', outbox().filter(function(m){ return m.id !== id; }));
+  (CAN('cancel') ? send({type:'cancel', ref:id}) : flushOut(true)).then(function(){ approvals(); });
+  approvals(); toast('↩ ' + L('t_cx'));
+}
+/* 6 · material requests from site */
+function reqRows(){
+  var r = SNAP.reqs; if(!r || !r.length) return '';
+  return '<h2>📦 ' + esc(L('reqs')) + '</h2>' + r.map(function(x, i){ var st = SENT['r' + x.id];
+    return '<div class="card" style="--i:' + i + '"><div class="row"><div class="ic">📦</div><div class="m"><b style="white-space:normal">' + esc((x.no ? x.no + ' · ' : '') + x.site) + '</b><small style="white-space:normal">' + esc(x.items) + '</small><small>' + esc([x.by, x.need ? L('needby') + ' ' + fd(x.need) : '', x.pri].filter(Boolean).join(' · ')) + '</small>' + (x.notes ? '<small style="white-space:normal">' + esc(x.notes) + '</small>' : '') + '</div></div>'
+      + (RO() ? '' : st ? '<div class="done-note">' + esc(st) + '</div>' : '<div class="btns"><button class="btn pri" data-req="' + esc(x.id) + '" data-ok="1">✅ ' + esc(L('approve')) + '</button><button class="btn sm" data-req="' + esc(x.id) + '" data-ok="0">✕ ' + esc(L('reject')) + '</button></div>') + '</div>'; }).join('');
 }
 function approvals(){
   var q = SNAP.queue || [], h = '<h2>' + esc(L('queue')) + '</h2>';
@@ -531,6 +574,7 @@ function approvals(){
       : '<div class="btns"><span class="pill">💻 ' + esc(x.k === 'wa' ? L('nophone') : L('pc')) + '</span><button class="btn sm" data-q="' + x.id + '" data-how="skip">' + L('skip') + '</button></div>';
     return '<div class="card" style="--i:' + i + '"><div class="row"><div class="ic">' + (JT[x.jt] || '🤖') + '</div><div class="m"><b style="white-space:normal">' + esc(x.t) + '</b><small>' + esc(x.d) + '</small></div></div>' + acts + '</div>';
   }).join('') : '<div class="card">' + empty('✅') + '</div>';
+  h = reqRows() + h;
   h += trackRows();
   $('v-ok').innerHTML = h;
 }
@@ -557,15 +601,15 @@ function send(msg){
   return r;
 }
 var flushing = null;
-function flushOut(){
+function flushOut(force){
   if(flushing) return flushing;
-  var o = outbox(); if(!o.length || !SNAP || !KEY) return Promise.resolve(true);
+  var o = outbox(); if((!o.length && !force) || !SNAP || !KEY) return Promise.resolve(true);
   var mb = SNAP.mb || {}; if(!mb.sk || !mb.u || !mb.box) return Promise.resolve(false);
   flushing = fetch(mb.u + '/p/' + mb.box, {cache:'no-store'}).then(function(r){ if(r.status === 404) return null; if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
     .then(function(t){ return t && t !== 'test' ? openBlob(t, KEY).catch(function(){ return {msgs:[]}; }) : {msgs:[]}; })
     .then(function(box){
       var acks = {}; (SNAP.acks || []).forEach(function(a){ acks[a] = 1; });
-      var have = {}, msgs = (box.msgs || []).filter(function(m){ return m && !acks[m.id]; });
+      var cx = cancelled(), have = {}, msgs = (box.msgs || []).filter(function(m){ return m && !acks[m.id] && !cx[m.id]; });
       msgs.forEach(function(m){ have[m.id] = 1; });
       o.forEach(function(m){ if(!have[m.id]) msgs.push(m); });
       return sealObj({msgs:msgs.slice(-200)}, KEY);
@@ -574,7 +618,7 @@ function flushOut(){
     .catch(function(){ flushing = null; return false; });
   return flushing;
 }
-function pruneSent(){ var keep = LS.get('blo_sent') || {}; SENT = {}; Object.keys(keep).forEach(function(k){ if(Date.now() - keep[k].at < 3 * 864e5 && (!/^q/.test(k) || (SNAP.queue || []).some(function(x){ return 'q' + x.id === k; }))) SENT[k] = keep[k].t; }); }
+function pruneSent(){ var keep = LS.get('blo_sent') || {}; SENT = {}; Object.keys(keep).forEach(function(k){ if(Date.now() - keep[k].at < 3 * 864e5 && (!/^q/.test(k) || (SNAP.queue || []).some(function(x){ return 'q' + x.id === k; })) && (!/^r/.test(k) || (SNAP.reqs || []).some(function(x){ return 'r' + x.id === k; }))) SENT[k] = keep[k].t; }); }
 function mark(k, text){ SENT[k] = text; var keep = LS.get('blo_sent') || {}; keep[k] = {t:text, at:Date.now()}; LS.set('blo_sent', keep); }
 function wa(phone, text){ var p = String(phone || '').replace(/\D/g, ''); if(p.length === 10) p = '91' + p; window.open('https://wa.me/' + p + '?text=' + encodeURIComponent(text), '_blank'); }
 
@@ -601,12 +645,27 @@ function opts(list, sel){ return list.map(function(c){ return '<option value="' 
 function entrySheet(pre){
   pre = pre || {};
   var cs = SNAP.cust || [], k = ENT.kind, bills = (SNAP.bills || []).filter(function(b){ return b.id != null; });
-  var kinds = [['exp', '💸 ' + L('spent')], ['rec', '💰 ' + L('got')]].concat(CAN('billpaid') ? [['paid', '🧾 ' + L('billpaid')]] : [], CAN('log') ? [['log', '📓 ' + L('sitelog')]] : [], CAN('att') && (SNAP.workers || []).length ? [['att', '👷 ' + L('attend')]] : []);
+  var kinds = [['exp', '💸 ' + L('spent')], ['rec', '💰 ' + L('got')]].concat(CAN('billpaid') ? [['paid', '🧾 ' + L('billpaid')]] : [], CAN('log') ? [['log', '📓 ' + L('sitelog')]] : [], CAN('att') && (SNAP.workers || []).length ? [['att', '👷 ' + L('attend')]] : [], CAN('note') ? [['note', '📝 ' + L('qnote')]] : [], CAN('visit') ? [['visit', '📍 ' + L('visit')]] : [], CAN('promise') ? [['promise', '🤝 ' + L('promise')]] : [], CAN('vpay') && (SNAP.vdues || []).length ? [['vpay', '🏪 ' + L('vpaid')]] : []);
   if(!kinds.some(function(x){ return x[0] === k; })){ k = ENT.kind = 'exp'; }
   var older = !CAN('log');
   var h = '<div class="grab"></div><h3 style="display:flex;align-items:center;gap:8px">＋ ' + esc(L('entry')) + ((k === 'exp' || k === 'rec') ? '<button class="btn sm" id="en-calc" aria-label="Calculator">🧮</button>' : '') + (SR() && (k === 'exp' || k === 'rec') ? '<button class="btn sm" id="en-mic" style="margin-left:auto">🎤 ' + esc(L('speak')) + '</button>' : '') + '</h3>'
     + '<div class="seg seg4" id="en-k">' + kinds.map(function(x){ return '<button data-k="' + x[0] + '" class="' + (k === x[0] ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>' + (older ? '<div class="note2" style="margin:8px 2px 0">ℹ️ ' + esc(L('needupd')) + '</div>' : '') + '<div id="en-heard" class="heard hide"></div>';
   if(k === 'att') h += attFields(pre);
+  else if(k === 'note'){
+    h += '<div class="field" style="margin-top:14px"><label>' + esc(L('qnotet')) + '</label><textarea id="en-n" rows="3" maxlength="200" placeholder="' + esc(L('qnoteph')) + '"></textarea></div>'
+      + '<div class="field"><label>' + esc(L('proj1')) + '</label><select id="en-c"><option value="">—</option>' + opts(favSort(cs, function(c){ return c.id; }), pre.cid) + '</select></div>'
+      + '<div class="field"><label>' + esc(L('qtime')) + '</label><input id="en-t" type="time"></div>';
+  } else if(k === 'visit'){
+    h += '<div class="field" style="margin-top:14px"><label>' + esc(L('proj1')) + '</label><select id="en-c">' + opts(favSort(cs, function(c){ return c.id; }), pre.cid) + '</select></div>'
+      + '<div class="field"><label>' + esc(L('vnote')) + '</label><textarea id="en-n" rows="2" maxlength="300" placeholder="' + esc(L('vnoteph')) + '"></textarea></div>';
+  } else if(k === 'promise'){
+    h += '<div class="field" style="margin-top:14px"><label>' + esc(L('proj1')) + '</label><select id="en-c">' + opts(favSort(cs, function(c){ return c.id; }), pre.cid) + '</select></div>'
+      + '<div class="field"><label>' + esc(L('amt')) + '</label><input id="en-amt" type="number" inputmode="decimal" min="1" step="any" placeholder="0" value="' + esc(pre.amt || '') + '"></div>';
+  } else if(k === 'vpay'){
+    var vd = SNAP.vdues || [];
+    h += '<div class="field" style="margin-top:14px"><label>' + esc(L('vendor')) + '</label><select id="en-v">' + vd.map(function(v){ return '<option value="' + esc(v.v) + '"' + (v.v === pre.v ? ' selected' : '') + '>' + esc(v.v + ' — ' + rs(v.a) + ' · ' + v.n + ' ' + L('billsn')) + '</option>'; }).join('') + '</select></div>'
+      + '<div class="note2" style="margin:-4px 2px 10px">' + esc(L('vpaynote')) + '</div>';
+  }
   else if(k === 'paid'){
     h += bills.length ? '<div class="field" style="margin-top:14px"><label>' + esc(L('which')) + '</label><select id="en-b">' + bills.map(function(b){ return '<option value="' + esc(b.id) + '|' + esc(b.cid == null ? '' : b.cid) + '">' + esc(b.v + ' — ' + rs(b.a) + ' · ' + b.w + (b.late ? ' · ' + L('late') : '')) + '</option>'; }).join('') + '</select></div>'
       : '<div class="card" style="margin-top:14px">' + esc(bills.length || !(SNAP.bills || []).length ? L('nobills') : L('needpc')) + '</div>';
@@ -620,9 +679,9 @@ function entrySheet(pre){
       + (k === 'rec' ? '<div class="field"><label>' + esc(L('against')) + '</label><select id="en-s"></select></div>' : '')
       + '<div class="field"><label>' + esc(L('note')) + '</label><input id="en-n" maxlength="120" placeholder="' + (k === 'exp' ? 'Cement 50 bags' : 'Stage 3') + '"></div>';
   }
-  if(k !== 'log' && k !== 'att') h += '<div class="field"><label>' + esc(L('mode')) + '</label><div class="seg" id="en-m">' + ['Cash', 'GPay', 'Bank Transfer', 'Cheque'].map(function(m, i){ return '<button data-m="' + m + '" class="' + (i ? '' : 'on') + '">' + m.replace('Bank Transfer', 'Bank') + '</button>'; }).join('') + '</div></div>';
-  if((k === 'exp' || k === 'log') && CAN('img')) h += '<div class="field"><label>' + esc(L('photo')) + '</label><label class="btn" style="width:100%;height:46px" for="en-f">📷 ' + esc(L('addphoto')) + '</label><input id="en-f" type="file" accept="image/*" capture="environment" hidden><div id="en-pv" class="pv"></div></div>';
-  h += '<div class="field"><label>' + esc(L('date')) + '</label><input id="en-d" type="date" value="' + todayIso() + '"></div>'
+  if(['exp', 'rec', 'paid', 'vpay'].indexOf(k) >= 0) h += '<div class="field"><label>' + esc(L('mode')) + '</label><div class="seg" id="en-m">' + ['Cash', 'GPay', 'Bank Transfer', 'Cheque'].map(function(m, i){ return '<button data-m="' + m + '" class="' + (i ? '' : 'on') + '">' + m.replace('Bank Transfer', 'Bank') + '</button>'; }).join('') + '</div></div>';
+  if((k === 'exp' || k === 'log' || k === 'visit') && CAN('img')) h += '<div class="field"><label>' + esc(L('photo')) + '</label><label class="btn" style="width:100%;height:46px" for="en-f">📷 ' + esc(L('addphoto')) + '</label><input id="en-f" type="file" accept="image/*" capture="environment" hidden><div id="en-pv" class="pv"></div></div>';
+  h += '<div class="field"' + (k === 'visit' ? ' hidden' : '') + '><label>' + esc(k === 'note' ? L('qwhen') : k === 'promise' ? L('pwhen') : L('date')) + '</label><input id="en-d" type="date" value="' + (pre.date || todayIso()) + '"></div>'
     + '<button class="btn pri" id="en-go" style="width:100%;height:50px;margin-top:6px"' + (k === 'paid' && !bills.length ? ' disabled' : '') + '>📨 ' + esc(L('send')) + '</button>'
     + '<p style="color:var(--text3);font-size:12.5px;margin-top:10px;text-align:center">' + (LANG === 'ta' ? 'கணினியில் மேஸ்திரி ஏஜென்டில் அனுமதித்ததும் கணக்கில் சேரும்.' : 'It goes into the books once you approve it in Mestri Agent on your computer.') + '</p>';
   $('sh-entry').innerHTML = h; IMG = null;
@@ -636,7 +695,20 @@ function entrySheet(pre){
   if(k === 'att'){ $('en-c').onchange = attList; attList(); $('at-l').onchange = attCount; $('at-all').onclick = function(){ [].forEach.call(document.querySelectorAll('#at-l input'), function(i){ i.checked = true; }); attCount(); }; $('at-none').onclick = function(){ [].forEach.call(document.querySelectorAll('#at-l input'), function(i){ i.checked = false; }); attCount(); }; }
   $('en-go').onclick = function(){
     var m = document.querySelector('#en-m .on'), mode = m ? m.getAttribute('data-m') : 'Cash', date = $('en-d').value, msg;
-    if(k === 'att'){
+    if(k === 'note'){
+      var tx = $('en-n').value.trim(); if(!tx){ $('en-n').focus(); return; }
+      msg = {type:'entry', kind:'note', text:tx, cid:$('en-c').value ? Number($('en-c').value) : null, date:date, time:$('en-t').value || ''};
+    } else if(k === 'visit'){
+      if(!$('en-c').value){ toast(L('pickp')); return; }
+      var now = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      msg = {type:'entry', kind:'visit', cid:Number($('en-c').value), note:$('en-n').value.trim(), at:now, img:IMG || undefined};
+    } else if(k === 'promise'){
+      var pa = Number($('en-amt').value); if(!(pa > 0)){ $('en-amt').focus(); return; } if(!$('en-c').value){ toast(L('pickp')); return; }
+      msg = {type:'entry', kind:'promise', cid:Number($('en-c').value), amt:pa, date:date};
+    } else if(k === 'vpay'){
+      var vv = ($('en-v') || {}).value, vrow = (SNAP.vdues || []).filter(function(x){ return x.v === vv; })[0]; if(!vrow) return;
+      msg = {type:'entry', kind:'vpay', v:vv, amt:vrow.a, mode:mode, date:date};
+    } else if(k === 'att'){
       var ids = [].map.call(document.querySelectorAll('#at-l input:checked'), function(i){ return Number(i.value); }); if(!ids.length){ toast(L('pickw')); return; }
       msg = {type:'entry', kind:'att', cid:Number($('en-c').value), ids:ids, n:ids.length, date:date};
     } else if(k === 'paid'){
@@ -717,15 +789,21 @@ function custSheet(cid, keep){
   var c = custOf(cid), o = (SNAP.owed || []).filter(function(x){ return String(x.cid) === String(cid); })[0], p = (SNAP.projects || []).filter(function(x){ return String(x.cid) === String(cid); })[0];
   var st = (SNAP.stages || []).filter(function(x){ return String(x.cid) === String(cid); })[0], pays = ((SNAP.pays || {})[cid] || []), ph = c.ph || (o && o.ph);
   var h = '<div class="grab"></div><h3 style="display:flex;align-items:center;gap:8px">' + esc(c.n) + favBtn(cid) + '</h3><div style="color:var(--text3);margin:-8px 0 12px">' + esc(c.p || (p && p.p) || (o && o.p) || '') + (ph ? ' · ' + esc(ph) : '') + '</div>'
-    + '<div class="btns" style="margin:0 0 14px">' + (ph ? '<a class="btn" href="tel:' + esc(String(ph).replace(/[^\d+]/g, '')) + '">📞 ' + esc(L('call')) + '</a><button class="btn wa" id="cs-wa">💬 WhatsApp</button>' : '') + (!RO() ? '<button class="btn pri" id="cs-rec">💰 ' + esc(L('got')) + '</button>' : '') + (c.pb ? '<a class="btn" href="' + esc(c.pb) + '" target="_blank" rel="noopener">📘 ' + esc(L('passbook')) + '</a>' + (ph && !RO() ? '<button class="btn" id="cs-pb">📤 ' + esc(L('sendpb')) + '</button>' : '') : '') + '</div>';
+    + '<div class="btns" style="margin:0 0 14px">' + (ph ? '<a class="btn" href="tel:' + esc(String(ph).replace(/[^\d+]/g, '')) + '">📞 ' + esc(L('call')) + '</a><button class="btn wa" id="cs-wa">💬 WhatsApp</button>' : '') + (!RO() ? '<button class="btn pri" id="cs-rec">💰 ' + esc(L('got')) + '</button>' : '') + (ph ? '<button class="btn" id="cs-st">📄 ' + esc(L('stmt')) + '</button>' : '') + (CAN('promise') && !RO() ? '<button class="btn" id="cs-pr">🤝 ' + esc(L('promise')) + '</button>' : '') + (c.pb ? '<a class="btn" href="' + esc(c.pb) + '" target="_blank" rel="noopener">📘 ' + esc(L('passbook')) + '</a>' + (ph && !RO() ? '<button class="btn" id="cs-pb">📤 ' + esc(L('sendpb')) + '</button>' : '') : '') + '</div>';
   h += '<div class="tiles">' + tile('var(--amber)', LANG === 'ta' ? 'ஒப்பந்த மீதம்' : 'Left on contract', o ? short(o.tot) : '₹0', '', 0) + tile(o && o.od > 0 ? 'var(--coral)' : 'var(--mint)', L('overdue'), o ? short(o.od) : '₹0', o && o.days ? o.days + ' ' + L('days') : '', 1)
     + (p ? tile('var(--cyan)', L('work'), Math.min(100, p.pct) + '%', p.late ? p.late + ' ' + L('late') : '', 2) + tile(p.used > 100 ? 'var(--coral)' : 'var(--lime)', L('budget'), p.used != null ? p.used + '%' : '—', p.bud ? short(p.spent) + ' / ' + short(p.bud) : '', 3) : '') + '</div>';
   h += remBlock(cid);
   if(st) h += sec(L('stages')) + '<div class="card">' + stageRows(st) + '</div>';
-  if(pays.length) h += sec(L('recent')) + '<div class="card">' + pays.map(function(x){ return '<div class="row"><div class="ic">⬇</div><div class="m"><b>' + rs(x.a) + '</b><small>' + fd(x.d) + ' · ' + esc([x.m, x.s].filter(Boolean).join(' · ')) + '</small></div></div>'; }).join('') + '</div>';
+  if(pays.length) h += sec(L('recent')) + '<div class="card">' + pays.map(function(x, i){ return '<div class="row"><div class="ic">⬇</div><div class="m"><b>' + rs(x.a) + '</b><small>' + fd(x.d) + ' · ' + esc([x.r, x.m, x.s].filter(Boolean).join(' · ')) + '</small></div>' + (x.r && ph && !RO() ? '<button class="btn sm wa" data-rcpt="' + esc(cid) + '|' + i + '">🧾 ' + esc(L('receipt')) + '</button>' : '') + '</div>'; }).join('') + '</div>';
+  var prs = (SNAP.promises || []).filter(function(p){ return String(p.cid) === String(cid); });
+  if(prs.length) h += sec('🤝 ' + L('promises')) + '<div class="card">' + prs.map(function(p){ return '<div class="row"><div class="m"><b>' + rs(p.amt) + ' · ' + fd(p.date) + '</b><small class="' + (p.st === 'kept' ? 'good' : p.st === 'missed' ? 'bad' : 'warn') + '">' + esc(L('p_' + p.st)) + '</small></div></div>'; }).join('') + '</div>';
+  var vs = (SNAP.visits || []).filter(function(v){ return String(v.cid) === String(cid); });
+  if(vs.length) h += sec('📍 ' + L('visits')) + '<div class="card">' + vs.map(function(v){ return '<div class="row"><div class="m"><b>' + fd(v.at.slice(0, 10)) + ' · ' + esc(v.at.slice(11, 16)) + '</b>' + (v.note ? '<small style="white-space:normal">' + esc(v.note) + '</small>' : '') + '</div></div>'; }).join('') + '</div>';
   if(SNAP.phid) h += sec('📷 ' + L('photos')) + '<div class="card" id="ph-c" data-c="' + esc(cid) + '">' + photoGrid(cid) + '</div>';
   $('sh-cust').innerHTML = h;
   remWire(cid);
+  if($('cs-st')) $('cs-st').onclick = function(){ wa(ph, stmtText(cid)); };
+  if($('cs-pr')) $('cs-pr').onclick = function(){ sheet('sh-cust', false); ENT.kind = 'promise'; entrySheet({cid:cid, amt:o && o.od > 0 ? o.od : '', date:new Date(Date.now() + 3 * 864e5 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)}); };
   if($('cs-pb')) $('cs-pb').onclick = function(){ wa(ph, (LANG === 'ta' ? 'வணக்கம் ' + c.n + ', உங்கள் கட்டுமான பாஸ்புக்: ' : 'Hello ' + c.n + ', your construction passbook: ') + c.pb + '\n\n' + (SNAP.co || '')); };
   if($('cs-wa')) $('cs-wa').onclick = function(){ wa(ph, o && o.msg && o.od > 0 ? o.msg : ''); };
   if($('cs-rec')) $('cs-rec').onclick = function(){ sheet('sh-cust', false); ENT.kind = 'rec'; entrySheet({cid:cid}); };
@@ -948,6 +1026,39 @@ function attList(){
 }
 function attCount(){ $('at-n').textContent = document.querySelectorAll('#at-l input:checked').length; }
 
+function FAVFIRST(){ var f = FAV(), c = (SNAP.cust || []).filter(function(x){ return f[x.id]; })[0]; return c ? c.id : undefined; }
+function plChart(s){
+  var d = (s.projPL || []).slice().sort(function(a, b){ return b.p - a.p; }); if(!d.length) return '';
+  var mx = Math.max.apply(null, [1].concat(d.map(function(x){ return Math.abs(x.p); })));
+  return sec('📊 ' + L('projpl')) + '<div class="card">' + d.map(function(x){ var w = Math.max(2, Math.abs(x.p) / mx * 100);
+    return '<div class="plr"><div class="pln"><b>' + esc(x.n) + '</b><span class="' + (x.p >= 0 ? 'good' : 'bad') + '">' + rs(x.p) + '</span></div><div class="plb"><i style="width:' + w.toFixed(1) + '%;background:' + (x.p >= 0 ? 'var(--mint)' : 'var(--coral)') + '"></i></div><small>' + esc(L('recv') + ' ' + short(x.rev) + ' · ' + L('spent2') + ' ' + short(x.cost)) + '</small></div>'; }).join('') + '</div>';
+}
+function stmtText(cid){
+  var c = custOf(cid), st = (SNAP.stages || []).filter(function(x){ return String(x.cid) === String(cid); })[0], o = (SNAP.owed || []).filter(function(x){ return String(x.cid) === String(cid); })[0], ta = LANG === 'ta', L2 = function(e, t){ return ta ? t : e; };
+  var out = ['*' + (SNAP.co || '') + '*', L2('Statement of account', 'கணக்கு விவரம்') + ' · ' + fd(todayIso()), '', c.n + (c.p ? ' — ' + c.p : ''), ''];
+  if(st){ var tot = 0, got = 0; st.s.forEach(function(x){ var g = Math.min(x.a, x.got), b = x.a - g; tot += x.a; got += g; out.push('• ' + x.n + ': ' + rs(x.a) + (b > 0.5 ? ' — ' + L2('paid ', 'செலுத்தியது ') + rs(g) + ', ' + L2('due ', 'நிலுவை ') + rs(b) + (x.due ? ' (' + fd(x.due) + ')' : '') : ' ✅')); });
+    out.push('', L2('Contract: ', 'ஒப்பந்தம்: ') + rs(tot), L2('Paid so far: ', 'இதுவரை செலுத்தியது: ') + rs(got), '*' + L2('Balance: ', 'மீதம்: ') + rs(tot - got) + '*'); }
+  else if(o) out.push(L2('Balance on contract: ', 'ஒப்பந்த மீதம்: ') + rs(o.tot));
+  if(o && o.od > 0) out.push('*' + L2('Due now: ', 'இப்போது செலுத்த வேண்டியது: ') + rs(o.od) + '*');
+  out.push('', L2('Thank you,', 'நன்றி,'), SNAP.co || ''); if(SNAP.cph) out.push(SNAP.cph);
+  return out.join('\n');
+}
+function rcptText(cid, p){
+  var c = custOf(cid), o = (SNAP.owed || []).filter(function(x){ return String(x.cid) === String(cid); })[0];
+  return ['🧾 *RECEIPT · ரசீது ' + p.r + '*', '*' + (SNAP.co || '') + '*' + (SNAP.cph ? ' · ' + SNAP.cph : ''), '',
+    'Date · தேதி: ' + fd(p.d), 'Received from · பெற்றது: ' + c.n, c.p ? 'Project · பணி: ' + c.p : '', 'Amount · தொகை: *' + rs(p.a) + '*', p.m ? 'Mode · முறை: ' + p.m : '', p.s ? 'Towards · எதற்காக: ' + p.s : '',
+    o ? '\nBalance on contract · மீதம்: ' + rs(o.tot) : '', '', 'Thank you · நன்றி'].filter(function(x){ return x !== ''; }).join('\n').replace(/\n(?=Thank)/, '\n\n');
+}
+document.addEventListener('click', function(e){
+  if(!SNAP) return;
+  var b = e.target.closest('[data-cancel],[data-rcpt],[data-vpay],[data-req]'); if(!b) return;
+  if(b.hasAttribute('data-cancel')){ cancelEntry(b.getAttribute('data-cancel')); return; }
+  if(b.hasAttribute('data-rcpt')){ var pr = b.getAttribute('data-rcpt').split('|'), p = ((SNAP.pays || {})[pr[0]] || [])[Number(pr[1])], c = custOf(pr[0]); if(p) wa(c.ph, rcptText(pr[0], p)); return; }
+  if(b.hasAttribute('data-vpay')){ ENT.kind = 'vpay'; entrySheet({v:b.getAttribute('data-vpay')}); return; }
+  if(b.hasAttribute('data-req')){ var id = b.getAttribute('data-req'), ok = b.getAttribute('data-ok') === '1', why = '';
+    if(!ok){ why = prompt(L('rejwhy'), ''); if(why === null) return; }
+    send({type:'req', id:isNaN(Number(id)) ? id : Number(id), ok:ok, why:why}); mark('r' + id, ok ? '✅ ' + L('reqok') : '✕ ' + L('reqno')); approvals(); toast('📨 ' + (LANG === 'ta' ? 'கணினிக்கு அனுப்பப்பட்டது' : 'Sent to your computer')); }
+});
 /* ── 4 · pull down to refresh ──────────────────────────────────────── */
 (function(){
   var y0 = null, dy = 0, ind = $('ptr');
@@ -964,6 +1075,7 @@ function setSheet(){
     + '<div class="field"><label>' + esc(L('theme')) + '</label><div class="seg" id="st-t">' + [['auto', 'Auto'], ['dark', '🌙'], ['light', '☀️']].map(function(x){ return '<button data-v="' + x[0] + '" class="' + (th === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div></div>'
     + '<div class="opt"><span>👆 ' + esc(L('bio')) + '<small>' + (bioOk() ? (LANG === 'ta' ? 'PIN இல்லாமல் திறக்க' : 'Open without typing the PIN') : 'Needs the page on https and a phone with a fingerprint or face lock') + '</small></span><button class="sw' + (bio ? ' on' : '') + '" id="st-bio"></button></div>'
     + (RO() ? '' : '<div class="opt"><span>🔔 ' + esc(L('notif')) + '<small>' + ('PushManager' in window ? (LANG === 'ta' ? 'பணம் வந்தால், தவணை முடிந்தால்…' : 'Money received, stage paid, over budget, approvals') : 'Add this page to your home screen first') + '</small></span><button class="sw' + (notif ? ' on' : '') + '" id="st-n"></button></div><button class="btn sm" id="st-dg" style="margin:2px 0 6px">🩺 ' + esc(L('diag')) + '</button>')
+    + (RO() ? '' : '<div class="opt"><span>💸 ' + esc(L('limitt')) + '<small>' + esc(L('limits')) + '</small></span><input id="st-lim" type="number" inputmode="numeric" min="0" step="1000" style="width:120px" value="' + (LS.get('blo_limit') || '') + '" placeholder="0"></div>')
     + '<div class="opt"><span>🔠 ' + esc(L('big')) + '<small>' + esc(L('bigs')) + '</small></span><button class="sw' + (LS.get('blo_big') ? ' on' : '') + '" id="st-big"></button></div>'
     + '<div class="opt"><span>🔐 ' + esc(L('lockopt')) + '<small>' + (LANG === 'ta' ? '5 நிமிடத்திற்கு மேல் மூடினால்' : 'After 5 minutes away') + '</small></span><button class="sw' + (lockOn ? ' on' : '') + '" id="st-lk"></button></div>'
     + '<div class="btns" style="margin-top:16px"><button class="btn" id="st-now">🔒 ' + esc(L('lockn')) + '</button><button class="btn" id="st-forget" style="color:var(--coral)">' + esc(L('forget')) + '</button></div>';
@@ -973,6 +1085,7 @@ function setSheet(){
   if($('st-n')) $('st-n').onclick = function(){ if(LS.get('blo_push')) pushOff().then(setSheet); else pushOn().then(function(){ if($('sh-set').classList.contains('on')) setSheet(); }); };
   if($('st-dg')) $('st-dg').onclick = diagSheet;
   $('st-lk').onclick = function(){ LS.set('blo_lock', LS.get('blo_lock') === false); setSheet(); };
+  if($('st-lim')) $('st-lim').onchange = function(){ var v = Math.max(0, Number(this.value) || 0); LS.set('blo_limit', v); home(); toast(v ? '💸 ' + L('limit') + ' ' + rs(v) : '💸 ' + L('limitoff')); };
   $('st-big').onclick = function(){ LS.set('blo_big', !LS.get('blo_big')); bigMode(); setSheet(); };
   $('st-now').onclick = function(){ sheet('sh-set', false); lock(); };
   $('st-forget').onclick = function(){ if(!confirm(LANG === 'ta' ? 'இந்த தொலைபேசியிலிருந்து அனைத்தையும் நீக்கவா?' : 'Remove everything from this phone? You will need the link and PIN again.')) return; pushOff(); ['blo_cfg', 'blo_blob', 'blo_bio', 'blo_out', 'blo_sent', 'blo_push', 'blo_alseen'].forEach(LS.del); kvClear(); location.reload(); };
