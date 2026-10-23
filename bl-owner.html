@@ -199,6 +199,13 @@ var ITER = 150000, $ = function(id){ return document.getElementById(id); };
 var CLEARED = Promise.resolve(), CFG = null, KEY = null, SNAP = null, LANG = 'en', VIEW = 'home', SENT = {};
 var LS = {get:function(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set:function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }, del:function(k){ try{ localStorage.removeItem(k); }catch(e){} }};
 var T = {
+  needupd:['Site log, bill paid, attendance and photos from the phone need the BuildLedger update on your computer. Until then, enter those on the computer.','தள பதிவு, பில், வருகை, புகைப்படம் — கணினியில் BuildLedger புதுப்பிப்பு தேவை. அதுவரை கணினியில் பதிவு செய்யவும்.'],
+  sentfrom:['Sent from this phone','இந்த தொலைபேசியிலிருந்து அனுப்பியவை'],
+  t_queued:['Not sent yet — no internet on this phone','இன்னும் அனுப்பவில்லை — இணையம் இல்லை'],
+  t_way:['On its way — your computer picks it up within 2 minutes while BuildLedger is open there','வழியில் — கணினியில் BuildLedger திறந்திருக்கும்போது 2 நிமிடத்தில் வரும்'],
+  t_wait:['Waiting for your approval — approve it above, or on the computer in Mestri Agent → Waiting for you','அனுமதிக்காகக் காத்திருக்கிறது — மேலே அல்லது கணினியில் Mestri Agent-ல் அனுமதிக்கவும்'],
+  t_done:['Handled on your computer — approved into the books, or skipped','கணினியில் முடிந்தது'],
+  t_old:['Not saved — the BuildLedger on your computer is too old for this kind of entry. Please enter it on the computer.','சேமிக்கப்படவில்லை — கணினியில் பதிவு செய்யவும்.'],
   diag:['Alerts check','அறிவிப்பு சோதனை'], testal:['Show a test alert','சோதனை அறிவிப்பு'], repair:['Switch off & on again','மீண்டும் இயக்கு'], testbody:['Test — alerts can appear on this phone ✅','சோதனை — இந்த தொலைபேசியில் அறிவிப்புகள் வரும் ✅'], testsent:['Test alert shown — check the top of your screen','சோதனை அறிவிப்பு காட்டப்பட்டது'],
   howal:['Alerts are sent by the BuildLedger Windows app on your computer while it is running (it stays in the tray, even with the window closed). They come when something new happens: money received above your minimum, a stage paid in full, a project over budget, new approvals, bills past due. BuildLedger opened in a web browser does not send alerts.','அறிவிப்புகளை உங்கள் கணினியில் இயங்கும் BuildLedger Windows செயலி அனுப்புகிறது. புதிதாக ஏதாவது நடக்கும்போது (பணம் வந்தால், தவணை முடிந்தால், பட்ஜெட் மீறினால், அனுமதி தேவைப்பட்டால்) வரும்.'],
   d_pc:['Your computer is set up for alerts','கணினி அறிவிப்புகளுக்குத் தயார்'], d_browser:['This browser can receive alerts','இந்த உலாவி அறிவிப்புகளைப் பெறும்'], d_perm:['Notifications allowed for this page','அறிவிப்புகளுக்கு அனுமதி'], d_permask:['Turn on “Alerts on this phone” and tap Allow','“அறிவிப்புகள்” இயக்கி அனுமதி கொடுக்கவும்'],
@@ -378,6 +385,7 @@ function empty(icon){ return '<div class="empty"><span class="e">' + icon + '</s
    stock  {low:[{n, left, u, pct}], po:[{v, a, st, d}]}
    phid   id of the separate locked photo record {p:[{cid, d, cap, src}]}
    role   'owner' | 'partner' (partner: read only, no mailbox)                */
+function CAN(c){ return !!(SNAP && (SNAP.caps || []).indexOf(c) >= 0); }
 function todayIso(){ return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 function RO(){ return !!(SNAP && SNAP.role === 'partner'); }
 function custOf(cid){ var c = (SNAP.cust || []).filter(function(x){ return String(x.id) === String(cid); })[0] || {id:cid, n:'—'}; if(!c.ph){ var o = (SNAP.owed || []).filter(function(x){ return String(x.cid) === String(cid); })[0]; if(o){ c.ph = o.ph; c.p = c.p || o.p; } } return c; }
@@ -490,6 +498,29 @@ function sites(){
 
 /* 8 */
 var JT = {chase:'💰', stagepaid:'🏁', stock:'📦', wages:'👷', bills:'🧾', checkup:'🩺', monthly:'📊', watch:'👀', passbook:'📘', phone:'📱'};
+function entrySum(m){
+  var c = m.cid != null ? custOf(m.cid).n : '', ta = LANG === 'ta';
+  if(m.kind === 'rec') return '💰 ' + rs(m.amt) + (ta ? ' வரவு — ' : ' received — ') + c;
+  if(m.kind === 'exp') return '💸 ' + rs(m.amt) + (ta ? ' செலவு' : ' spent') + (m.note ? ' — ' + m.note : '') + (c ? ' · ' + c : '');
+  if(m.kind === 'billpaid') return '🧾 ' + (ta ? 'பில் கட்டியது: ' : 'Bill paid: ') + (m.v || '') + ' ' + rs(m.amt);
+  if(m.kind === 'log') return '📓 ' + (ta ? 'தள பதிவு — ' : 'Site log — ') + c + (m.workers ? ' · ' + m.workers + ' 👷' : '');
+  if(m.kind === 'att') return '👷 ' + (ta ? 'வருகை — ' : 'Attendance — ') + c + ' · ' + (m.n || 0);
+  return m.kind;
+}
+function track(m){ var t = (LS.get('blo_track') || []).filter(function(x){ return Date.now() - x.at < 7 * 864e5; }); t.push({id:m.id, at:Date.now(), kind:m.kind, amt:m.amt || 0, sum:entrySum(m)}); LS.set('blo_track', t.slice(-20)); }
+function trackRows(){
+  var t = (LS.get('blo_track') || []).filter(function(x){ return Date.now() - x.at < 7 * 864e5; }).reverse(); if(!t.length) return '';
+  var acks = SNAP.acks || [], out = outbox(), phoneQ = (SNAP.queue || []).filter(function(q){ return q.jt === 'phone'; });
+  return '<h2>📨 ' + esc(L('sentfrom')) + '</h2><div class="card">' + t.map(function(x){
+    var st, cls = '';
+    if(out.some(function(m){ return m.id === x.id; })){ st = '📶 ' + L('t_queued'); cls = 'warn'; }
+    else if(acks.indexOf(x.id) < 0){ st = '🕑 ' + L('t_way'); cls = 'warn'; }
+    else if((x.kind === 'log' || x.kind === 'att' || x.kind === 'billpaid') && !CAN(x.kind === 'billpaid' ? 'billpaid' : x.kind)){ st = '❌ ' + L('t_old'); cls = 'bad'; }
+    else if(x.amt && phoneQ.some(function(q){ return q.t.indexOf(rs(x.amt)) >= 0 || q.t.indexOf(rs(x.amt).replace('₹', '₹ ')) >= 0; })){ st = '🟡 ' + L('t_wait'); cls = 'warn'; }
+    else { st = '✅ ' + L('t_done'); cls = 'good'; }
+    return '<div class="row"><div class="m"><b style="white-space:normal">' + esc(x.sum) + '</b><small class="' + cls + '" style="white-space:normal">' + esc(st) + '</small><small>' + esc(ago(x.at)) + '</small></div></div>';
+  }).join('') + '</div>';
+}
 function approvals(){
   var q = SNAP.queue || [], h = '<h2>' + esc(L('queue')) + '</h2>';
   h += q.length ? q.map(function(x, i){
@@ -500,6 +531,7 @@ function approvals(){
       : '<div class="btns"><span class="pill">💻 ' + esc(x.k === 'wa' ? L('nophone') : L('pc')) + '</span><button class="btn sm" data-q="' + x.id + '" data-how="skip">' + L('skip') + '</button></div>';
     return '<div class="card" style="--i:' + i + '"><div class="row"><div class="ic">' + (JT[x.jt] || '🤖') + '</div><div class="m"><b style="white-space:normal">' + esc(x.t) + '</b><small>' + esc(x.d) + '</small></div></div>' + acts + '</div>';
   }).join('') : '<div class="card">' + empty('✅') + '</div>';
+  h += trackRows();
   $('v-ok').innerHTML = h;
 }
 /* 9 */
@@ -518,8 +550,11 @@ function go(v){
 function outbox(){ return LS.get('blo_out') || []; }
 function send(msg){
   msg.id = msg.id || b64u(rand(9)); msg.at = Date.now();
+  if(msg.type === 'entry') track(msg);
   var o = outbox(); o.push(msg); LS.set('blo_out', o);
-  return flushOut();
+  var r = flushOut();
+  if(msg.type === 'entry' && SNAP){ approvals(); r.then(function(){ if(SNAP) approvals(); }); }
+  return r;
 }
 var flushing = null;
 function flushOut(){
@@ -566,9 +601,11 @@ function opts(list, sel){ return list.map(function(c){ return '<option value="' 
 function entrySheet(pre){
   pre = pre || {};
   var cs = SNAP.cust || [], k = ENT.kind, bills = (SNAP.bills || []).filter(function(b){ return b.id != null; });
-  var kinds = [['exp', '💸 ' + L('spent')], ['rec', '💰 ' + L('got')], ['paid', '🧾 ' + L('billpaid')], ['log', '📓 ' + L('sitelog')]].concat((SNAP.workers || []).length ? [['att', '👷 ' + L('attend')]] : []);
+  var kinds = [['exp', '💸 ' + L('spent')], ['rec', '💰 ' + L('got')]].concat(CAN('billpaid') ? [['paid', '🧾 ' + L('billpaid')]] : [], CAN('log') ? [['log', '📓 ' + L('sitelog')]] : [], CAN('att') && (SNAP.workers || []).length ? [['att', '👷 ' + L('attend')]] : []);
+  if(!kinds.some(function(x){ return x[0] === k; })){ k = ENT.kind = 'exp'; }
+  var older = !CAN('log');
   var h = '<div class="grab"></div><h3 style="display:flex;align-items:center;gap:8px">＋ ' + esc(L('entry')) + ((k === 'exp' || k === 'rec') ? '<button class="btn sm" id="en-calc" aria-label="Calculator">🧮</button>' : '') + (SR() && (k === 'exp' || k === 'rec') ? '<button class="btn sm" id="en-mic" style="margin-left:auto">🎤 ' + esc(L('speak')) + '</button>' : '') + '</h3>'
-    + '<div class="seg seg4" id="en-k">' + kinds.map(function(x){ return '<button data-k="' + x[0] + '" class="' + (k === x[0] ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</div><div id="en-heard" class="heard hide"></div>';
+    + '<div class="seg seg4" id="en-k">' + kinds.map(function(x){ return '<button data-k="' + x[0] + '" class="' + (k === x[0] ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>' + (older ? '<div class="note2" style="margin:8px 2px 0">ℹ️ ' + esc(L('needupd')) + '</div>' : '') + '<div id="en-heard" class="heard hide"></div>';
   if(k === 'att') h += attFields(pre);
   else if(k === 'paid'){
     h += bills.length ? '<div class="field" style="margin-top:14px"><label>' + esc(L('which')) + '</label><select id="en-b">' + bills.map(function(b){ return '<option value="' + esc(b.id) + '|' + esc(b.cid == null ? '' : b.cid) + '">' + esc(b.v + ' — ' + rs(b.a) + ' · ' + b.w + (b.late ? ' · ' + L('late') : '')) + '</option>'; }).join('') + '</select></div>'
@@ -584,7 +621,7 @@ function entrySheet(pre){
       + '<div class="field"><label>' + esc(L('note')) + '</label><input id="en-n" maxlength="120" placeholder="' + (k === 'exp' ? 'Cement 50 bags' : 'Stage 3') + '"></div>';
   }
   if(k !== 'log' && k !== 'att') h += '<div class="field"><label>' + esc(L('mode')) + '</label><div class="seg" id="en-m">' + ['Cash', 'GPay', 'Bank Transfer', 'Cheque'].map(function(m, i){ return '<button data-m="' + m + '" class="' + (i ? '' : 'on') + '">' + m.replace('Bank Transfer', 'Bank') + '</button>'; }).join('') + '</div></div>';
-  if(k === 'exp' || k === 'log') h += '<div class="field"><label>' + esc(L('photo')) + '</label><label class="btn" style="width:100%;height:46px" for="en-f">📷 ' + esc(L('addphoto')) + '</label><input id="en-f" type="file" accept="image/*" capture="environment" hidden><div id="en-pv" class="pv"></div></div>';
+  if((k === 'exp' || k === 'log') && CAN('img')) h += '<div class="field"><label>' + esc(L('photo')) + '</label><label class="btn" style="width:100%;height:46px" for="en-f">📷 ' + esc(L('addphoto')) + '</label><input id="en-f" type="file" accept="image/*" capture="environment" hidden><div id="en-pv" class="pv"></div></div>';
   h += '<div class="field"><label>' + esc(L('date')) + '</label><input id="en-d" type="date" value="' + todayIso() + '"></div>'
     + '<button class="btn pri" id="en-go" style="width:100%;height:50px;margin-top:6px"' + (k === 'paid' && !bills.length ? ' disabled' : '') + '>📨 ' + esc(L('send')) + '</button>'
     + '<p style="color:var(--text3);font-size:12.5px;margin-top:10px;text-align:center">' + (LANG === 'ta' ? 'கணினியில் மேஸ்திரி ஏஜென்டில் அனுமதித்ததும் கணக்கில் சேரும்.' : 'It goes into the books once you approve it in Mestri Agent on your computer.') + '</p>';
