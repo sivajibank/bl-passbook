@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0f1a">
 <meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; worker-src 'self'; manifest-src 'self'; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="robots" content="noindex,nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -553,9 +554,9 @@ function dueToday(){
   var t = todayIso(), out = [];
   (SNAP.stages || []).forEach(function(c){ c.s.forEach(function(st){ var bal = st.a - st.got; if(bal > 0.5 && st.due && st.due <= t) out.push({ic:'🧱', t:c.n + ' — ' + st.n, s:(st.due < t ? L('late') + ' ' : L('due') + ' ') + fd(st.due), a:bal, late:st.due < t, cid:c.cid, dir:'in'}); }); });
   (SNAP.bills || []).forEach(function(b){ if(b.due && b.due <= t) out.push({ic:'🧾', t:b.v, s:esc(b.w) + ' · ' + (b.due < t ? L('late') + ' ' : L('due') + ' ') + fd(b.due), a:b.a, late:b.due < t, ph:b.ph, dir:'out'}); });
-  ((SNAP.today || {}).appts || []).forEach(function(a){ out.push({ic:'🤝', t:a.who, s:(a.tm ? a.tm + ' · ' : '') + a.what}); });
+  ((SNAP.today || {}).appts || []).forEach(function(a){ out.push({ic:'🤝', t:a.who, s:esc((a.tm ? a.tm + ' · ' : '') + a.what)}); });
   (SNAP.promises || []).forEach(function(p){ if(p.st === 'missed' || (p.st === 'open' && p.date <= t)) out.push({ic:'🤝', t:p.n, s:(p.st === 'missed' ? L('p_missed') + ' · ' : L('p_today') + ' · ') + fd(p.date), a:p.amt, late:p.st === 'missed', cid:p.cid, dir:'in'}); });
-  ((SNAP.leads || {}).due || []).forEach(function(l){ if(l.next && l.next <= t) out.push({ic:'📞', t:l.n, s:(LANG === 'ta' ? 'விசாரணை' : 'Enquiry') + ' · ' + (l.w || ''), ph:l.ph}); });
+  ((SNAP.leads || {}).due || []).forEach(function(l){ if(l.next && l.next <= t) out.push({ic:'📞', t:l.n, s:esc((LANG === 'ta' ? 'விசாரணை' : 'Enquiry') + ' · ' + (l.w || '')), ph:l.ph}); });
   return out;
 }
 function home(){
@@ -755,8 +756,10 @@ var flushing = null;
 function flushOut(force){
   if(flushing) return flushing;
   var o = outbox(); if((!o.length && !force) || !SNAP || !KEY) return Promise.resolve(true);
-  var mb = SNAP.mb || {}; if(!mb.sk || !mb.u || !mb.box) return Promise.resolve(false);
-  flushing = fetch(mb.u + '/p/' + mb.box, {cache:'no-store'}).then(function(r){ if(r.status === 404) return null; if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+  var mb = SNAP.mb || {}, v2 = mb.v === 2 && mb.mk; if(!(v2 || mb.sk) || !mb.u || !mb.box) return Promise.resolve(false);
+  /* 1.37.1: the phone writes its own mailbox with a key that opens nothing else (older Worker: the shop key) */
+  var mbUrl = mb.u + (v2 ? '/m/' : '/p/') + mb.box, mbHead = v2 ? {'content-type':'text/plain', 'x-mb-key':mb.mk} : {'content-type':'text/plain', 'x-pb-key':mb.sk};
+  flushing = fetch(mbUrl, {cache:'no-store'}).then(function(r){ if(r.status === 404) return null; if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
     .then(function(t){ return t && t !== 'test' ? openBlob(t, KEY).catch(function(){ return {msgs:[]}; }) : {msgs:[]}; })
     .then(function(box){
       var acks = {}; (SNAP.acks || []).forEach(function(a){ acks[a] = 1; });
@@ -764,7 +767,7 @@ function flushOut(force){
       msgs.forEach(function(m){ have[m.id] = 1; });
       o.forEach(function(m){ if(!have[m.id]) msgs.push(m); });
       return sealObj({msgs:msgs.slice(-200)}, KEY);
-    }).then(function(blob){ return fetch(mb.u + '/p/' + mb.box, {method:'PUT', headers:{'content-type':'text/plain', 'x-pb-key':mb.sk}, body:blob}); })
+    }).then(function(blob){ return fetch(mbUrl, {method:'PUT', headers:mbHead, body:blob}); })
     .then(function(r){ flushing = null; if(!r.ok) throw new Error('HTTP ' + r.status); LS.set('blo_out', outbox().filter(function(m){ return !o.some(function(x){ return x.id === m.id; }); })); return true; })
     .catch(function(){ flushing = null; return false; });
   return flushing;
@@ -892,7 +895,7 @@ function entrySheet(pre){
     send(msg); sheet('sh-entry', false); toast('📨 ' + L('queued'));
   };
   sheet('sh-entry', true);
-  if(pre.voice) setTimeout(listen, 350); else if($('en-amt')) setTimeout(function(){ $('en-amt').focus(); }, 300);
+  if(pre.voice) setTimeout(listen, 350); else if($('en-amt')) setTimeout(function(){ var a = $('en-amt'); if(a && $('sh-entry').classList.contains('on')) a.focus(); }, 300);
 }
 function setMode(m){ if(!$('en-m')) return; [].forEach.call($('en-m').children, function(x){ x.classList.toggle('on', x.getAttribute('data-m') === m); }); }
 $('fab').onclick = function(){ ENT.kind = 'exp'; entrySheet(); };
@@ -984,7 +987,7 @@ function custSheet(cid, keep){
 function findSheet(){
   $('sh-find').innerHTML = '<div class="grab"></div><input id="fd-q" type="search" placeholder="🔍 ' + esc(L('findph')) + '" autocomplete="off"><div id="fd-r" style="margin-top:12px"></div>';
   var q = $('fd-q'); q.oninput = function(){ $('fd-r').innerHTML = findRows(q.value); };
-  sheet('sh-find', true); setTimeout(function(){ q.focus(); }, 300);
+  sheet('sh-find', true); setTimeout(function(){ if(q.isConnected) q.focus(); }, 300);
 }
 function hit(hay, q){ hay = String(hay || '').toLowerCase(); if(hay.indexOf(q) >= 0) return true; var b = bones(q); return b.length >= 3 && hay.split(/\s+/).some(function(w){ return bones(w).indexOf(b) === 0; }); }
 function findRows(raw){
@@ -1226,7 +1229,7 @@ document.addEventListener('click', function(e){
   if(b.hasAttribute('data-vpay')){ ENT.kind = 'vpay'; entrySheet({v:b.getAttribute('data-vpay')}); return; }
   if(b.hasAttribute('data-req')){ var id = b.getAttribute('data-req'), ok = b.getAttribute('data-ok') === '1', why = '';
     if(!ok){ why = prompt(L('rejwhy'), ''); if(why === null) return; }
-    send({type:'req', id:isNaN(Number(id)) ? id : Number(id), ok:ok, why:why}); mark('r' + id, ok ? '✅ ' + L('reqok') : '✕ ' + L('reqno')); approvals(); toast('📨 ' + (LANG === 'ta' ? 'கணினிக்கு அனுப்பப்பட்டது' : 'Sent to your computer')); }
+    send({type:'req', rid:isNaN(Number(id)) ? id : Number(id), ok:ok, why:why}); mark('r' + id, ok ? '✅ ' + L('reqok') : '✕ ' + L('reqno')); approvals(); toast('📨 ' + (LANG === 'ta' ? 'கணினிக்கு அனுப்பப்பட்டது' : 'Sent to your computer')); }
 });
 /* ── 4 · pull down to refresh ──────────────────────────────────────── */
 (function(){
