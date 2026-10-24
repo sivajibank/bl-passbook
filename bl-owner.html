@@ -271,6 +271,25 @@ main{overflow-x:clip}
 .pad button{border-radius:22px;background:var(--glass);box-shadow:0 8px 18px -12px rgba(0,0,0,.5)}
 .dots i.f{background:var(--g-pri);border-color:transparent;box-shadow:0 0 12px color-mix(in srgb,var(--cyan) 70%,transparent)}
 @media (prefers-reduced-motion:reduce){body::before,.tile::before,.hero::before{animation:none}.cu{color:inherit!important}.cu::after{content:none}}
+
+/* 1.37.3 · getting back */
+.shbar{position:sticky;top:-10px;z-index:5;display:flex;align-items:center;gap:8px;margin:-10px -18px 8px;padding:10px 12px 8px;background:var(--bg2);border-bottom:1px solid color-mix(in srgb,var(--b2) 60%,transparent)}
+.shbar .grab{margin:0 auto!important;position:absolute;left:50%;top:4px;transform:translateX(-50%)}
+.shbar button{display:inline-flex;align-items:center;gap:5px;height:38px;padding:0 14px;border-radius:19px;font:800 14px/1 inherit;color:var(--text);background:color-mix(in srgb,var(--b2) 55%,transparent);border:1px solid color-mix(in srgb,var(--b2) 80%,transparent)}
+.shbar .sh-x{margin-left:auto;width:38px;padding:0;justify-content:center;font-size:17px}
+.vback{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 13px;margin:2px 0 10px;border-radius:17px;font:800 13.5px/1 inherit;color:var(--text);background:color-mix(in srgb,var(--b2) 55%,transparent);border:1px solid color-mix(in srgb,var(--b2) 80%,transparent)}
+.pv{position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+#sh-photo{top:0;max-height:none;border-radius:0;display:flex;flex-direction:column}
+#sh-photo .pv{flex:1 1 auto;display:grid;place-items:center;background:#000;border-radius:14px;min-height:240px;overflow:hidden}
+#sh-photo .pv img.big{width:100%;height:100%;max-height:calc(100dvh - 300px);object-fit:contain;border-radius:0}
+.pv .pva{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font:900 24px/1 system-ui;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.35)}
+.pv .pva[disabled]{opacity:.25}
+.pv .pvl{left:8px}.pv .pvr{right:8px}
+.pv .pvn{position:absolute;right:10px;bottom:10px;padding:4px 10px;border-radius:12px;font:800 12px/1.3 system-ui;color:#fff;background:rgba(0,0,0,.55)}
+.pvdots{display:flex;gap:6px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none}
+.pvdots button{flex:0 0 auto;width:54px;height:54px;border-radius:10px;overflow:hidden;border:2px solid transparent;opacity:.6;padding:0}
+.pvdots button.on{border-color:var(--cyan);opacity:1}
+.pvdots img{width:100%;height:100%;object-fit:cover;display:block}
 </style>
 </head>
 <body>
@@ -1620,6 +1639,111 @@ window.staffCard = function(s){
   return sec('👥 ' + L('staff')) + '<div class="card">' + (s.staff.length ? s.staff.map(function(u){ return '<div class="row"><div class="ic">👤</div><div class="m"><b>' + esc(u.u) + '</b><small>' + u.n + ' ' + esc(L('changes')) + (u.add ? ' · +' + u.add : '') + (u.edit ? ' · ✎' + u.edit : '') + (u.del ? ' · 🗑' + u.del : '') + '</small>'
     + u.last.map(function(x){ return '<small class="act">' + esc(new Date(x.at).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})) + ' — ' + esc(x.t) + '</small>'; }).join('') + '</div></div>'; }).join('') : empty('👥')) + '</div>';
 };
+})();
+</script>
+<script>
+/* ══ 1.37.3 · getting back: ‹ Back and ✕ on every panel, the phone's Back button, photo viewer ══
+   Panels (customer page, photo, entry, settings …) open on top of each other; Back closes only the
+   top one. The phone's own Back button / swipe does the same, then returns to Today. */
+(function(){
+var SEQ = 0, N = 0, HOMEJUMP = false, POP = false;
+function tx(en, ta){ return LANG === 'ta' ? ta : en; }
+function open(){ return [].slice.call(document.querySelectorAll('.sheet.on')).sort(function(a, b){ return (a._seq || 0) - (b._seq || 0); }); }
+function top(){ var o = open(); return o[o.length - 1] || null; }
+function restack(){ open().forEach(function(s, i){ s.style.zIndex = 41 + Math.min(i, 15); }); }   /* below the toast (60) and lock (70) */
+function veil(){ $('veil').classList.toggle('on', !!document.querySelector('.sheet.on')); }
+function push(){ if(POP) return; try{ N++; history.pushState({blo:N}, ''); }catch(e){ N--; } }
+function closeTop(){ var t = top(); if(t){ sheet0(t.id, false); veil(); return true; } return false; }
+function closeAll(){ open().forEach(function(s){ sheet0(s.id, false); }); veil(); }
+/* the bar on top of every panel */
+function bar(sh){
+  if(!sh.classList.contains('on') || sh.querySelector(':scope > .shbar')) return;
+  var g = sh.querySelector(':scope > .grab'), b = document.createElement('div'); b.className = 'shbar';
+  b.innerHTML = '<button class="sh-back" type="button">‹ ' + tx('Back', 'பின்') + '</button>'
+    + (open().length > 1 ? '<button class="sh-home" type="button">🏠 ' + esc(L('home')) + '</button>' : '')
+    + '<button class="sh-x" type="button" aria-label="' + tx('Close', 'மூடு') + '">✕</button>';
+  if(g) b.appendChild(g);
+  sh.insertBefore(b, sh.firstChild);
+}
+var sheet0 = sheet;
+sheet = function(id, on){
+  var el = $(id), was = el.classList.contains('on');
+  sheet0(id, on);
+  if(on){ el._seq = ++SEQ; restack(); var old = el.querySelector(':scope > .shbar'); if(old) old.remove(); bar(el); if(!was) push(); }
+};
+[].forEach.call(document.querySelectorAll('.sheet'), function(sh){
+  new MutationObserver(function(){ bar(sh); }).observe(sh, {childList:true});
+  new MutationObserver(function(){ if(sh.classList.contains('on') && !sh._seq){ sh._seq = ++SEQ; bar(sh); } if(!sh.classList.contains('on')) sh._seq = 0; restack(); }).observe(sh, {attributes:true, attributeFilter:['class']});
+});
+/* Back: one step. Uses the phone's history when the step is ours, so both Backs stay in step. */
+function back(){
+  if(N > 0 && history.state && history.state.blo === N) history.back();
+  else if(!closeTop() && VIEW !== 'home') go('home');
+}
+function home(){
+  if(N > 0){ HOMEJUMP = true; history.go(-N); }
+  else { closeAll(); if(VIEW !== 'home') go('home'); }
+}
+window.addEventListener('popstate', function(e){
+  N = (e.state && e.state.blo) || 0; POP = true;
+  try{
+    if(HOMEJUMP){ HOMEJUMP = false; closeAll(); if(VIEW !== 'home') go('home'); }
+    else if(!closeTop() && VIEW !== 'home') go('home');
+  } finally { POP = false; }
+});
+$('veil').onclick = function(e){ e.stopPropagation(); back(); };
+document.addEventListener('click', function(e){
+  var b = e.target.closest('.shbar button, .vback'); if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  if(b.classList.contains('sh-home') || b.classList.contains('vback')) home(); else back();
+}, true);
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && (top() || VIEW !== 'home')) back(); });
+/* sections (Money, Sites, Approve, Alerts): ‹ Today at the top, and the phone's Back returns to Today */
+var go1 = go;
+go = function(v){
+  var from = VIEW; go1(v);
+  if(v !== 'home' && from === 'home') push();
+  else if(v === 'home' && from !== 'home' && N > 0 && !POP){ HOMEJUMP = true; history.go(-N); }
+  chip();
+};
+function chip(){
+  ['money', 'sites', 'ok', 'alerts'].forEach(function(v){ var el = $('v-' + v); if(el && !el.querySelector(':scope > .vback')) el.insertAdjacentHTML('afterbegin', '<button class="vback" type="button">‹ 🏠 ' + esc(L('home')) + '</button>'); });
+}
+['money', 'sites', 'ok', 'alerts'].forEach(function(v){ var el = $('v-' + v); if(el) new MutationObserver(chip).observe(el, {childList:true}); });
+chip();
+if(window.BLO) BLO.go = go;
+/* photo viewer: ‹ › arrows, swipe, counter and a strip of the same set (one customer, or all) */
+var SET = null, CUR = 0;
+document.addEventListener('click', function(e){
+  var p = e.target.closest('[data-ph]'); if(!p || e.target.closest('#sh-photo')) return;
+  var grid = p.closest('.phg'); SET = grid ? [].map.call(grid.querySelectorAll('[data-ph]'), function(x){ return Number(x.getAttribute('data-ph')); }) : null;
+}, true);
+var pv0 = photoView;
+photoView = function(i){
+  if(!PHOTOS || !PHOTOS[i]) return;
+  if(!SET || SET.indexOf(i) < 0) SET = PHOTOS.map(function(_, k){ return k; });
+  CUR = SET.indexOf(i); var already = $('sh-photo').classList.contains('on');
+  draw();
+  if(!already) sheet('sh-photo', true);
+};
+function draw(){
+  var i = SET[CUR], p = PHOTOS[i], n = SET.length;
+  $('sh-photo').innerHTML = '<div class="grab"></div><div class="pv"><img class="big" src="' + esc(p.src) + '" alt="">'
+    + (n > 1 ? '<button class="pva pvl" type="button" data-pv="-1"' + (CUR ? '' : ' disabled') + ' aria-label="' + tx('Previous', 'முந்தைய') + '">‹</button><button class="pva pvr" type="button" data-pv="1"' + (CUR < n - 1 ? '' : ' disabled') + ' aria-label="' + tx('Next', 'அடுத்து') + '">›</button><span class="pvn">' + (CUR + 1) + ' / ' + n + '</span>' : '')
+    + '</div><div style="margin-top:10px"><b>' + esc(custOf(p.cid).n) + '</b> · ' + fd(p.d) + (p.cap ? '<div style="color:var(--text3)">' + esc(p.cap) + '</div>' : '') + '</div>'
+    + (n > 1 ? '<div class="pvdots">' + SET.map(function(k, j){ var q = PHOTOS[k]; return '<button type="button" data-pvi="' + j + '" class="' + (j === CUR ? 'on' : '') + '"><img src="' + esc(q.src) + '" alt="" loading="lazy"></button>'; }).join('') + '</div>' : '');
+  var d = $('sh-photo').querySelector('.pvdots button.on'); if(d) d.scrollIntoView({block:'nearest', inline:'center'});
+}
+function step(k){ if(!SET) return; var j = CUR + k; if(j < 0 || j >= SET.length) return; CUR = j; draw(); }
+$('sh-photo').addEventListener('click', function(e){
+  var a = e.target.closest('[data-pv]'); if(a){ e.stopPropagation(); step(Number(a.getAttribute('data-pv'))); return; }
+  var t = e.target.closest('[data-pvi]'); if(t){ e.stopPropagation(); CUR = Number(t.getAttribute('data-pvi')); draw(); }
+});
+var x0 = null, y0 = null;
+$('sh-photo').addEventListener('touchstart', function(e){ if(!e.target.closest('.pv')) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive:true});
+$('sh-photo').addEventListener('touchend', function(e){ if(x0 == null) return; var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if(Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) step(dx < 0 ? 1 : -1); }, {passive:true});
+document.addEventListener('keydown', function(e){ if(!$('sh-photo').classList.contains('on')) return; if(e.key === 'ArrowRight') step(1); if(e.key === 'ArrowLeft') step(-1); });
+window.BLONAV = {back:back, home:home, depth:function(){ return N; }, open:function(){ return open().map(function(s){ return s.id; }); }};
 })();
 </script>
 </body>
