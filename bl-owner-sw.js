@@ -3,7 +3,7 @@
    This helper then fetches the locked summary and opens it with the key the
    page saved on this phone after the PIN was entered. */
 'use strict';
-var SHELL = 'bl-owner-v12', FILES = ['bl-owner.html', 'bl-owner.webmanifest', 'bl-owner-icon-192.png', 'bl-owner-icon-512.png'];
+var SHELL = 'bl-owner-v13', FILES = ['bl-owner.html', 'bl-owner.webmanifest', 'bl-owner-icon-192.png', 'bl-owner-icon-512.png'];
 self.addEventListener('install', function(e){ e.waitUntil(caches.open(SHELL).then(function(c){ return c.addAll(FILES).catch(function(){}); }).then(function(){ return self.skipWaiting(); })); });
 self.addEventListener('activate', function(e){ e.waitUntil(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){ return k !== SHELL; }).map(function(k){ return caches.delete(k); })); }).then(function(){ return self.clients.claim(); })); });
 self.addEventListener('fetch', function(e){
