@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -414,6 +413,22 @@ button{font-family:inherit}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .kpi,.card{opacity:1!important;transform:none!important;filter:none!important}}
 
+/* before / after */
+.bacard{padding:10px}
+.bas{position:relative;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:var(--sunk);touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.baimg{position:absolute;inset:0;display:grid;place-items:center}
+.baimg img{width:100%;height:100%;object-fit:cover;display:block}
+.baa{clip-path:inset(0 0 0 var(--x))}
+.bas.hint .baa{transition:clip-path .7s var(--ease)}.bas.hint .bak{transition:left .7s var(--ease)}
+.bak{position:absolute;top:0;bottom:0;left:var(--x);width:3px;margin-left:-1.5px;background:#fff;box-shadow:0 0 14px rgba(0,0,0,.45);pointer-events:none;z-index:2}
+.bak::after{content:'\21C6';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+  font-size:19px;font-weight:900;font-style:normal;color:#fff;background:linear-gradient(135deg,var(--indigo),var(--pink));box-shadow:0 8px 20px rgba(0,0,0,.35);border:2px solid #fff}
+.bas input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;z-index:3}
+.balab{position:absolute;top:10px;z-index:2;font-size:11px;font-weight:800;color:#fff;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:none}
+.balab.l{left:10px}.balab.r{right:10px}
+.bacap{display:flex;justify-content:space-between;gap:12px;margin-top:8px;font-size:12px;font-weight:700;color:var(--text3)}
+.bacap span:last-child{text-align:right}
+
 @media print{.gal{grid-template-columns:repeat(4,1fr)}.galspin{display:none}}
 .foot{margin-top:30px;text-align:center;font-size:11px;color:var(--text4);line-height:1.8;font-weight:600;
   border-top:1px solid var(--b1);padding-top:18px}
@@ -737,6 +752,11 @@ var STR = {
     themeAuto:'தானியங்கி',
     themeLight:'வெளிச்சம்',
     themeDark:'இருள்',
+    baNav:'முன்னேற்றம்',
+    beforeAfter:'முன் / பின்',
+    beforeW:'முன்',
+    nowW:'இப்போது',
+    baDrag:'இழுத்து ஒப்பிடவும்',
     exportLedger:'ஏற்றுமதி'
   }
 };
@@ -1607,6 +1627,20 @@ function render(){
     H += '</div></section>';
   }
 
+  /* ── before / after: the site's first photo next to its latest ── */
+  var BA = baPair();
+  if(BA){
+    var g0 = P.pg[BA[0]], g1 = P.pg[BA[1]], span = daysBetween(parseD(g1[3]), parseD(g0[3]));
+    H += secOpen('s-ba', T('baNav','Progress'), '✨', T('beforeAfter','Before / after'), 'var(--amber)', 'var(--pink)', span > 0 ? span + ' ' + T('daysWord','days') : '', 'noprint')
+      + '<div class="card in bacard"><div class="bas" id="ba-s" style="--x:50%">'
+      +   '<div class="baimg" id="ba-a"><span class="galspin"></span></div>'
+      +   '<div class="baimg baa" id="ba-b"><span class="galspin"></span></div>'
+      +   '<span class="balab l">' + T('beforeW','Before') + ' · ' + fmtD(g0[3]) + '</span><span class="balab r">' + T('nowW','Now') + ' · ' + fmtD(g1[3]) + '</span>'
+      +   '<i class="bak"></i><input type="range" min="0" max="100" value="50" aria-label="' + esc(T('baDrag','Drag to compare')) + '" oninput="this.parentNode.style.setProperty(\'--x\', this.value + \'%\')">'
+      + '</div><div class="bacap"><span>' + esc(g0[2] || g0[1] || '') + '</span><span>' + esc(g1[2] || g1[1] || '') + '</span></div>'
+      + '<div class="t2" style="text-align:center;margin-top:6px">↔ ' + T('baDrag','Drag to compare') + '</div></div></section>';
+  }
+
   /* ── photo gallery ── */
   if((P.pg||[]).length){
     H += secOpen('s-photos', T('photosNav','Photos'), '🖼️', T('sitePhotos','Site Photos'), 'var(--pink)', 'var(--violet)', P.pg.length) + '<div class="gal">';
@@ -1727,6 +1761,7 @@ function render(){
   paintLive();
   animate();
   galMount();
+  baMount();
   settleNumerals();
   kpiParallax();
   scrollFx();
@@ -1845,6 +1880,23 @@ window.cycleTheme = function(){
 applyTheme();
 try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); }catch(e){}
 
+
+/* before / after: needs at least two dated site photos on different days (live cards only) */
+function baPair(){
+  var pg = P.pg || []; if(pg.length < 2 || !LIVE) return null;
+  var idx = pg.map(function(g, i){ return i; }).filter(function(i){ return hasD(pg[i][3]); });
+  if(idx.length < 2) return null;
+  idx.sort(function(a, b){ return String(pg[a][3]).localeCompare(String(pg[b][3])); });
+  var first = idx[0], last = idx[idx.length - 1];
+  return pg[first][3] === pg[last][3] ? null : [first, last];
+}
+function baMount(){
+  var BA = baPair(); if(!BA || !$('ba-s')) return;
+  var put = function(id, i){ galFetch(i).then(function(url){ var el = $(id); if(el) el.innerHTML = '<img src="' + url + '" alt="">'; }, function(){ var el = $(id); if(el) el.innerHTML = '<span style="font-size:22px;opacity:.4">⚠</span>'; }); };
+  put('ba-a', BA[0]); put('ba-b', BA[1]);
+  /* a gentle hint that it moves: glide once to 70% and back to the middle */
+  if(!REDUCED){ var s = $('ba-s'); setTimeout(function(){ s.classList.add('hint'); s.style.setProperty('--x', '70%'); setTimeout(function(){ s.style.setProperty('--x', '50%'); setTimeout(function(){ s.classList.remove('hint'); }, 700); }, 750); }, 1400); }
+}
 
 /* ── add to home screen ─────────────────────────────────────
    Turns the passbook into an icon on the customer's phone so they never have
